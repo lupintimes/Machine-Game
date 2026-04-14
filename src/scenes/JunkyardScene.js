@@ -11,7 +11,7 @@ export default class JunkyardScene extends Phaser.Scene {
 
         // ─── UI ────────────────────────
         this.ui = new UI(this)
-        this.ui.createAll()
+        this.ui.create()
 
         // ─── Room ──────────────────────
         this.add.rectangle(400, 550, 800, 100, 0x3d3d2e)
@@ -37,6 +37,12 @@ export default class JunkyardScene extends Phaser.Scene {
         // ─── Controls ──────────────────
         this.cursors = this.input.keyboard.createCursorKeys()
         this.spaceKey = this.input.keyboard.addKey('SPACE')
+        this.wasd = this.input.keyboard.addKeys({
+            up: Phaser.Input.Keyboard.KeyCodes.W,
+            down: Phaser.Input.Keyboard.KeyCodes.S,
+            left: Phaser.Input.Keyboard.KeyCodes.A,
+            right: Phaser.Input.Keyboard.KeyCodes.D
+        })
 
         // ─── Dialog ────────────────────
         this.dialog = new DialogBox(this)
@@ -56,15 +62,15 @@ export default class JunkyardScene extends Phaser.Scene {
 
         this.player.setVelocity(0)
 
-        if (this.cursors.left.isDown) {
+        if (this.cursors.left.isDown || this.wasd.left.isDown) {
             this.player.setVelocityX(-speed)
-        } else if (this.cursors.right.isDown) {
+        } else if (this.cursors.right.isDown || this.wasd.right.isDown) {
             this.player.setVelocityX(speed)
         }
 
-        if (this.cursors.up.isDown) {
+        if (this.cursors.up.isDown || this.wasd.up.isDown) {
             this.player.setVelocityY(-speed)
-        } else if (this.cursors.down.isDown) {
+        } else if (this.cursors.down.isDown || this.wasd.down.isDown) {
             this.player.setVelocityY(speed)
         }
 

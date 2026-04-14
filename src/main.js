@@ -1,8 +1,9 @@
 import GameState from './data/gameState.js'
-import UI from './ui.js'
 import HubScene from './scenes/HubScene.js'
 import WorkshopScene from './scenes/WorkshopScene.js'
 import JunkyardScene from './scenes/JunkyardScene.js'
+
+window.GameState = GameState
 
 const config = {
     type: Phaser.AUTO,
@@ -23,8 +24,5 @@ const config = {
     },
     scene: [HubScene, WorkshopScene, JunkyardScene]
 }
-
-// Make GameState accessible everywhere
-window.GameState = GameState
 
 const game = new Phaser.Game(config)

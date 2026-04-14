@@ -7,11 +7,15 @@ export default class WorkshopScene extends Phaser.Scene {
     }
 
     create() {
+        this.ui = new UI(this)
+        this.ui.create()
+
         this.cameras.main.setBackgroundColor('#2d2d44')
 
-        // ─── UI ────────────────────────
-        this.ui = new UI(this)
-        this.ui.createAll()
+        // ─── Launch UI Scene on top ────
+        if (!this.scene.isActive('UIScene')) {
+            this.scene.launch('UIScene')
+        }
 
         // ─── Room ──────────────────────
         this.add.rectangle(400, 550, 800, 100, 0x4a4a5e)
@@ -33,6 +37,12 @@ export default class WorkshopScene extends Phaser.Scene {
         // ─── Controls ──────────────────
         this.cursors = this.input.keyboard.createCursorKeys()
         this.spaceKey = this.input.keyboard.addKey('SPACE')
+        this.wasd = this.input.keyboard.addKeys({
+            up: Phaser.Input.Keyboard.KeyCodes.W,
+            down: Phaser.Input.Keyboard.KeyCodes.S,
+            left: Phaser.Input.Keyboard.KeyCodes.A,
+            right: Phaser.Input.Keyboard.KeyCodes.D
+        })
 
         // ─── Dialog ────────────────────
         this.dialog = new DialogBox(this)
@@ -56,22 +66,23 @@ export default class WorkshopScene extends Phaser.Scene {
 
         this.player.setVelocity(0)
 
-        if (this.cursors.left.isDown) {
+        // ─── Left & Right ──────────────────────────────
+        if (this.cursors.left.isDown || this.wasd.left.isDown) {
             this.player.setVelocityX(-speed)
-        } else if (this.cursors.right.isDown) {
+        } else if (this.cursors.right.isDown || this.wasd.right.isDown) {
             this.player.setVelocityX(speed)
         }
 
-        if (this.cursors.up.isDown) {
+        // ─── Up & Down ─────────────────────────────────
+        if (this.cursors.up.isDown || this.wasd.up.isDown) {
             this.player.setVelocityY(-speed)
-        } else if (this.cursors.down.isDown) {
+        } else if (this.cursors.down.isDown || this.wasd.down.isDown) {
             this.player.setVelocityY(speed)
         }
 
         this.playerGfx.x = this.player.x
         this.playerGfx.y = this.player.y
 
-        // Update stats when moving
         this.ui.updateStats()
     }
 }

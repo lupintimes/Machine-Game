@@ -38,7 +38,7 @@ export default class HubScene extends Phaser.Scene {
 
     updateStats() {
         this.statsText.setText(
-            `💰 ${GameState.money} | ⭐ ${GameState.reputation} | 🔧 ${GameState.skills.repair} | ⚗️ ${GameState.elixir} | Level ${GameState.level}`
+            `⭐ ${GameState.reputation} | 🔧 ${GameState.skills.repair} | 💰 ${GameState.money} | ⚗️ ${GameState.elixir} | Level ${GameState.level}`
         )
     }
 
