@@ -66,6 +66,20 @@ export default class PressureValveGame extends Phaser.Scene {
             callbackScope: this,
             loop: true
         })
+        // ─── Close Button ──────────────
+        const closeBtn = this.add.text(W - 60, 40, '✖', {
+            fontSize: '32px',
+            fill: '#ff4444',
+            backgroundColor: '#000000',
+            padding: { x: 10, y: 5 }
+        }).setOrigin(0.5).setDepth(100).setInteractive({ useHandCursor: true })
+
+        closeBtn.on('pointerover', () => closeBtn.setFill('#ff0000'))
+        closeBtn.on('pointerout', () => closeBtn.setFill('#ff4444'))
+        closeBtn.on('pointerdown', () => {
+            this.scene.stop()
+            this.scene.resume('WorkshopScene')
+        })
     }
 
     createGauge(x, y, index) {

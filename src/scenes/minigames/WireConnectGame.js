@@ -60,6 +60,22 @@ export default class WireConnectGame extends Phaser.Scene {
             fontSize: '28px',
             fill: '#ffffff'
         }).setOrigin(0.5).setDepth(5)
+
+        // ─── Close Button ──────────────
+        const closeBtn = this.add.text(W - 60, 40, '✖', {
+            fontSize: '32px',
+            fill: '#ff4444',
+            backgroundColor: '#000000',
+            padding: { x: 10, y: 5 }
+        }).setOrigin(0.5).setDepth(100).setInteractive({ useHandCursor: true })
+
+        closeBtn.on('pointerover', () => closeBtn.setFill('#ff0000'))
+        closeBtn.on('pointerout', () => closeBtn.setFill('#ff4444'))
+        closeBtn.on('pointerdown', () => {
+            this.scene.stop()
+            this.scene.resume('WorkshopScene')
+        })
+
     }
 
     generateNodes(W, H) {
@@ -68,10 +84,10 @@ export default class WireConnectGame extends Phaser.Scene {
         const positions = [
             { x: W / 2 - 320, y: H / 2 - 80 },
             { x: W / 2 - 150, y: H / 2 + 80 },
-            { x: W / 2,       y: H / 2 - 120 },
+            { x: W / 2, y: H / 2 - 120 },
             { x: W / 2 + 150, y: H / 2 + 60 },
             { x: W / 2 + 280, y: H / 2 - 80 },
-            { x: W / 2 - 50,  y: H / 2 + 150 }
+            { x: W / 2 - 50, y: H / 2 + 150 }
         ]
 
         positions.forEach((pos, i) => {

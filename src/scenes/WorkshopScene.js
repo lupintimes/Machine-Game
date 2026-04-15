@@ -34,25 +34,38 @@ export default class WorkshopScene extends Phaser.Scene {
         this.stations = [
             {
                 rect: this.add.rectangle(820, 800, 700, 600, 0x8b4513).setDepth(1).setAlpha(0.3),
-                name: 'Repair Bench',
+                label: this.add.text(720, 500, '🔧 Hardware Bench', { fontSize: '22px', fill: '#fff' }).setDepth(2),
+                lockLabel: null,
+                name: 'Hardware Bench',
                 cooldown: false,
-                reward: { money: 50, repair: 5, reputation: 3 }
+                locked: false
             },
             {
                 rect: this.add.rectangle(1930, 800, 700, 600, 0x555577).setDepth(1).setAlpha(0.3),
-                name: 'Generator',
+                label: this.add.text(1830, 500, '⚡ Electrical Bench', { fontSize: '22px', fill: '#fff' }).setDepth(2),
+                lockLabel: null,
+                name: 'Electrical Bench',
                 cooldown: false,
-                reward: { money: 80, repair: 8, reputation: 5 }
+                locked: !GameState.getFlag('electricalUnlocked')
             },
             {
-                rect: this.add.rectangle(3250, 800, 1200, 600, 0x665544).setDepth(1).setAlpha(0.3),
-                name: 'Engine Rack',
+                rect: this.add.rectangle(3250, 800, 1200, 600, 0x9b59b6).setDepth(1).setAlpha(0.3),
+                label: this.add.text(3100, 500, '🔮 Magical Bench', { fontSize: '22px', fill: '#fff' }).setDepth(2),
+                lockLabel: null,
+                name: 'Magical Bench',
                 cooldown: false,
-                reward: { money: 30, repair: 3, reputation: 2, elixir: true }
+                locked: false
             }
         ]
 
-
+        // Show lock on generator if locked
+        if (this.stations[1].locked) {
+            this.stations[1].rect.setAlpha(0.15)
+            this.stations[1].lockLabel = this.add.text(1830, 550, '🔒 Need 5 repair skill', {
+                fontSize: '18px',
+                fill: '#ff4444'
+            }).setDepth(3)
+        }
 
         // ─── Press E hint ──────────────
         this.interactHint = this.add.text(0, 0, 'Press E to interact', {
@@ -62,17 +75,9 @@ export default class WorkshopScene extends Phaser.Scene {
             padding: { x: 8, y: 4 }
         }).setDepth(20).setVisible(false)
 
-        // ─── Cooldown hint ─────────────
-        this.cooldownHint = this.add.text(0, 0, '⏳ Cooling down...', {
-            fontSize: '18px',
-            fill: '#ff4444',
-            backgroundColor: '#000000',
-            padding: { x: 8, y: 4 }
-        }).setDepth(20).setVisible(false).setScrollFactor(0)
-
         // ─── Player ────────────────────
         this.player = this.physics.add.image(400, 850)
-        this.player.setDisplaySize(32, 48)
+        this.player.setDisplaySize(104, 156)
         this.player.body.setCollideWorldBounds(true)
         this.playerGfx = this.add.rectangle(400, 850, 32, 48, 0x00ff88)
         this.playerGfx.setDepth(10)
@@ -123,8 +128,22 @@ export default class WorkshopScene extends Phaser.Scene {
         } else if (this.cursors.right.isDown || this.wasd.right.isDown) {
             this.player.setVelocityX(speed)
         }
+
         this.playerGfx.x = this.player.x
         this.playerGfx.y = this.player.y
+
+        // ─── Check if generator unlocked now ─
+        if (this.stations[1].locked && GameState.getFlag('electricalUnlocked')) {
+            this.stations[1].locked = false
+            this.stations[1].rect.setAlpha(0.3)
+            if (this.stations[1].lockLabel) {
+                this.stations[1].lockLabel.destroy()
+            }
+            this.dialog.show([
+                { name: 'You', text: '⚡ My repair skills are good enough now!' },
+                { name: 'You', text: 'I can work on the Generator!' }
+            ])
+        }
 
         // ─── Check distance to stations ─
         this.nearStation = null
@@ -138,19 +157,17 @@ export default class WorkshopScene extends Phaser.Scene {
             if (dist < 200) {
                 this.nearStation = station
 
-                // Show hint above station
                 this.interactHint.setVisible(true)
                 this.interactHint.setPosition(
                     station.rect.x - 80,
-                    station.rect.y - 250
+                    station.rect.y - 350
                 )
 
-                // Highlight station
-                station.rect.setStrokeStyle(3, 0xffff00)
-                station.rect.setAlpha(0.5)
+                station.rect.setStrokeStyle(3, station.locked ? 0xff0000 : 0xffff00)
+                if (!station.locked) station.rect.setAlpha(0.5)
             } else {
                 station.rect.setStrokeStyle(0)
-                station.rect.setAlpha(0.3)
+                if (!station.locked) station.rect.setAlpha(0.3)
             }
         })
 
@@ -163,10 +180,26 @@ export default class WorkshopScene extends Phaser.Scene {
             this.onInteract(this.nearStation)
         }
 
+        // ─── Check if can meet trader ───
+        if (GameState.canMeetTrader() && !this.shownTraderHint) {
+            this.shownTraderHint = true
+            this.dialog.show([
+                { name: 'You', text: 'I know enough now to look for parts.' },
+                { name: 'You', text: 'Maybe the Junkyard trader has what I need.' }
+            ])
+        }
+
         this.ui.updateStats()
     }
 
     onInteract(station) {
+        if (station.locked) {
+            this.dialog.show([
+                { name: 'You', text: '🔒 I need more repair skill to work on this.' }
+            ])
+            return
+        }
+
         if (station.cooldown) {
             this.dialog.show([
                 { name: 'You', text: 'I just worked on this. Let me rest a bit.' }
@@ -174,55 +207,25 @@ export default class WorkshopScene extends Phaser.Scene {
             return
         }
 
-        if (station.name === 'Repair Bench') {
+        if (station.name === 'Hardware Bench') {
             this.scene.pause('WorkshopScene')
-            this.scene.launch('PressureValveGame')  // ← swapped
+            this.scene.launch('PressureValveGame')
             station.cooldown = true
             this.time.delayedCall(5000, () => { station.cooldown = false })
         }
 
-        if (station.name === 'Generator') {
+        if (station.name === 'Electrical Bench') {
             this.scene.pause('WorkshopScene')
-            this.scene.launch('WireConnectGame')  // ← swapped
+            this.scene.launch('WireConnectGame')
             station.cooldown = true
             this.time.delayedCall(5000, () => { station.cooldown = false })
         }
 
-        if (station.name === 'Engine Rack') {
+        if (station.name === 'Magical Bench') {
             this.scene.pause('WorkshopScene')
             this.scene.launch('EnergyCalibrationGame')
             station.cooldown = true
             this.time.delayedCall(5000, () => { station.cooldown = false })
-        }
-    }
-
-    applyReward(station) {
-        const r = station.reward
-
-        // Apply rewards to GameState
-        GameState.earnMoney(r.money)
-        GameState.addSkill('repair', r.repair)
-        GameState.addReputation(r.reputation)
-        if (r.elixir) GameState.addElixir(1)
-
-        // Update UI
-        this.ui.updateStats()
-
-        // Start cooldown (5 seconds)
-        station.cooldown = true
-        station.rect.setAlpha(0.15)
-
-        this.time.delayedCall(5000, () => {
-            station.cooldown = false
-            station.rect.setAlpha(0.3)
-        })
-
-        // Check level 1 complete
-        if (GameState.isLevel1Complete()) {
-            this.dialog.show([
-                { name: 'You', text: 'I have enough money now!' },
-                { name: 'You', text: 'Time to visit the Junkyard and buy that power core!' }
-            ])
         }
     }
 }

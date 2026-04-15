@@ -17,9 +17,48 @@ const GameState = {
         parts: []
     },
 
+    // ─── Inventory ─────────────────────────────────────
+    inventory: [],
+
+    // ─── Inventory Methods ─────────────────────────────
+    addItem(item) {
+        const existing = this.inventory.find(i => i.id === item.id)
+        if (existing) {
+            existing.quantity += item.quantity || 1
+        } else {
+            this.inventory.push({
+                ...item,
+                quantity: item.quantity || 1
+            })
+        }
+    },
+
+    removeItem(id, quantity = 1) {
+        const item = this.inventory.find(i => i.id === id)
+        if (item) {
+            item.quantity -= quantity
+            if (item.quantity <= 0) {
+                this.inventory = this.inventory.filter(i => i.id !== id)
+            }
+            return true
+        }
+        return false
+    },
+
+    hasItem(id) {
+        return this.inventory.some(i => i.id === id)
+    },
+
+    getItem(id) {
+        return this.inventory.find(i => i.id === id)
+    },
+
+    // ─── existing methods ──────────────────────────────
     flags: {
+        electricalUnlocked: false,
         metTrader: false,
         boughtCore: false,
+        secretBaseRevealed: false,
         learnedTruth: false,
         toldKing: false,
         metParkCleaner: false,
@@ -29,9 +68,7 @@ const GameState = {
         enemyTerritoryUnlocked: false
     },
 
-    earnMoney(amount) {
-        this.money += amount
-    },
+    earnMoney(amount) { this.money += amount },
 
     spendMoney(amount) {
         if (this.money >= amount) {
@@ -41,19 +78,18 @@ const GameState = {
         return false
     },
 
-    addReputation(amount) {
-        this.reputation += amount
-    },
+    addReputation(amount) { this.reputation += amount },
 
     addSkill(skill, amount) {
         if (this.skills[skill] !== undefined) {
             this.skills[skill] += amount
+            if (skill === 'repair' && this.skills.repair >= 5) {
+                this.flags.electricalUnlocked = true
+            }
         }
     },
 
-    addElixir(amount) {
-        this.elixir += amount
-    },
+    addElixir(amount) { this.elixir += amount },
 
     addArmorPart(part) {
         if (!this.armor.parts.includes(part)) {
@@ -67,25 +103,14 @@ const GameState = {
         }
     },
 
-    getFlag(flag) {
-        return this.flags[flag]
-    },
+    getFlag(flag) { return this.flags[flag] },
 
-    advanceLevel() {
-        this.level++
-    },
+    advanceLevel() { this.level++ },
 
-    isLevel1Complete() {
-        return this.armor.hasCore === true
-    },
-
-    isLevel2Complete() {
-        return this.flags.learnedTruth && this.flags.toldKing
-    },
-
-    isLevel3Complete() {
-        return this.flags.gfDead === true
-    }
+    isLevel1Complete() { return this.flags.boughtCore === true },
+    isLevel2Complete() { return this.flags.learnedTruth && this.flags.toldKing },
+    isLevel3Complete() { return this.flags.gfDead === true },
+    canMeetTrader() { return this.skills.repair >= 10 }
 }
 
 export default GameState
