@@ -97,11 +97,16 @@ export default class WorkshopScene extends Phaser.Scene {
 
         // ─── Dialog ────────────────────
         this.dialog = new DialogBox(this)
-        this.dialog.show([
-            { name: 'You', text: 'My workshop... at least this place is still standing.' },
-            { name: 'You', text: 'The armor is half done. I need a power core.' }
-        ])
 
+        // Only show intro dialog first time
+        if (!GameState.getFlag('workshopIntroSeen')) {
+            this.dialog.show([
+                { name: 'You', text: 'My workshop... at least this place is still standing.' },
+                { name: 'You', text: 'The armor is half done. I need a power core.' }
+            ], () => {
+                GameState.setFlag('workshopIntroSeen')
+            })
+        }
         // ─── Scene Title ───────────────
         this.add.text(W / 2, 50, '🔧 Workshop', {
             fontSize: '28px',

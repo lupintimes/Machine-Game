@@ -55,6 +55,9 @@ const GameState = {
 
     // ─── existing methods ──────────────────────────────
     flags: {
+        secretBaseVisited: false,
+        secretBaseIntroSeen: false,
+        workshopIntroSeen: false,
         electricalUnlocked: false,
         metTrader: false,
         boughtCore: false,
