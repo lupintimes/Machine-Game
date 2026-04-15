@@ -11,6 +11,9 @@ export default class WorkshopScene extends Phaser.Scene {
     }
 
     create() {
+        const W = this.cameras.main.width
+        const H = this.cameras.main.height
+
         // ─── UI ────────────────────────
         this.ui = new UI(this)
         this.ui.create()
@@ -20,48 +23,60 @@ export default class WorkshopScene extends Phaser.Scene {
         this.bg.setOrigin(0, 0)
         this.bg.setDepth(-1)
 
-        const scaleY = this.cameras.main.height / this.bg.height
+        const scaleY = H / this.bg.height
         this.bg.setScale(scaleY)
 
         const scaledWidth = this.bg.width * scaleY
-        this.physics.world.setBounds(0, 0, scaledWidth, this.cameras.main.height)
-        this.cameras.main.setBounds(0, 0, scaledWidth, this.cameras.main.height)
+        this.physics.world.setBounds(0, 0, scaledWidth, H)
+        this.cameras.main.setBounds(0, 0, scaledWidth, H)
 
         // ─── Interactable Stations ─────
         this.stations = [
             {
-                rect: this.add.rectangle(460, 350, 400, 400, 0x8b4513).setDepth(1),
-                label: this.add.text(270, 310, '🔧 Repair Bench', { fontSize: '13px', fill: '#fff' }).setDepth(2),
-                name: 'Repair Bench'
+                rect: this.add.rectangle(820, 800, 700, 600, 0x8b4513).setDepth(1).setAlpha(0.3),
+                name: 'Repair Bench',
+                cooldown: false,
+                reward: { money: 50, repair: 5, reputation: 3 }
             },
             {
-                rect: this.add.rectangle(1050, 350, 400, 400, 0x555577).setDepth(1),
-                label: this.add.text(770, 310, '⚡ Generator', { fontSize: '13px', fill: '#fff' }).setDepth(2),
-                name: 'Generator'
+                rect: this.add.rectangle(1930, 800, 700, 600, 0x555577).setDepth(1).setAlpha(0.3),
+                name: 'Generator',
+                cooldown: false,
+                reward: { money: 80, repair: 8, reputation: 5 }
             },
             {
-                rect: this.add.rectangle(1750, 350, 600, 400, 0x665544).setDepth(1),
-                label: this.add.text(1265, 310, '🔩 Engine Rack', { fontSize: '13px', fill: '#fff' }).setDepth(2),
-                name: 'Engine Rack'
+                rect: this.add.rectangle(3250, 800, 1200, 600, 0x665544).setDepth(1).setAlpha(0.3),
+                name: 'Engine Rack',
+                cooldown: false,
+                reward: { money: 30, repair: 3, reputation: 2, elixir: true }
             }
         ]
-        
-        
-        // ─── Press E hint (hidden by default) ──
+
+
+
+        // ─── Press E hint ──────────────
         this.interactHint = this.add.text(0, 0, 'Press E to interact', {
-            fontSize: '13px',
+            fontSize: '20px',
             fill: '#ffff00',
             backgroundColor: '#000000',
-            padding: { x: 6, y: 3 }
+            padding: { x: 8, y: 4 }
         }).setDepth(20).setVisible(false)
 
+        // ─── Cooldown hint ─────────────
+        this.cooldownHint = this.add.text(0, 0, '⏳ Cooling down...', {
+            fontSize: '18px',
+            fill: '#ff4444',
+            backgroundColor: '#000000',
+            padding: { x: 8, y: 4 }
+        }).setDepth(20).setVisible(false).setScrollFactor(0)
+
         // ─── Player ────────────────────
-        this.player = this.physics.add.image(400, 400)
+        this.player = this.physics.add.image(400, 850)
         this.player.setDisplaySize(32, 48)
         this.player.body.setCollideWorldBounds(true)
-        this.playerGfx = this.add.rectangle(400, 400, 32, 48, 0x00ff88)
+        this.playerGfx = this.add.rectangle(400, 850, 32, 48, 0x00ff88)
         this.playerGfx.setDepth(10)
-        this.playerGfx.setScale(3.25)
+        this.playerGfx.setScale(7.25)
 
         // ─── Camera ────────────────────
         this.cameras.main.startFollow(this.player, true, 0.1, 0.1)
@@ -71,8 +86,6 @@ export default class WorkshopScene extends Phaser.Scene {
         this.spaceKey = this.input.keyboard.addKey('SPACE')
         this.eKey = this.input.keyboard.addKey('E')
         this.wasd = this.input.keyboard.addKeys({
-            up: Phaser.Input.Keyboard.KeyCodes.W,
-            down: Phaser.Input.Keyboard.KeyCodes.S,
             left: Phaser.Input.Keyboard.KeyCodes.A,
             right: Phaser.Input.Keyboard.KeyCodes.D
         })
@@ -85,16 +98,16 @@ export default class WorkshopScene extends Phaser.Scene {
         ])
 
         // ─── Scene Title ───────────────
-        this.add.text(400, 40, '🔧 Workshop', {
-            fontSize: '18px',
+        this.add.text(W / 2, 50, '🔧 Workshop', {
+            fontSize: '28px',
             fill: '#fff'
-        }).setScrollFactor(0).setDepth(20)
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(20)
 
         this.nearStation = null
     }
 
     update() {
-        const speed = 200
+        const speed = 600
 
         if (this.dialog.isActive) {
             if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
@@ -110,13 +123,6 @@ export default class WorkshopScene extends Phaser.Scene {
         } else if (this.cursors.right.isDown || this.wasd.right.isDown) {
             this.player.setVelocityX(speed)
         }
-
-        if (this.cursors.up.isDown || this.wasd.up.isDown) {
-            this.player.setVelocityY(-speed)
-        } else if (this.cursors.down.isDown || this.wasd.down.isDown) {
-            this.player.setVelocityY(speed)
-        }
-
         this.playerGfx.x = this.player.x
         this.playerGfx.y = this.player.y
 
@@ -129,56 +135,93 @@ export default class WorkshopScene extends Phaser.Scene {
                 station.rect.x, station.rect.y
             )
 
-            if (dist < 80) {
+            if (dist < 200) {
                 this.nearStation = station
 
                 // Show hint above station
                 this.interactHint.setVisible(true)
                 this.interactHint.setPosition(
-                    station.rect.x - 60,
-                    station.rect.y - 70
+                    station.rect.x - 80,
+                    station.rect.y - 250
                 )
 
                 // Highlight station
-                station.rect.setStrokeStyle(2, 0xffff00)
+                station.rect.setStrokeStyle(3, 0xffff00)
+                station.rect.setAlpha(0.5)
             } else {
-                // Remove highlight
                 station.rect.setStrokeStyle(0)
+                station.rect.setAlpha(0.3)
             }
         })
 
-        // Hide hint if not near anything
         if (!this.nearStation) {
             this.interactHint.setVisible(false)
         }
 
         // ─── Press E to interact ────────
         if (Phaser.Input.Keyboard.JustDown(this.eKey) && this.nearStation) {
-            this.onInteract(this.nearStation.name)
+            this.onInteract(this.nearStation)
         }
 
         this.ui.updateStats()
     }
 
-    onInteract(stationName) {
-        if (stationName === 'Repair Bench') {
+    onInteract(station) {
+        if (station.cooldown) {
             this.dialog.show([
-                { name: 'You', text: 'Let me fix this device...' },
-                { name: 'You', text: 'Done! That should earn me some coin.' }
+                { name: 'You', text: 'I just worked on this. Let me rest a bit.' }
             ])
+            return
         }
 
-        if (stationName === 'Generator') {
-            this.dialog.show([
-                { name: 'You', text: 'This generator needs some tuning...' },
-                { name: 'You', text: 'Fixed! The power output is stable now.' }
-            ])
+        if (station.name === 'Repair Bench') {
+            this.scene.pause('WorkshopScene')
+            this.scene.launch('PressureValveGame')  // ← swapped
+            station.cooldown = true
+            this.time.delayedCall(5000, () => { station.cooldown = false })
         }
 
-        if (stationName === 'Engine Rack') {
+        if (station.name === 'Generator') {
+            this.scene.pause('WorkshopScene')
+            this.scene.launch('WireConnectGame')  // ← swapped
+            station.cooldown = true
+            this.time.delayedCall(5000, () => { station.cooldown = false })
+        }
+
+        if (station.name === 'Engine Rack') {
+            this.scene.pause('WorkshopScene')
+            this.scene.launch('EnergyCalibrationGame')
+            station.cooldown = true
+            this.time.delayedCall(5000, () => { station.cooldown = false })
+        }
+    }
+
+    applyReward(station) {
+        const r = station.reward
+
+        // Apply rewards to GameState
+        GameState.earnMoney(r.money)
+        GameState.addSkill('repair', r.repair)
+        GameState.addReputation(r.reputation)
+        if (r.elixir) GameState.addElixir(1)
+
+        // Update UI
+        this.ui.updateStats()
+
+        // Start cooldown (5 seconds)
+        station.cooldown = true
+        station.rect.setAlpha(0.15)
+
+        this.time.delayedCall(5000, () => {
+            station.cooldown = false
+            station.rect.setAlpha(0.3)
+        })
+
+        // Check level 1 complete
+        if (GameState.isLevel1Complete()) {
             this.dialog.show([
-                { name: 'You', text: 'These engine parts need assembly...' },
-                { name: 'You', text: 'Finished. Not bad for a days work.' }
+                { name: 'You', text: 'I have enough money now!' },
+                { name: 'You', text: 'Time to visit the Junkyard and buy that power core!' }
             ])
         }
     }

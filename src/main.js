@@ -2,13 +2,16 @@ import GameState from './data/gameState.js'
 import HubScene from './scenes/HubScene.js'
 import WorkshopScene from './scenes/WorkshopScene.js'
 import JunkyardScene from './scenes/JunkyardScene.js'
+import WireConnectGame from './scenes/minigames/WireConnectGame.js'
+import PressureValveGame from './scenes/minigames/PressureValveGame.js'
+import EnergyCalibrationGame from './scenes/minigames/EnergyCalibrationGame.js'
 
 window.GameState = GameState
 
 const config = {
     type: Phaser.AUTO,
-    width: 800,
-    height: 600,
+    width: 1920,
+    height: 1080,
     parent: 'game-container',
     backgroundColor: '#1a1a2e',
     physics: {
@@ -22,7 +25,7 @@ const config = {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH
     },
-    scene: [HubScene, WorkshopScene, JunkyardScene]
+    scene: [HubScene, WorkshopScene, JunkyardScene, WireConnectGame, PressureValveGame, EnergyCalibrationGame]
 }
 
 const game = new Phaser.Game(config)

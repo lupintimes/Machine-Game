@@ -17,29 +17,40 @@ export default class DialogBox {
     }
 
     createBox() {
-        this.box = this.scene.add.rectangle(400, 520, 750, 120, 0x000000, 0.85)
+        const W = this.scene.cameras.main.width
+        const H = this.scene.cameras.main.height
+
+        // Dialog box at bottom
+        this.box = this.scene.add.rectangle(W / 2, H - 80, W - 100, 140, 0x000000, 0.85)
         this.box.setStrokeStyle(2, 0xffffff)
         this.box.setDepth(100)
+        this.box.setScrollFactor(0)
 
-        this.nameText = this.scene.add.text(50, 475, '', {
-            fontSize: '14px',
+        // Name label
+        this.nameText = this.scene.add.text(80, H - 150, '', {
+            fontSize: '20px',
             fill: '#00ff88',
             fontStyle: 'bold'
         })
         this.nameText.setDepth(101)
+        this.nameText.setScrollFactor(0)
 
-        this.dialogText = this.scene.add.text(50, 500, '', {
-            fontSize: '16px',
+        // Dialog text
+        this.dialogText = this.scene.add.text(80, H - 115, '', {
+            fontSize: '22px',
             fill: '#ffffff',
-            wordWrap: { width: 700 }
+            wordWrap: { width: W - 160 }
         })
         this.dialogText.setDepth(101)
+        this.dialogText.setScrollFactor(0)
 
-        this.hintText = this.scene.add.text(650, 555, '[SPACE]', {
-            fontSize: '12px',
+        // Continue hint
+        this.hintText = this.scene.add.text(W - 150, H - 40, '[SPACE]', {
+            fontSize: '16px',
             fill: '#888888'
         })
         this.hintText.setDepth(101)
+        this.hintText.setScrollFactor(0)
     }
 
     showLine() {

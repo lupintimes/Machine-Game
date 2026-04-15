@@ -1,67 +1,95 @@
-import DialogBox from '../dialog.js'
+import UI from '../ui.js'
 
 export default class HubScene extends Phaser.Scene {
     constructor() {
         super('HubScene')
     }
 
-    create() {
-        this.cameras.main.setBackgroundColor('#1a1a2e')
-
-        this.add.text(400, 20, '🏘️ City Map', {
-            fontSize: '22px',
-            fill: '#ffffff'
-        }).setOrigin(0.5)
-
-        this.add.text(400, 50, 'Click a location to travel there', {
-            fontSize: '13px',
-            fill: '#888888'
-        }).setOrigin(0.5)
-
-        this.add.rectangle(400, 320, 700, 450, 0x2a2a3e)
-
-        // Locations - unlock based on GameState
-        this.createLocation(180, 200, 'Workshop', '🔧', 0x8b4513, 'WorkshopScene', true)
-        this.createLocation(500, 200, 'Junkyard', '🗑️', 0x555533, 'JunkyardScene', true)
-        this.createLocation(180, 380, 'Park', '🌿', 0x2d5a27, null, GameState.level >= 3)
-        this.createLocation(500, 380, "King's Palace", '👑', 0x5c415d, null, GameState.level >= 2)
-        this.createLocation(340, 290, 'Town Center', '🏛️', 0x3a506b, null, false)
-        this.createLocation(620, 300, 'Enemy Territory', '💀', 0x5a1a1a, null, GameState.flags.enemyTerritoryUnlocked)
-
-        // Stats bar at bottom
-        this.statsText = this.add.text(10, 570, '', {
-            fontSize: '13px',
-            fill: '#aaaaaa'
-        })
-        this.updateStats()
+    preload() {
+        this.load.image('hub-bg', 'assets/images/hub-bg.png')
     }
 
-    updateStats() {
-        this.statsText.setText(
-            `⭐ ${GameState.reputation} | 🔧 ${GameState.skills.repair} | 💰 ${GameState.money} | ⚗️ ${GameState.elixir} | Level ${GameState.level}`
-        )
+    create() {
+        const W = this.cameras.main.width
+        const H = this.cameras.main.height
+
+        // ─── UI ────────────────────────
+        this.ui = new UI(this)
+        this.ui.create()
+
+        // ─── Background ────────────────
+        // If you have a bg image uncomment below
+        // this.bg = this.add.image(0, 0, 'hub-bg').setOrigin(0,0).setDepth(-1)
+        // const scaleY = H / this.bg.height
+        // this.bg.setScale(scaleY)
+
+        // Placeholder background for now
+        this.cameras.main.setBackgroundColor('#1a1a2e')
+
+        // ─── Title ─────────────────────
+        this.add.text(W / 2, 50, '🏘️ City Map', {
+            fontSize: '42px',
+            fill: '#ffffff',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setDepth(1)
+
+        this.add.text(W / 2, 105, 'Click a location to travel there', {
+            fontSize: '22px',
+            fill: '#888888'
+        }).setOrigin(0.5).setDepth(1)
+
+        // ─── Map background panel ───────
+        this.add.rectangle(W / 2, H / 2 + 40, W - 200, H - 220, 0x2a2a3e).setDepth(0)
+
+        // ─── Locations ─────────────────
+        const col1 = W * 0.2
+        const col2 = W * 0.4
+        const col3 = W * 0.6
+        const col4 = W * 0.8
+        const row1 = H * 0.35
+        const row2 = H * 0.6
+        const row3 = H * 0.8
+
+        this.createLocation(col1, row1, 'Workshop',         '🔧', 0x8b4513, 'WorkshopScene',  true)
+        this.createLocation(col2, row1, 'Junkyard',          '🗑️', 0x555533, 'JunkyardScene',  true)
+        this.createLocation(col3, row1, "King's Palace",     '👑', 0x5c415d, 'PalaceScene',    GameState.level >= 2)
+        this.createLocation(col4, row1, 'Town Center',       '🏛️', 0x3a506b, 'TownScene',      false)
+        this.createLocation(col1, row2, 'Park',              '🌿', 0x2d5a27, 'ParkScene',      GameState.level >= 3)
+        this.createLocation(col2, row2, 'Enemy Territory',   '💀', 0x5a1a1a, 'EnemyScene',     GameState.flags.enemyTerritoryUnlocked)
+
+        // ─── Level indicator ───────────
+        this.add.text(W / 2, H - 60, `Current Level: ${GameState.level}`, {
+            fontSize: '22px',
+            fill: '#00ff88'
+        }).setOrigin(0.5).setDepth(1)
     }
 
     createLocation(x, y, label, icon, color, targetScene, unlocked) {
-        const box = this.add.rectangle(x, y, 130, 80, color)
-        box.setStrokeStyle(2, unlocked ? 0x00ff88 : 0x444444)
+        // Box
+        const box = this.add.rectangle(x, y, 200, 120, color)
+        box.setStrokeStyle(3, unlocked ? 0x00ff88 : 0x444444)
         box.setAlpha(unlocked ? 1 : 0.5)
+        box.setDepth(1)
 
-        this.add.text(x, y - 12, icon, {
-            fontSize: '22px'
-        }).setOrigin(0.5)
+        // Icon
+        this.add.text(x, y - 20, icon, {
+            fontSize: '36px'
+        }).setOrigin(0.5).setDepth(2)
 
-        this.add.text(x, y + 18, label, {
-            fontSize: '12px',
+        // Label
+        this.add.text(x, y + 30, label, {
+            fontSize: '18px',
             fill: unlocked ? '#ffffff' : '#666666'
-        }).setOrigin(0.5)
+        }).setOrigin(0.5).setDepth(2)
 
+        // Lock icon
         if (!unlocked) {
-            this.add.text(x + 45, y - 35, '🔒', {
-                fontSize: '14px'
-            }).setOrigin(0.5)
+            this.add.text(x + 70, y - 50, '🔒', {
+                fontSize: '20px'
+            }).setOrigin(0.5).setDepth(2)
         }
 
+        // Pulse on unlocked
         if (unlocked) {
             this.tweens.add({
                 targets: box,
@@ -72,16 +100,17 @@ export default class HubScene extends Phaser.Scene {
             })
         }
 
+        // Click - unlocked
         if (unlocked && targetScene) {
             box.setInteractive({ useHandCursor: true })
 
             box.on('pointerover', () => {
-                box.setStrokeStyle(3, 0xffffff)
-                this.showTooltip(x, y - 55, `Go to ${label}`)
+                box.setStrokeStyle(4, 0xffffff)
+                this.showTooltip(x, y - 90, `Go to ${label}`)
             })
 
             box.on('pointerout', () => {
-                box.setStrokeStyle(2, 0x00ff88)
+                box.setStrokeStyle(3, 0x00ff88)
                 this.hideTooltip()
             })
 
@@ -93,10 +122,11 @@ export default class HubScene extends Phaser.Scene {
             })
         }
 
+        // Click - locked
         if (!unlocked) {
             box.setInteractive()
             box.on('pointerover', () => {
-                this.showTooltip(x, y - 55, '🔒 Locked')
+                this.showTooltip(x, y - 90, '🔒 Locked')
             })
             box.on('pointerout', () => {
                 this.hideTooltip()
@@ -106,10 +136,10 @@ export default class HubScene extends Phaser.Scene {
 
     showTooltip(x, y, message) {
         this.tooltip = this.add.text(x, y, message, {
-            fontSize: '13px',
+            fontSize: '18px',
             fill: '#ffffff',
             backgroundColor: '#000000',
-            padding: { x: 8, y: 4 }
+            padding: { x: 10, y: 5 }
         }).setOrigin(0.5).setDepth(200)
     }
 

@@ -6,31 +6,34 @@ export default class UI {
     }
 
     create() {
+        const W = this.scene.cameras.main.width
+        const H = this.scene.cameras.main.height
+
         // ─── Top Bar Background ────────────────────────
-        this.bar = this.scene.add.rectangle(400, 15, 800, 30, 0x000000, 0.8)
+        this.bar = this.scene.add.rectangle(W / 2, 20, W, 40, 0x000000, 0.8)
         this.bar.setDepth(50).setScrollFactor(0)
 
         // ─── Stats Text ────────────────────────────────
-        this.statsText = this.scene.add.text(10, 5, '', {
-            fontSize: '13px',
+        this.statsText = this.scene.add.text(20, 8, '', {
+            fontSize: '18px',
             fill: '#ffffff'
         }).setDepth(51).setScrollFactor(0)
 
         // ─── Level Text ────────────────────────────────
-        this.levelText = this.scene.add.text(730, 5, '', {
-            fontSize: '13px',
+        this.levelText = this.scene.add.text(W - 120, 8, '', {
+            fontSize: '18px',
             fill: '#00ff88',
             fontStyle: 'bold'
         }).setDepth(51).setScrollFactor(0)
 
         // ─── Task Button ───────────────────────────────
-        this.taskBtn = this.scene.add.rectangle(740, 575, 100, 30, 0x333355)
+        this.taskBtn = this.scene.add.rectangle(W - 80, H - 30, 130, 40, 0x333355)
         this.taskBtn.setDepth(50).setScrollFactor(0)
         this.taskBtn.setStrokeStyle(1, 0xffaa00)
         this.taskBtn.setInteractive({ useHandCursor: true })
 
-        this.taskBtnText = this.scene.add.text(740, 575, '📋 Tasks', {
-            fontSize: '13px',
+        this.taskBtnText = this.scene.add.text(W - 80, H - 30, '📋 Tasks', {
+            fontSize: '16px',
             fill: '#ffffff'
         }).setOrigin(0.5).setDepth(51).setScrollFactor(0)
 
@@ -40,13 +43,13 @@ export default class UI {
 
         // ─── Hub Button (hidden in HubScene) ───────────
         if (this.scene.scene.key !== 'HubScene') {
-            this.hubBtn = this.scene.add.rectangle(60, 575, 100, 30, 0x333355)
+            this.hubBtn = this.scene.add.rectangle(80, H - 30, 130, 40, 0x333355)
             this.hubBtn.setDepth(50).setScrollFactor(0)
             this.hubBtn.setStrokeStyle(1, 0x00ff88)
             this.hubBtn.setInteractive({ useHandCursor: true })
 
-            this.hubBtnText = this.scene.add.text(60, 575, '🗺️ Hub', {
-                fontSize: '13px',
+            this.hubBtnText = this.scene.add.text(80, H - 30, '🗺️ Hub', {
+                fontSize: '16px',
                 fill: '#ffffff'
             }).setOrigin(0.5).setDepth(51).setScrollFactor(0)
 
@@ -81,40 +84,49 @@ export default class UI {
     }
 
     showTaskPanel() {
+        const W = this.scene.cameras.main.width
+        const H = this.scene.cameras.main.height
+
         this.taskVisible = true
         const tasks = this.getCurrentTasks()
 
-        this.taskOverlay = this.scene.add.rectangle(400, 300, 800, 600, 0x000000, 0.6)
+        // Overlay
+        this.taskOverlay = this.scene.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.6)
         this.taskOverlay.setDepth(60).setScrollFactor(0)
 
-        this.taskPanel = this.scene.add.rectangle(400, 300, 400, 350, 0x1a1a2e)
+        // Panel
+        this.taskPanel = this.scene.add.rectangle(W / 2, H / 2, 600, 450, 0x1a1a2e)
         this.taskPanel.setStrokeStyle(2, 0xffaa00)
         this.taskPanel.setDepth(61).setScrollFactor(0)
 
-        this.taskTitle = this.scene.add.text(400, 150, `📋 Level ${GameState.level} Tasks`, {
-            fontSize: '18px',
+        // Title
+        this.taskTitle = this.scene.add.text(W / 2, H / 2 - 180, `📋 Level ${GameState.level} Tasks`, {
+            fontSize: '24px',
             fill: '#ffaa00',
             fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(62).setScrollFactor(0)
 
+        // Task list
         this.taskItems = []
         tasks.forEach((task, i) => {
             const check = task.done ? '✅' : '⬜'
             const color = task.done ? '#00ff88' : '#ffffff'
-            const text = this.scene.add.text(250, 200 + (i * 40), `${check} ${task.text}`, {
-                fontSize: '14px',
+            const text = this.scene.add.text(W / 2 - 250, H / 2 - 110 + (i * 55), `${check} ${task.text}`, {
+                fontSize: '20px',
                 fill: color
             }).setDepth(62).setScrollFactor(0)
             this.taskItems.push(text)
         })
 
-        this.armorText = this.scene.add.text(400, 390, this.getArmorStatus(), {
-            fontSize: '13px',
+        // Armor status
+        this.armorText = this.scene.add.text(W / 2, H / 2 + 140, this.getArmorStatus(), {
+            fontSize: '18px',
             fill: '#888888'
         }).setOrigin(0.5).setDepth(62).setScrollFactor(0)
 
-        this.taskClose = this.scene.add.text(400, 430, '[ Close ]', {
-            fontSize: '14px',
+        // Close button
+        this.taskClose = this.scene.add.text(W / 2, H / 2 + 190, '[ Close ]', {
+            fontSize: '18px',
             fill: '#888888'
         }).setOrigin(0.5).setDepth(62).setScrollFactor(0)
         this.taskClose.setInteractive({ useHandCursor: true })
