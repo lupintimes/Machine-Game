@@ -8,6 +8,7 @@ import TownCenterScene from './scenes/TownCenterScene.js'
 import ParkScene from './scenes/ParkScene.js'
 import WireConnectGame from './scenes/minigames/WireConnectGame.js'
 import PressureValveGame from './scenes/minigames/PressureValveGame.js'
+import CutsceneScene from './scenes/CutsceneScene.js'
 import EnergyCalibrationGame from './scenes/minigames/EnergyCalibrationGame.js'
 
 window.GameState = GameState
@@ -37,6 +38,7 @@ const config = {
         PalaceScene,
         TownCenterScene,
         ParkScene,
+        CutsceneScene, 
         WireConnectGame,
         PressureValveGame,
         EnergyCalibrationGame

@@ -1,14 +1,14 @@
 const GameState = {
 
-    level: 2,
-    money: 500,
-    reputation: 120,
-    elixir: 120,
+    level: 1,
+    money: 5000,
+    reputation: 0,
+    elixir: 0,
 
     skills: {
-        repair: 120,
-        research: 120,
-        combat: 120
+        repair: 0,
+        research: 0,
+        combat: 0
     },
 
     armor: {
@@ -78,7 +78,13 @@ const GameState = {
         gfHeardConversation: false,
         gfDead: false,
         conspiracyRevealed: false,
-        enemyTerritoryUnlocked: false
+        enemyTerritoryUnlocked: false,
+
+
+        researchClueFound: false,    // from workshop research
+        luvazaClueFound: false,      // from talking to Luvaza
+        parkClueFound: false ,
+        traderClueFound: false,       // from Park Cleaner
     },
 
     earnMoney(amount) { this.money += amount },

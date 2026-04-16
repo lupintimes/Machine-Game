@@ -103,7 +103,7 @@ export default class ParkScene extends Phaser.Scene {
     update() {
         const speed = 600
 
-        if (this.dialog.isActive || this.menuActive) {
+        if (this.dialog.isActive) {
             if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
                 this.dialog.next()
             }
@@ -241,6 +241,47 @@ export default class ParkScene extends Phaser.Scene {
 
     // ─── Cleaner Chat (random cheerful dialogs) ────────
     cleanerChat() {
+        // ─── Special clue dialog (once) ────
+        if (GameState.getFlag('rebuiltBuildings') && !GameState.getFlag('parkClueFound')) {
+            this.dialog.show([
+                { name: 'Park Cleaner', text: 'Ah! The city engineer! How goes the rebuilding?' },
+                { name: 'You', text: 'Good. Almost done.' },
+                { name: 'Park Cleaner', text: 'Wonderful! This city deserves to shine again.' },
+                { name: 'You', text: 'Hey... can I ask you something?' },
+                { name: 'Park Cleaner', text: 'Of course! Anything!' },
+                { name: 'You', text: 'Do you know anything about the material vaults?' },
+                { name: 'Park Cleaner', text: '...' },
+                { name: 'Park Cleaner', text: 'The Veridium vaults? Under the east district?' },
+                { name: 'You', text: 'How do you know about those?' },
+                { name: 'Park Cleaner', text: 'Oh! I uh... I clean the parks near there.' },
+                { name: 'Park Cleaner', text: 'You hear things. Haha!' },
+                { name: 'You', text: 'The name Veridium... that\'s classified information.' },
+                { name: 'Park Cleaner', text: '...' },
+                { name: 'Park Cleaner', text: 'Is it? I had no idea. Haha!' },
+                { name: 'Park Cleaner', text: 'Well! These leaves won\'t sweep themselves!' },
+                { name: 'You', text: '(He knew the exact name. Something isn\'t right.)' },
+                { name: '', text: '📌 Clue found! Keep investigating.' }
+            ], () => {
+                GameState.setFlag('parkClueFound')
+                this.showCleanerMenu()
+
+                // Check if truth unlocks
+                if (GameState.skills.research >= 30 &&
+                    GameState.getFlag('luvazaClueFound') &&
+                    GameState.getFlag('parkClueFound')) {
+                    this.time.delayedCall(500, () => {
+                        // Go to workshop to trigger cutscene
+                        this.dialog.show([
+                            { name: 'You', text: 'I have all the pieces now.' },
+                            { name: 'You', text: 'I need to go back to my workshop and put this together.' }
+                        ])
+                    })
+                }
+            })
+            return
+        }
+
+        // ─── Random chats ──────────────────
         const chats = [
             [
                 { name: 'Park Cleaner', text: 'Beautiful day isn\'t it? Well... despite everything.' },

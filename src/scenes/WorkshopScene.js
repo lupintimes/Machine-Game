@@ -58,7 +58,7 @@ export default class WorkshopScene extends Phaser.Scene {
             }
         ]
 
-        // Show lock on generator if locked
+        // Show lock on electrical if locked
         if (this.stations[1].locked) {
             this.stations[1].rect.setAlpha(0.15)
             this.stations[1].lockLabel = this.add.text(1830, 550, '🔒 Need 5 repair skill', {
@@ -98,7 +98,12 @@ export default class WorkshopScene extends Phaser.Scene {
         // ─── Dialog ────────────────────
         this.dialog = new DialogBox(this)
 
-        // Only show intro dialog first time
+        // ─── Menu state ────────────────
+        this.menuActive = false
+        this.menuItems = []
+        this.truthTriggered = false
+
+        // ─── Intro dialog (first time) ──
         if (!GameState.getFlag('workshopIntroSeen')) {
             this.dialog.show([
                 { name: 'You', text: 'My workshop... at least this place is still standing.' },
@@ -107,6 +112,7 @@ export default class WorkshopScene extends Phaser.Scene {
                 GameState.setFlag('workshopIntroSeen')
             })
         }
+
         // ─── Scene Title ───────────────
         this.add.text(W / 2, 50, '🔧 Workshop', {
             fontSize: '28px',
@@ -119,7 +125,38 @@ export default class WorkshopScene extends Phaser.Scene {
     update() {
         const speed = 600
 
-        if (this.dialog.isActive) {
+        // ─── DEBUG (remove later) ──────
+        if (this.input.keyboard.checkDown(this.input.keyboard.addKey('T'), 500)) {
+            console.log('=== TRUTH CHECK ===')
+            console.log('research >= 30:', GameState.skills.research >= 30)
+            console.log('researchClue:', GameState.getFlag('researchClueFound'))
+            console.log('luvazaClue:', GameState.getFlag('luvazaClueFound'))
+            console.log('parkClue:', GameState.getFlag('parkClueFound'))
+            console.log('traderClue:', GameState.getFlag('traderClueFound'))
+            console.log('learnedTruth:', GameState.getFlag('learnedTruth'))
+            console.log('truthTriggered:', this.truthTriggered)
+        }
+
+
+        // ─── Check truth unlock every frame ─
+        if (!GameState.getFlag('learnedTruth') &&
+            GameState.skills.research >= 30 &&
+            GameState.getFlag('researchClueFound') &&
+            GameState.getFlag('luvazaClueFound') &&
+            GameState.getFlag('parkClueFound') &&
+            GameState.getFlag('traderClueFound')) {
+
+            if (!this.truthTriggered) {
+                this.truthTriggered = true
+                console.log('🎬 Triggering cutscene now!')
+                this.time.delayedCall(500, () => {
+                    this.triggerTruthCutscene()
+                })
+            }
+        }
+
+
+        if (this.dialog.isActive ) {
             if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
                 this.dialog.next()
             }
@@ -137,7 +174,7 @@ export default class WorkshopScene extends Phaser.Scene {
         this.playerGfx.x = this.player.x
         this.playerGfx.y = this.player.y
 
-        // ─── Check if generator unlocked now ─
+        // ─── Check if electrical unlocked ─
         if (this.stations[1].locked && GameState.getFlag('electricalUnlocked')) {
             this.stations[1].locked = false
             this.stations[1].rect.setAlpha(0.3)
@@ -146,7 +183,7 @@ export default class WorkshopScene extends Phaser.Scene {
             }
             this.dialog.show([
                 { name: 'You', text: '⚡ My repair skills are good enough now!' },
-                { name: 'You', text: 'I can work on the Generator!' }
+                { name: 'You', text: 'I can work on the Electrical Bench!' }
             ])
         }
 
@@ -161,13 +198,11 @@ export default class WorkshopScene extends Phaser.Scene {
 
             if (dist < 200) {
                 this.nearStation = station
-
                 this.interactHint.setVisible(true)
                 this.interactHint.setPosition(
                     station.rect.x - 80,
                     station.rect.y - 350
                 )
-
                 station.rect.setStrokeStyle(3, station.locked ? 0xff0000 : 0xffff00)
                 if (!station.locked) station.rect.setAlpha(0.5)
             } else {
@@ -185,7 +220,7 @@ export default class WorkshopScene extends Phaser.Scene {
             this.onInteract(this.nearStation)
         }
 
-        // ─── Check if can meet trader ───
+        // ─── Trader hint ───────────────
         if (GameState.canMeetTrader() && !this.shownTraderHint) {
             this.shownTraderHint = true
             this.dialog.show([
@@ -194,9 +229,24 @@ export default class WorkshopScene extends Phaser.Scene {
             ])
         }
 
+        // ─── Check truth unlock every frame ─
+        if (!GameState.getFlag('learnedTruth') &&
+            !this.truthTriggered &&
+            GameState.skills.research >= 30 &&
+            GameState.getFlag('researchClueFound') &&
+            GameState.getFlag('luvazaClueFound') &&
+            GameState.getFlag('parkClueFound') &&
+            GameState.getFlag('traderClueFound')) {
+            this.truthTriggered = true
+            this.time.delayedCall(500, () => {
+                this.triggerTruthCutscene()
+            })
+        }
+
         this.ui.updateStats()
     }
 
+    // ─── On Interact ───────────────────────────────────
     onInteract(station) {
         if (station.locked) {
             this.dialog.show([
@@ -227,10 +277,223 @@ export default class WorkshopScene extends Phaser.Scene {
         }
 
         if (station.name === 'Magical Bench') {
-            this.scene.pause('WorkshopScene')
-            this.scene.launch('EnergyCalibrationGame')
-            station.cooldown = true
-            this.time.delayedCall(5000, () => { station.cooldown = false })
+            if (GameState.level >= 2) {
+                this.showMagicalBenchMenu(station)
+            } else {
+                this.scene.pause('WorkshopScene')
+                this.scene.launch('EnergyCalibrationGame')
+                station.cooldown = true
+                this.time.delayedCall(5000, () => { station.cooldown = false })
+            }
         }
+    }
+
+    // ─── Magical Bench Menu ────────────────────────────
+    showMagicalBenchMenu(station) {
+        const W = this.cameras.main.width
+        const H = this.cameras.main.height
+
+        this.menuActive = true
+        this.menuItems = []
+
+        this.menuOverlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.7)
+            .setScrollFactor(0).setDepth(50)
+
+        this.menuPanel = this.add.rectangle(W / 2, H / 2, 600, 500, 0x1a1a2e)
+            .setStrokeStyle(3, 0x9b59b6).setScrollFactor(0).setDepth(51)
+
+        this.menuTitle = this.add.text(W / 2, H / 2 - 210, '🔮 Magical Bench', {
+            fontSize: '28px',
+            fill: '#9b59b6',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(52)
+
+        this.menuStats = this.add.text(W / 2, H / 2 - 160,
+            `🔬 Research: ${GameState.skills.research}/30   ⚗️ Elixir: ${GameState.elixir}`, {
+            fontSize: '18px',
+            fill: '#aaaaaa'
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(52)
+
+        // ─── Energy Calibration ────────
+        this.createBenchButton(W / 2, H / 2 - 70,
+            '⚡ Energy Calibration',
+            'Earn elixir + research skill', () => {
+                this.closeMagicalMenu()
+                station.cooldown = true
+                this.time.delayedCall(5000, () => { station.cooldown = false })
+                this.scene.pause('WorkshopScene')
+                this.scene.launch('EnergyCalibrationGame')
+            }
+        )
+
+        // ─── Research ─────────────────
+        const researchDone = GameState.skills.research >= 30
+        const canResearch = GameState.elixir >= 1 && !researchDone
+
+        this.createBenchButton(W / 2, H / 2 + 40,
+            researchDone ? '✅ Research Complete' : '🔬 Research Attack Data',
+            researchDone
+                ? 'All clues gathered'
+                : canResearch
+                    ? `Costs ⚗️1 elixir | Progress: ${GameState.skills.research}/30`
+                    : '❌ Need at least 1 elixir',
+            () => {
+                if (researchDone) {
+                    this.closeMagicalMenu()
+                    this.dialog.show([
+                        { name: 'You', text: 'Research is complete.' },
+                        { name: 'You', text: 'I need to gather all clues from others.' }
+                    ])
+                    return
+                }
+                if (GameState.elixir < 1) {
+                    this.closeMagicalMenu()
+                    this.dialog.show([
+                        { name: 'You', text: 'I need at least 1 elixir to run the analysis.' },
+                        { name: 'You', text: 'Play Energy Calibration to earn elixir.' }
+                    ])
+                    return
+                }
+                this.closeMagicalMenu()
+                this.doResearch()
+            },
+            !canResearch && !researchDone
+        )
+
+        // ─── Back ──────────────────────
+        this.createBenchButton(W / 2, H / 2 + 150, '🔙 Back', '', () => {
+            this.closeMagicalMenu()
+        })
+    }
+
+    createBenchButton(x, y, text, subtitle, onClick, locked = false) {
+        const btn = this.add.rectangle(x, y, 500, 75, locked ? 0x222233 : 0x333355)
+            .setStrokeStyle(2, locked ? 0x444444 : 0x9b59b6)
+            .setScrollFactor(0).setDepth(52)
+            .setInteractive({ useHandCursor: !locked })
+
+        const mainText = this.add.text(x, subtitle ? y - 12 : y, text, {
+            fontSize: '20px',
+            fill: locked ? '#666666' : '#ffffff'
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(53)
+
+        let subText = null
+        if (subtitle) {
+            subText = this.add.text(x, y + 16, subtitle, {
+                fontSize: '14px',
+                fill: locked ? '#444444' : '#aaaaaa'
+            }).setOrigin(0.5).setScrollFactor(0).setDepth(53)
+        }
+
+        if (!locked) {
+            btn.on('pointerover', () => btn.setFillStyle(0x442266))
+            btn.on('pointerout', () => btn.setFillStyle(0x333355))
+        }
+        btn.on('pointerdown', () => { if (!locked) onClick() })
+
+        this.menuItems.push(btn, mainText)
+        if (subText) this.menuItems.push(subText)
+        return btn
+    }
+
+    closeMagicalMenu() {
+        this.menuActive = false
+        if (this.menuOverlay) this.menuOverlay.destroy()
+        if (this.menuPanel) this.menuPanel.destroy()
+        if (this.menuTitle) this.menuTitle.destroy()
+        if (this.menuStats) this.menuStats.destroy()
+        this.menuItems.forEach(item => item.destroy())
+        this.menuItems = []
+    }
+
+    // ─── Research System ───────────────────────────────
+    doResearch() {
+        GameState.addElixir(-1)
+        GameState.addSkill('research', 5)
+        this.ui.updateStats()
+
+        const research = GameState.skills.research
+
+        if (research <= 5) {
+            this.dialog.show([
+                { name: 'You', text: 'Running attack pattern analysis...' },
+                { name: 'You', text: 'Clue 1: The attackers knew exactly which districts to hit.' },
+                { name: 'You', text: 'This wasn\'t random. They had a detailed map.' },
+                { name: '', text: `🔬 Research Progress: ${research}/30` }
+            ])
+        } else if (research <= 10) {
+            this.dialog.show([
+                { name: 'You', text: 'Cross referencing attack timing...' },
+                { name: 'You', text: 'Clue 2: The attack happened during guard rotation.' },
+                { name: 'You', text: 'Someone knew the security schedule inside out.' },
+                { name: '', text: `🔬 Research Progress: ${research}/30` }
+            ])
+        } else if (research <= 15) {
+            this.dialog.show([
+                { name: 'You', text: 'Analyzing the damage patterns...' },
+                { name: 'You', text: 'Clue 3: Key areas were deliberately left untouched.' },
+                { name: 'You', text: 'The material vaults... specifically avoided.' },
+                { name: '', text: `🔬 Research Progress: ${research}/30` }
+            ])
+        } else if (research <= 20) {
+            this.dialog.show([
+                { name: 'You', text: 'Investigating the material vaults...' },
+                { name: 'You', text: 'Clue 4: A rare material only found in this city.' },
+                { name: 'You', text: 'Can\'t be taken publicly. Someone wants it secretly.' },
+                { name: '', text: `🔬 Research Progress: ${research}/30` }
+            ])
+        } else if (research <= 25) {
+            this.dialog.show([
+                { name: 'You', text: 'Deep analysis of enemy movement data...' },
+                { name: 'You', text: 'Clue 5: The enemy had perfect knowledge of defenses.' },
+                { name: 'You', text: 'This level of intel... from someone with high authority.' },
+                { name: '', text: `🔬 Research Progress: ${research}/30` }
+            ])
+        } else if (research >= 30) {
+            // ─── Research complete ─────────
+            GameState.setFlag('researchClueFound')
+
+            const luvaza = GameState.getFlag('luvazaClueFound')
+            const park = GameState.getFlag('parkClueFound')
+            const trader = GameState.getFlag('traderClueFound')
+
+            if (luvaza && park && trader) {
+                // All clues found - trigger cutscene
+                this.dialog.show([
+                    { name: 'You', text: 'Final analysis complete...' },
+                    { name: 'You', text: 'I have everything I need.' },
+                    { name: '', text: `🔬 Research Progress: ${research}/30 ✅` }
+                ], () => {
+                    this.triggerTruthCutscene()
+                })
+            } else {
+                // Missing clues
+                const missing = []
+                if (!luvaza) missing.push('💕 Talk more with Luvaza at Town Center')
+                if (!park) missing.push('🌿 Talk more with Park Cleaner at Park')
+                if (!trader) missing.push('🧑 Talk more with Trader at Junkyard')
+
+                this.dialog.show([
+                    { name: 'You', text: 'Research is complete...' },
+                    { name: 'You', text: 'But I need more info from others.' },
+                    ...missing.map(m => ({ name: '📌', text: m })),
+                    { name: '', text: `🔬 Research: ${research}/30 ✅` }
+                ])
+            }
+        }
+    }
+
+    // ─── Trigger Truth Cutscene ────────────────────────
+    triggerTruthCutscene() {
+        if (this.truthTriggered) return
+        this.truthTriggered = true
+
+        this.cameras.main.fade(800, 0, 0, 0)
+        this.time.delayedCall(800, () => {
+            this.scene.start('CutsceneScene', {
+                key: 'truthDiscovered',
+                returnScene: 'WorkshopScene'
+            })
+        })
     }
 }

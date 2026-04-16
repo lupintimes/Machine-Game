@@ -187,7 +187,7 @@ export default class UI {
         }
 
         // ─── Armor status ──────────────
-        this.invArmor = this.scene.add.text(W / 2, H / 2 + 250, 
+        this.invArmor = this.scene.add.text(W / 2, H / 2 + 250,
             `🤖 Armor: ${GameState.armor.parts.length}/3 parts  |  Core: ${GameState.armor.hasCore ? '✅' : '❌'}`, {
             fontSize: '18px',
             fill: '#888888'
@@ -319,9 +319,22 @@ export default class UI {
         }
         if (GameState.level === 2) {
             return [
-                { text: 'Research the attack', done: GameState.skills.research >= 30 },
-                { text: 'Discover the truth', done: GameState.getFlag('learnedTruth') },
-                { text: 'Tell the King', done: GameState.getFlag('toldKing') }
+                // ─── Main tasks ────────────────
+                { text: 'Visit the Palace', done: GameState.getFlag('metKing') },
+                { text: 'Visit Town Center', done: GameState.getFlag('metLuvaza') },
+                { text: 'Repair all buildings', done: GameState.getFlag('rebuiltBuildings') },
+                { text: 'Visit the Park', done: GameState.getFlag('metParkCleaner') },
+                { text: 'Research attack data (30)', done: GameState.skills.research >= 30 },
+
+                // ─── Clues ─────────────────────
+                { text: '🔍 Clue: Research complete', done: GameState.getFlag('researchClueFound') },
+                { text: '🔍 Clue: Luvaza\'s secret', done: GameState.getFlag('luvazaClueFound') },
+                { text: '🔍 Clue: Park Cleaner slip', done: GameState.getFlag('parkClueFound') },
+                { text: '🔍 Clue: Trader\'s warning', done: GameState.getFlag('traderClueFound') },
+
+                // ─── Final ─────────────────────
+                { text: '🎯 Discover the Truth', done: GameState.getFlag('learnedTruth') },
+                { text: '👑 Tell the King', done: GameState.getFlag('toldKing') }
             ]
         }
         if (GameState.level === 3) {

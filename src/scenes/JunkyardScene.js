@@ -160,16 +160,65 @@ export default class JunkyardScene extends Phaser.Scene {
                 { name: 'Trader', text: 'But every broken thing is an opportunity, right?' },
                 { name: 'You', text: 'I need parts for my armor. Got anything?' },
                 { name: 'Trader', text: 'Check my shop. I might have what you need.' }
+            ], () => { this.showTraderMenu() })
+
+        } else if (GameState.level >= 2 && !GameState.getFlag('traderClueFound')) {
+            // ─── Trader drops clue in Level 2 ──
+            this.dialog.show([
+                { name: 'Trader', text: 'You\'ve been busy lately.' },
+                { name: 'You', text: 'Trying to figure out who attacked the city.' },
+                { name: 'Trader', text: '...' },
+                { name: 'Trader', text: 'Close the door.' },
+                { name: 'You', text: 'What?' },
+                { name: 'Trader', text: 'Just do it. Walls have ears in this city.' },
+                { name: 'You', text: '...' },
+                { name: 'Trader', text: 'Look. I like you kid. You\'re smart.' },
+                { name: 'Trader', text: 'So I\'m going to tell you something.' },
+                { name: 'Trader', text: 'Something I probably shouldn\'t.' },
+                { name: 'You', text: 'Tell me.' },
+                { name: 'Trader', text: 'Two weeks before the attack...' },
+                { name: 'Trader', text: 'A buyer came to me. Wanted to purchase large quantities of explosives.' },
+                { name: 'You', text: 'Did you sell?' },
+                { name: 'Trader', text: 'No. Something felt wrong.' },
+                { name: 'Trader', text: 'But I got a good look at him.' },
+                { name: 'You', text: 'Who was it?' },
+                { name: 'Trader', text: 'I don\'t know his name.' },
+                { name: 'Trader', text: 'But he carried a royal seal.' },
+                { name: 'You', text: 'A royal seal...' },
+                { name: 'Trader', text: 'Exactly.' },
+                { name: 'Trader', text: 'Someone with royal connections planned this attack.' },
+                { name: 'You', text: 'Why didn\'t you report this?' },
+                { name: 'Trader', text: 'Report to who? The King?' },
+                { name: 'Trader', text: 'What if he already knows?' },
+                { name: 'You', text: '...' },
+                { name: 'Trader', text: 'Be careful kid. This goes deeper than you think.' },
+                { name: '', text: '📌 Clue found! Keep investigating.' }
             ], () => {
+                GameState.setFlag('traderClueFound')
                 this.showTraderMenu()
             })
+
+        } else if (GameState.getFlag('traderClueFound') && !GameState.getFlag('learnedTruth')) {
+            this.dialog.show([
+                { name: 'Trader', text: 'You remember what I told you.' },
+                { name: 'You', text: 'Royal seal. Two weeks before the attack.' },
+                { name: 'Trader', text: 'Keep digging. You\'re close.' },
+                { name: 'Trader', text: 'But watch your back.' }
+            ], () => { this.showTraderMenu() })
+
+        } else if (GameState.getFlag('learnedTruth')) {
+            this.dialog.show([
+                { name: 'Trader', text: 'You figured it out didn\'t you.' },
+                { name: 'You', text: 'Yes.' },
+                { name: 'Trader', text: 'Then you know what you\'re up against.' },
+                { name: 'Trader', text: 'Be very careful who you trust.' }
+            ], () => { this.showTraderMenu() })
+
         } else {
             this.dialog.show([
                 { name: 'Trader', text: 'You know where to go now.' },
                 { name: 'Trader', text: 'The base is waiting.' }
-            ], () => {
-                this.showTraderMenu()
-            })
+            ], () => { this.showTraderMenu() })
         }
     }
 

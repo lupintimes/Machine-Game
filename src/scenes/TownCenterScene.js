@@ -157,7 +157,7 @@ export default class TownCenterScene extends Phaser.Scene {
     update() {
         const speed = 600
 
-        if (this.dialog.isActive || this.menuActive) {
+        if (this.dialog.isActive ) {
             if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
                 this.dialog.next()
             }
@@ -354,6 +354,7 @@ export default class TownCenterScene extends Phaser.Scene {
                 { name: 'You', text: 'I\'ll do what I can.' },
                 { name: 'Luvaza', text: 'Start with the Medical Center. People are getting hurt.' }
             ], () => { this.showLuvazaMenu() })
+
         } else if (rebuilt.length < 3) {
             this.dialog.show([
                 { name: 'Luvaza', text: `${rebuilt.length} building${rebuilt.length > 1 ? 's' : ''} repaired! You\'re doing great.` },
@@ -361,17 +362,41 @@ export default class TownCenterScene extends Phaser.Scene {
                 { name: 'You', text: 'I won\'t stop until it\'s all fixed.' },
                 { name: 'Luvaza', text: 'I\'m glad you\'re here.' }
             ], () => { this.showLuvazaMenu() })
+
+        } else if (!GameState.getFlag('luvazaClueFound')) {
+            // ─── Luvaza drops the clue ─────
+            this.dialog.show([
+                { name: 'Luvaza', text: 'You repaired everything! Thank you so much.' },
+                { name: 'You', text: 'Luvaza... can I ask you something personal?' },
+                { name: 'Luvaza', text: 'Of course. What is it?' },
+                { name: 'You', text: 'Has your father been acting strange lately?' },
+                { name: 'Luvaza', text: '...' },
+                { name: 'Luvaza', text: 'Why do you ask?' },
+                { name: 'You', text: 'Just... something feels off. About the attack.' },
+                { name: 'Luvaza', text: 'Now that you mention it...' },
+                { name: 'Luvaza', text: 'He was having secret meetings. Weeks before the attack.' },
+                { name: 'Luvaza', text: 'Late at night. He never told me who with.' },
+                { name: 'Luvaza', text: 'I thought it was just... kingdom business.' },
+                { name: 'You', text: 'Do you remember anything about them?' },
+                { name: 'Luvaza', text: 'Just one thing. A name I heard through the door.' },
+                { name: 'Luvaza', text: 'I didn\'t think much of it then...' },
+                { name: 'Luvaza', text: 'But it was the name of someone outside the kingdom.' },
+                { name: 'You', text: 'Outside the kingdom...' },
+                { name: 'Luvaza', text: 'I\'m sure it\'s nothing. Father would never...' },
+                { name: 'Luvaza', text: 'He loves this city.' },
+                { name: 'You', text: '(Something is definitely wrong here.)' },
+                { name: '', text: '📌 Clue found! Keep investigating.' }
+            ], () => {
+                GameState.setFlag('luvazaClueFound')
+                this.showLuvazaMenu()
+            })
+
         } else {
             this.dialog.show([
-                { name: 'Luvaza', text: 'You repaired everything!' },
-                { name: 'Luvaza', text: 'The city feels alive again.' },
-                { name: 'You', text: 'It\'s a start. There\'s still much to do.' },
-                { name: 'Luvaza', text: 'You\'re amazing, you know that?' },
-                { name: 'You', text: 'Luvaza... I need to tell you something.' },
-                { name: 'You', text: 'I\'ve been researching the attack.' },
-                { name: 'Luvaza', text: 'What did you find?' },
-                { name: 'You', text: 'Nothing yet. But I will.' },
-                { name: 'Luvaza', text: 'Be careful. Promise me.' }
+                { name: 'Luvaza', text: 'Is everything okay? You seem troubled.' },
+                { name: 'You', text: 'Just thinking about the attack.' },
+                { name: 'Luvaza', text: 'Be careful. Promise me.' },
+                { name: 'You', text: 'I promise.' }
             ], () => { this.showLuvazaMenu() })
         }
     }
