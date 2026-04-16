@@ -1,14 +1,14 @@
 const GameState = {
 
-    level: 1,
-    money: 0,
-    reputation: 0,
-    elixir: 0,
+    level: 2,
+    money: 500,
+    reputation: 120,
+    elixir: 120,
 
     skills: {
-        repair: 0,
-        research: 0,
-        combat: 0
+        repair: 120,
+        research: 120,
+        combat: 120
     },
 
     armor: {
@@ -55,16 +55,26 @@ const GameState = {
 
     // ─── existing methods ──────────────────────────────
     flags: {
-        secretBaseVisited: false,
-        secretBaseIntroSeen: false,
+        // Level 1
         workshopIntroSeen: false,
+        junkyardIntroSeen: false,
         electricalUnlocked: false,
         metTrader: false,
         boughtCore: false,
         secretBaseRevealed: false,
+        secretBaseVisited: false,
+        secretBaseIntroSeen: false,
+
+        // Level 2
+        metKing: false,
+        kingGaveQuest: false,
+        metLuvaza: false,
+        metParkCleaner: false,
         learnedTruth: false,
         toldKing: false,
-        metParkCleaner: false,
+        rebuiltBuildings: false,
+
+        // Level 3
         gfHeardConversation: false,
         gfDead: false,
         conspiracyRevealed: false,

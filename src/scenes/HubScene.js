@@ -53,8 +53,8 @@ export default class HubScene extends Phaser.Scene {
         this.createLocation(col1, row1, 'Workshop',         '🔧', 0x8b4513, 'WorkshopScene',  true)
         this.createLocation(col2, row1, 'Junkyard',          '🗑️', 0x555533, 'JunkyardScene',  true)
         this.createLocation(col3, row1, "King's Palace",     '👑', 0x5c415d, 'PalaceScene',    GameState.level >= 2)
-        this.createLocation(col4, row1, 'Town Center',       '🏛️', 0x3a506b, 'TownScene',      false)
-        this.createLocation(col1, row2, 'Park',              '🌿', 0x2d5a27, 'ParkScene',      GameState.level >= 3)
+        this.createLocation(col4, row1, 'Town Center', '🏛️', 0x3a506b, 'TownCenterScene', GameState.getFlag('metKing'))
+        this.createLocation(col1, row2, 'Park', '🌿', 0x2d5a27, 'ParkScene', GameState.getFlag('metLuvaza'))
         this.createLocation(col2, row2, 'Enemy Territory',   '💀', 0x5a1a1a, 'EnemyScene',     GameState.flags.enemyTerritoryUnlocked)
 
         // ─── Level indicator ───────────

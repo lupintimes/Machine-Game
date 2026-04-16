@@ -3,6 +3,9 @@ import HubScene from './scenes/HubScene.js'
 import WorkshopScene from './scenes/WorkshopScene.js'
 import JunkyardScene from './scenes/JunkyardScene.js'
 import SecretBaseScene from './scenes/SecretBaseScene.js'
+import PalaceScene from './scenes/PalaceScene.js'
+import TownCenterScene from './scenes/TownCenterScene.js'
+import ParkScene from './scenes/ParkScene.js'
 import WireConnectGame from './scenes/minigames/WireConnectGame.js'
 import PressureValveGame from './scenes/minigames/PressureValveGame.js'
 import EnergyCalibrationGame from './scenes/minigames/EnergyCalibrationGame.js'
@@ -26,7 +29,18 @@ const config = {
         mode: Phaser.Scale.FIT,
         autoCenter: Phaser.Scale.CENTER_BOTH
     },
-    scene: [HubScene, WorkshopScene, JunkyardScene, SecretBaseScene, WireConnectGame, PressureValveGame, EnergyCalibrationGame]
+    scene: [
+        HubScene,
+        WorkshopScene,
+        JunkyardScene,
+        SecretBaseScene,
+        PalaceScene,
+        TownCenterScene,
+        ParkScene,
+        WireConnectGame,
+        PressureValveGame,
+        EnergyCalibrationGame
+    ]
 }
 
 const game = new Phaser.Game(config)

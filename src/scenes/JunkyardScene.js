@@ -431,7 +431,7 @@ export default class JunkyardScene extends Phaser.Scene {
             .setInteractive({ useHandCursor: true })
 
         cont.on('pointerdown', () => {
-            this.scene.start('HubScene')
+            this.scene.start('SecretBaseScene')
         })
     }
 }
