@@ -508,10 +508,15 @@ export default class UI {
         }
         if (GameState.level === 3) {
             return [
-                { text: 'Install armor core', done: GameState.armor.parts.includes('core') },
-                { text: 'Attach servo motors', done: GameState.armor.parts.includes('servo') },
-                { text: 'Reinforce plating', done: GameState.armor.parts.includes('plating') },
-                { text: 'Befriend Park Cleaner', done: GameState.getFlag('metParkCleaner') }
+                { text: 'Install servo motors', done: GameState.armor.parts.includes('servo') },
+                { text: 'Install armor plating', done: GameState.armor.parts.includes('plating') },
+                { text: '🤖 Armor complete', done: GameState.getFlag('armorComplete') },
+                { text: '─── Park Cleaner ───', done: false },
+                { text: `Friendship (${GameState.parkCleanerFriendship || 0}/3)`, done: (GameState.parkCleanerFriendship || 0) >= 3 },
+                { text: 'Learn reason for attack', done: GameState.getFlag('reasonForAttackKnown') },
+                { text: '─── The Betrayal ───', done: false },
+                { text: '📡 Receive Luvaza\'s call', done: GameState.getFlag('gfCalledComms') },
+                { text: '💔 Rush to the Palace', done: GameState.getFlag('gfDead') }
             ]
         }
         return [{ text: 'No tasks yet', done: false }]

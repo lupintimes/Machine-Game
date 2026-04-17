@@ -18,6 +18,10 @@ export default class CutsceneScene extends Phaser.Scene {
         this.speedMultiplier = 1
         this.isSkipping = false
 
+        // ─── Controls ──────────────────
+        this.enterKey = this.input.keyboard.addKey('ENTER')
+        this.spaceKey = this.input.keyboard.addKey('SPACE')
+
         // ─── Black background ──────────
         this.add.rectangle(W / 2, H / 2, W, H, 0x000000)
 
@@ -45,38 +49,34 @@ export default class CutsceneScene extends Phaser.Scene {
             wordWrap: { width: W - 200 }
         }).setOrigin(0.5)
 
-        // ─── Controls Panel (top right) ─
-        this.controlsBg = this.add.rectangle(W - 130, 50, 220, 80, 0x000000, 0.6)
-            .setStrokeStyle(1, 0x444444).setDepth(500)
-
-        // Speed button
-        this.speedBtn = this.add.text(W - 200, 30, '⏩ 1x', {
+        // ─── Speed indicator ───────────
+        this.speedText = this.add.text(W - 30, 30, '⏩ 1x', {
             fontSize: '16px',
-            fill: '#888888'
-        }).setDepth(501).setInteractive({ useHandCursor: true })
+            fill: '#555555'
+        }).setOrigin(1, 0).setDepth(500)
 
-        this.speedBtn.on('pointerover', () => this.speedBtn.setFill('#ffffff'))
-        this.speedBtn.on('pointerout', () => this.speedBtn.setFill('#888888'))
-        this.speedBtn.on('pointerdown', () => this.cycleSpeed())
-
-        // Skip button
-        this.skipBtn = this.add.text(W - 200, 55, '⏭ Skip', {
+        // ─── Control hint (bottom) ─────
+        this.add.text(W / 2, H - 30, 'ENTER: Speed Up  |  SPACE: Skip', {
             fontSize: '16px',
-            fill: '#888888'
-        }).setDepth(501).setInteractive({ useHandCursor: true })
-
-        this.skipBtn.on('pointerover', () => this.skipBtn.setFill('#ff4444'))
-        this.skipBtn.on('pointerout', () => this.skipBtn.setFill('#888888'))
-        this.skipBtn.on('pointerdown', () => this.skipCutscene())
+            fill: '#555555'
+        }).setOrigin(0.5).setDepth(500)
 
         // ─── Play the cutscene ─────────
         this.playCutscene(this.cutsceneKey)
     }
 
     update() {
-        if (this.introDialog && this.introDialog.isActive) {
-            if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
+        // ─── Speed up on ENTER ─────────
+        if (Phaser.Input.Keyboard.JustDown(this.enterKey)) {
+            this.cycleSpeed()
+        }
+
+        // ─── SPACE handling ────────────
+        if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
+            if (this.introDialog && this.introDialog.isActive) {
                 this.introDialog.next()
+            } else {
+                this.skipCutscene()
             }
         }
     }
@@ -85,13 +85,21 @@ export default class CutsceneScene extends Phaser.Scene {
     cycleSpeed() {
         if (this.speedMultiplier === 1) {
             this.speedMultiplier = 2
-            this.speedBtn.setText('⏩ 2x')
+            this.speedText.setText('⏩ 2x')
+            this.speedText.setFill('#ffaa00')
         } else if (this.speedMultiplier === 2) {
             this.speedMultiplier = 4
-            this.speedBtn.setText('⏩ 4x')
+            this.speedText.setText('⏩ 4x')
+            this.speedText.setFill('#ff4444')
         } else {
             this.speedMultiplier = 1
-            this.speedBtn.setText('⏩ 1x')
+            this.speedText.setText('⏩ 1x')
+            this.speedText.setFill('#555555')
+        }
+        if (this.cutsceneKey === 'gfDeath') {
+            GameState.setFlag('gfDead')
+            GameState.setFlag('parkCleanerRevealed')
+            GameState.advanceLevel()
         }
     }
 
@@ -100,10 +108,8 @@ export default class CutsceneScene extends Phaser.Scene {
         if (this.isSkipping) return
         this.isSkipping = true
 
-        // Stop all tweens
         this.tweens.killAll()
 
-        // Apply all flags that this cutscene would set
         if (this.cutsceneKey === 'gameIntro') {
             GameState.setFlag('introSeen')
         }
@@ -116,7 +122,6 @@ export default class CutsceneScene extends Phaser.Scene {
             GameState.setFlag('enemyTerritoryUnlocked')
         }
 
-        // Go to return scene
         this.cameras.main.fade(300, 0, 0, 0)
         this.time.delayedCall(300, () => {
             if (this.cutsceneKey === 'gameIntro') {
@@ -133,7 +138,7 @@ export default class CutsceneScene extends Phaser.Scene {
         })
     }
 
-    // ─── Show Sequence (with speed support) ────────────
+    // ─── Show Sequence ─────────────────────────────────
     showSequence(sequence, onComplete) {
         let index = 0
 
@@ -153,7 +158,6 @@ export default class CutsceneScene extends Phaser.Scene {
             this.cutsceneTitle.setText(item.title || '')
             this.cutsceneSubtitle.setText(item.subtitle || '')
 
-            // Speed affects fade and hold duration
             const fadeIn = 800 / this.speedMultiplier
             const hold = (item.duration || 2500) / this.speedMultiplier
             const fadeOut = 600 / this.speedMultiplier
@@ -183,23 +187,13 @@ export default class CutsceneScene extends Phaser.Scene {
     // ─── Play Cutscene ─────────────────────────────────
     playCutscene(key) {
         switch (key) {
-            case 'gameIntro':
-                this.gameIntroCutscene()
-                break
-            case 'truthDiscovered':
-                this.truthDiscoveredCutscene()
-                break
-            case 'level2Complete':
-                this.level2CompleteCutscene()
-                break
-            case 'level3Intro':
-                this.level3IntroCutscene()
-                break
-            case 'gameOver':
-                this.gameOverCutscene()
-                break
-            default:
-                this.defaultCutscene()
+            case 'gameIntro': this.gameIntroCutscene(); break
+            case 'truthDiscovered': this.truthDiscoveredCutscene(); break
+            case 'level2Complete': this.level2CompleteCutscene(); break
+            case 'level3Intro': this.level3IntroCutscene(); break
+            case 'gfDeath': this.gfDeathCutscene(); break
+            case 'gameOver': this.gameOverCutscene(); break
+            default: this.defaultCutscene()
         }
     }
 
@@ -211,26 +205,10 @@ export default class CutsceneScene extends Phaser.Scene {
         this.cameras.main.fadeIn(1500, 0, 0, 0)
 
         this.showSequence([
-            {
-                title: 'A city once full of life...',
-                subtitle: '',
-                duration: 2500
-            },
-            {
-                title: 'Now lies in ruins.',
-                subtitle: 'Half destroyed by an unknown enemy.',
-                duration: 3000
-            },
-            {
-                title: 'The attack came without warning.',
-                subtitle: 'No one knows why. No one knows who.',
-                duration: 3000
-            },
-            {
-                title: 'But life must go on.',
-                subtitle: '',
-                duration: 2000
-            }
+            { title: 'A city once full of life...', subtitle: '', duration: 2500 },
+            { title: 'Now lies in ruins.', subtitle: 'Half destroyed by an unknown enemy.', duration: 3000 },
+            { title: 'The attack came without warning.', subtitle: 'No one knows why. No one knows who.', duration: 3000 },
+            { title: 'But life must go on.', subtitle: '', duration: 2000 }
         ], () => {
             if (this.isSkipping) return
 
@@ -243,22 +221,17 @@ export default class CutsceneScene extends Phaser.Scene {
                 fontStyle: 'italic'
             }).setOrigin(0.5)
 
-            // Player and GF rectangles
-            this.add.rectangle(200, 850, 32, 48, 0x00ff88).setDepth(2).setScale(7.25);
-            this.add.text(W / 2 - 100, H / 2 - 55, 'You', {
-                fontSize: '16px',
-                fill: '#00ff88'
+            this.add.rectangle(200, 850, 32, 48, 0x00ff88).setDepth(2).setScale(7.25)
+            this.add.text(200, 700, 'You', {
+                fontSize: '16px', fill: '#00ff88'
             }).setOrigin(0.5).setDepth(3)
 
-            this.add.rectangle(1720, 850, 32, 48, 0xff69b4).setDepth(2).setScale(7.25);
-            this.add.text(W / 2 + 100, H / 2 - 55, 'Luvaza', {
-                fontSize: '16px',
-                fill: '#ff69b4'
+            this.add.rectangle(1720, 850, 32, 48, 0xff69b4).setDepth(2).setScale(7.25)
+            this.add.text(1720, 700, 'Luvaza', {
+                fontSize: '16px', fill: '#ff69b4'
             }).setOrigin(0.5).setDepth(3)
-
 
             this.introDialog = new DialogBox(this)
-            this.spaceKey = this.input.keyboard.addKey('SPACE')
 
             this.introDialog.show([
                 { name: 'You', text: '...' },
@@ -285,7 +258,6 @@ export default class CutsceneScene extends Phaser.Scene {
 
                 this.cutsceneTitle.setText('Time to get to work.')
                 this.cutsceneTitle.setAlpha(0)
-                this.cutsceneSubtitle.setAlpha(0)
 
                 this.tweens.add({
                     targets: this.cutsceneTitle,
@@ -323,10 +295,10 @@ export default class CutsceneScene extends Phaser.Scene {
             { title: 'The pieces fall into place...', subtitle: '', duration: 2000 },
             { title: 'The research data...', subtitle: 'The attack was perfectly planned.\nEvery guard rotation. Every vault location.', duration: 3000 },
             { title: 'Luvaza\'s words...', subtitle: '"Father had secret meetings\nbefore the attack..."', duration: 3000 },
-            { title: 'The Park Cleaner\'s slip...', subtitle: '"The Veridium vaults..."\nClassified information. How did he know?', duration: 3000 },
+            { title: 'The Park Cleaner\'s slip...', subtitle: '"The Veridium vaults..."\nHow did he know?', duration: 3000 },
             { title: 'The Trader\'s warning...', subtitle: '"A royal seal.\nTwo weeks before the attack."', duration: 3000 },
             { title: 'The truth...', subtitle: 'The attack was orchestrated.\nTo extract the Veridium.', duration: 3000 },
-            { title: 'Someone at the very top.', subtitle: 'Someone with royal authority.\nSomeone who had everything to gain.', duration: 3500 },
+            { title: 'Someone at the very top.', subtitle: 'Someone with royal authority.', duration: 3500 },
             { title: 'I need to tell the King.', subtitle: '...even if I\'m not sure I can trust him.', duration: 3000 }
         ], () => {
             if (this.isSkipping) return
@@ -353,12 +325,11 @@ export default class CutsceneScene extends Phaser.Scene {
 
         this.showSequence([
             { title: 'I told the King.', subtitle: 'But something felt wrong.', duration: 2500 },
-            { title: '"That\'s... a serious accusation."', subtitle: 'He wasn\'t shocked.\nHe wasn\'t angry.\nHe was... calm.', duration: 3500 },
+            { title: '"That\'s... a serious accusation."', subtitle: 'He wasn\'t shocked.\nHe was... calm.', duration: 3500 },
             { title: 'Too calm.', subtitle: 'Like he already knew.', duration: 2500 },
-            { title: 'The meetings before the attack...', subtitle: 'The royal seal on the explosives buyer...\nThe Enemy Boss with inside knowledge...', duration: 3500 },
             { title: 'It was him.', subtitle: 'The King and the Enemy Boss.\nThey planned this together.', duration: 3000 },
-            { title: 'The Veridium.', subtitle: 'A material only found in this city.\nThat\'s what they\'re after.', duration: 3000 },
-            { title: 'And Luvaza...', subtitle: 'She doesn\'t know.\nShe can\'t know.\nNot yet.', duration: 3000 },
+            { title: 'The Veridium.', subtitle: 'That\'s what they\'re after.', duration: 3000 },
+            { title: 'And Luvaza...', subtitle: 'She doesn\'t know.\nNot yet.', duration: 3000 },
             { title: '⭐ LEVEL 3 UNLOCKED', subtitle: 'The truth is known.\nNow comes the hardest part.', duration: 3500 }
         ], () => {
             if (this.isSkipping) return
@@ -406,7 +377,7 @@ export default class CutsceneScene extends Phaser.Scene {
 
         this.showSequence([
             { title: 'Time has run out.', subtitle: '', duration: 2500 },
-            { title: 'The crisis consumed the city.', subtitle: 'You couldn\'t save everyone in time.', duration: 3000 },
+            { title: 'The crisis consumed the city.', subtitle: 'You couldn\'t save everyone.', duration: 3000 },
             { title: 'GAME OVER', subtitle: 'The city falls into darkness.', duration: 3500 }
         ], () => {
             if (this.isSkipping) return
@@ -416,6 +387,39 @@ export default class CutsceneScene extends Phaser.Scene {
 
             this.tweens.add({ targets: cont, alpha: 1, duration: 800 })
             cont.on('pointerdown', () => { location.reload() })
+        })
+    }
+    gfDeathCutscene() {
+        const W = this.cameras.main.width
+        const H = this.cameras.main.height
+
+        this.cameras.main.fadeIn(2000, 0, 0, 0)
+
+        this.showSequence([
+            { title: '', subtitle: '', duration: 1000 },
+            { title: 'She\'s gone.', subtitle: '', duration: 3000 },
+            { title: 'Luvaza...', subtitle: 'The one person who believed in this city.', duration: 3500 },
+            { title: 'Killed by her own father.', subtitle: 'To protect a secret worth more than his daughter\'s life.', duration: 4000 },
+            { title: 'The comms device saved her voice.', subtitle: 'Her last words. The proof of everything.', duration: 3500 },
+            { title: 'The Park Cleaner is the Enemy Boss.', subtitle: 'He played everyone. Including me.', duration: 3500 },
+            { title: 'The King sold his city.', subtitle: 'His people. His daughter. For Veridium.', duration: 3500 },
+            { title: 'No more hiding.', subtitle: 'No more investigating.', duration: 2500 },
+            { title: 'They will answer for this.', subtitle: '', duration: 3000 },
+            { title: '⚔️ LEVEL 4 UNLOCKED', subtitle: 'Revenge. Justice. Whatever it takes.', duration: 4000 }
+        ], () => {
+            if (this.isSkipping) return
+            GameState.advanceLevel()
+            GameState.setFlag('parkCleanerRevealed')
+
+            const cont = this.add.text(W / 2, H - 100, '[ Click to continue ]', {
+                fontSize: '22px', fill: '#ff4444'
+            }).setOrigin(0.5).setAlpha(0).setInteractive({ useHandCursor: true })
+
+            this.tweens.add({ targets: cont, alpha: 1, duration: 800 })
+            cont.on('pointerdown', () => {
+                this.cameras.main.fade(500, 0, 0, 0)
+                this.time.delayedCall(500, () => { this.scene.start('HubScene') })
+            })
         })
     }
 

@@ -157,7 +157,7 @@ export default class TownCenterScene extends Phaser.Scene {
     update() {
         const speed = 600
 
-        if (this.dialog.isActive ) {
+        if (this.dialog.isActive) {
             if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
                 this.dialog.next()
             }
@@ -345,6 +345,26 @@ export default class TownCenterScene extends Phaser.Scene {
     // ─── Luvaza Talk ───────────────────────────────────
     luvazaTalk() {
         const rebuilt = GameState.rebuiltBuildings || []
+
+        // After first meeting, if player has comms device
+        if (GameState.getFlag('hasCommsDevice') && !GameState.getFlag('gaveCommsToGF')) {
+            this.dialog.show([
+                { name: 'You', text: 'Luvaza, I have something for you.' },
+                { name: 'Luvaza', text: 'What is it?' },
+                { name: 'You', text: 'A communication device. So we can stay in touch.' },
+                { name: 'Luvaza', text: 'That\'s so thoughtful!' },
+                { name: 'You', text: 'If anything happens... if you see anything strange...' },
+                { name: 'You', text: 'Contact me immediately. Promise?' },
+                { name: 'Luvaza', text: 'I promise. Thank you.' },
+                { name: '', text: '📡 Gave Comms Device to Luvaza' },
+                { name: '', text: 'This will be important later...' }
+            ], () => {
+                GameState.setFlag('gaveCommsToGF')
+                GameState.removeItem('comms_device')
+                this.showLuvazaMenu()
+            })
+            return
+        }
 
         if (rebuilt.length === 0) {
             this.dialog.show([

@@ -40,8 +40,17 @@ export default class JunkyardScene extends Phaser.Scene {
         this.menuActive = false
         this.menuItems = []
         this.shopItems = []
+        this.cutsceneTexts = []
 
-        // ─── Show intro dialog then menu
+        // ─── Safety: ensure armor object exists ────────
+        if (!GameState.armor) {
+            GameState.armor = {
+                hasCore: false,
+                parts: []
+            }
+        }
+
+        // ─── Show intro dialog then menu ───────────────
         if (!GameState.getFlag('junkyardIntroSeen')) {
             this.dialog.show([
                 { name: 'Trader', text: 'Welcome to Kingdom of trash... All u find here is trash including you' },
@@ -163,7 +172,7 @@ export default class JunkyardScene extends Phaser.Scene {
             ], () => { this.showTraderMenu() })
 
         } else if (GameState.level >= 2 && !GameState.getFlag('traderClueFound')) {
-            // ─── Trader drops clue in Level 2 ──
+            // ─── Trader drops clue in Level 2 ──────────
             this.dialog.show([
                 { name: 'Trader', text: 'You\'ve been busy lately.' },
                 { name: 'You', text: 'Trying to figure out who attacked the city.' },
@@ -248,13 +257,27 @@ export default class JunkyardScene extends Phaser.Scene {
 
         this.shopItems = []
 
-        // ─── Item 1: Armor Core ────────
+        // ─── Dynamic Y position ────────────────────────
+        // Shifts items up if Armor Core is already bought
+        let itemY = GameState.getFlag('boughtCore')
+            ? H / 2 - 90
+            : H / 2 - 130
+
+        // ─── Item 1: Armor Core ────────────────────────
         if (!GameState.getFlag('boughtCore')) {
-            this.createShopItem(W / 2, H / 2 - 130, '🤖 Armor Core', 500, () => {
+            this.createShopItem(W / 2, itemY, '🤖 Armor Core', 500, () => {
                 if (GameState.spendMoney(500)) {
+
+                    // ─── Safety check for armor object ─
+                    if (!GameState.armor) {
+                        GameState.armor = { hasCore: false, parts: [] }
+                    }
+
                     GameState.armor.hasCore = true
                     GameState.addArmorPart('core')
                     GameState.setFlag('boughtCore')
+
+                    // ─── Add Armor Core to inventory ───
                     GameState.addItem({
                         id: 'armor_core',
                         name: 'Armor Core',
@@ -262,30 +285,49 @@ export default class JunkyardScene extends Phaser.Scene {
                         description: 'Power core for the robotic armor. The heart of the machine.',
                         quantity: 1
                     })
+
+                    // ─── Add Comms Device to inventory ─
+                    GameState.addItem({
+                        id: 'comms_device',
+                        name: 'Comms Device',
+                        icon: '📡',
+                        description: 'An old but reliable communication device from the Trader.',
+                        quantity: 1
+                    })
+                    GameState.setFlag('hasCommsDevice')
+
                     this.closeShop()
 
-                    // ─── First time buying core sequence ──
+                    // ─── Purchase dialog with comms device reveal ──
                     this.dialog.show([
                         { name: 'Trader', text: 'Here\'s your power core. Handle with care.' },
-                        { name: 'You', text: 'Finally... this is what I needed.' },
-                        { name: 'Trader', text: 'Kid... wait a moment.' },
+                        { name: 'You',    text: 'Finally! Now I can make something with this.' },
+                        { name: 'Trader', text: 'Oh wait. Take this too.' },
+                        { name: 'Trader', text: 'A communication device. Old tech but reliable.' },
+                        { name: 'You',    text: 'What\'s this for?' },
+                        { name: 'Trader', text: 'Keep in touch with people you care about.' },
+                        { name: 'Trader', text: 'In times like these... communication saves lives.' },
+                        { name: '',       text: '📡 Received: Comms Device' },
+                        { name: 'Trader', text: 'Kid... there\'s something you should see.' },
                         { name: 'Trader', text: 'There\'s something I\'ve been meaning to show someone for a long time.' },
                         { name: 'Trader', text: 'Someone smart enough to actually use it.' },
-                        { name: 'You', text: 'What do you mean?' },
+                        { name: 'You',    text: 'What do you mean?' },
                         { name: 'Trader', text: 'I found something underground. Years ago.' },
                         { name: 'Trader', text: 'An armor frame. Ancient engineering. Unlike anything I\'ve ever seen.' },
-                        { name: 'You', text: 'What kind of armor?' },
+                        { name: 'You',    text: 'What kind of armor?' },
                         { name: 'Trader', text: 'The kind no ordinary human can work with.' },
                         { name: 'Trader', text: 'But you... you bought that core. You understand machines on a different level.' },
                         { name: 'Trader', text: 'I think you\'re the one who can finish it.' },
-                        { name: 'You', text: 'Show me.' }
+                        { name: 'You',    text: 'Show me.' }
                     ], () => {
                         GameState.setFlag('secretBaseRevealed')
                         GameState.advanceLevel()
                         this.ui.updateStats()
                         this.showSecretBaseCutscene()
                     })
+
                 } else {
+                    // ─── Not enough money ───────────────
                     this.closeShop()
                     this.dialog.show([
                         { name: 'Trader', text: `Not enough coins! You need 500, you have ${GameState.money}.` }
@@ -294,10 +336,11 @@ export default class JunkyardScene extends Phaser.Scene {
                     })
                 }
             })
+            itemY += 80
         }
 
-        // ─── Item 2: Repair Parts ──────
-        this.createShopItem(W / 2, H / 2 - 50, '🔧 Repair Parts (+10 repair)', 100, () => {
+        // ─── Item 2: Repair Parts ──────────────────────
+        this.createShopItem(W / 2, itemY, '🔧 Repair Parts (+10 repair)', 100, () => {
             if (GameState.spendMoney(100)) {
                 GameState.addSkill('repair', 10)
                 GameState.addItem({
@@ -318,9 +361,10 @@ export default class JunkyardScene extends Phaser.Scene {
                 ], () => { this.showTraderMenu() })
             }
         })
+        itemY += 80
 
-        // ─── Item 3: Elixir ────────────
-        this.createShopItem(W / 2, H / 2 + 30, '⚗️ Elixir (+3)', 150, () => {
+        // ─── Item 3: Elixir ───────────────────────────
+        this.createShopItem(W / 2, itemY, '⚗️ Elixir (+3)', 150, () => {
             if (GameState.spendMoney(150)) {
                 GameState.addElixir(3)
                 GameState.addItem({
@@ -341,9 +385,10 @@ export default class JunkyardScene extends Phaser.Scene {
                 ], () => { this.showTraderMenu() })
             }
         })
+        itemY += 80
 
-        // ─── Item 4: Blueprint ─────────
-        this.createShopItem(W / 2, H / 2 + 110, '📜 Blueprint (+5 research)', 200, () => {
+        // ─── Item 4: Blueprint ────────────────────────
+        this.createShopItem(W / 2, itemY, '📜 Blueprint (+5 research)', 200, () => {
             if (GameState.spendMoney(200)) {
                 GameState.addSkill('research', 5)
                 GameState.addItem({
@@ -364,13 +409,15 @@ export default class JunkyardScene extends Phaser.Scene {
                 ], () => { this.showTraderMenu() })
             }
         })
+        itemY += 80
 
-        // ─── Back ──────────────────────
-        this.shopClose = this.add.text(W / 2, H / 2 + 230, '[ Back ]', {
+        // ─── Back Button ──────────────────────────────
+        this.shopClose = this.add.text(W / 2, itemY + 40, '[ Back ]', {
             fontSize: '18px',
             fill: '#888888'
         }).setOrigin(0.5).setScrollFactor(0).setDepth(52)
             .setInteractive({ useHandCursor: true })
+
         this.shopClose.on('pointerdown', () => {
             this.closeShop()
             this.showTraderMenu()
@@ -412,7 +459,6 @@ export default class JunkyardScene extends Phaser.Scene {
     }
 
     // ─── Trader Secret ─────────────────────────────────
-    // Only long dialog on first visit
     traderSecret() {
         if (!GameState.getFlag('secretBaseVisited')) {
             this.dialog.show([
@@ -429,7 +475,7 @@ export default class JunkyardScene extends Phaser.Scene {
                 })
             })
         } else {
-            // Short version on repeat visits
+            // ─── Short version on repeat visits ────────
             this.cameras.main.fade(500, 0, 0, 0)
             this.time.delayedCall(500, () => {
                 this.scene.start('SecretBaseScene')
@@ -442,44 +488,73 @@ export default class JunkyardScene extends Phaser.Scene {
         const W = this.cameras.main.width
         const H = this.cameras.main.height
 
+        // ─── Clear any old cutscene objects ────────────
+        this.cutsceneTexts.forEach(t => t.destroy())
+        this.cutsceneTexts = []
+
         this.cutsceneOverlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.9)
             .setScrollFactor(0).setDepth(100)
 
-        this.add.text(W / 2, H / 2 - 150, '🔐 SECRET BASE DISCOVERED', {
+        // ─── Helper to track all text objects ──────────
+        const addText = (x, y, text, style) => {
+            const t = this.add.text(x, y, text, style)
+                .setOrigin(0.5)
+                .setScrollFactor(0)
+                .setDepth(101)
+            this.cutsceneTexts.push(t)
+            return t
+        }
+
+        addText(W / 2, H / 2 - 150, '🔐 SECRET BASE DISCOVERED', {
             fontSize: '40px',
             fill: '#ff8800',
             fontStyle: 'bold'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(101)
+        })
 
-        this.add.text(W / 2, H / 2 - 60, 'The Trader reveals a hidden underground workshop.', {
+        addText(W / 2, H / 2 - 60, 'The Trader reveals a hidden underground workshop.', {
             fontSize: '24px',
             fill: '#ffffff'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(101)
+        })
 
-        this.add.text(W / 2, H / 2, 'An ancient armor frame awaits assembly.', {
+        addText(W / 2, H / 2, 'An ancient armor frame awaits assembly.', {
             fontSize: '24px',
             fill: '#aaaaaa'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(101)
+        })
 
-        this.add.text(W / 2, H / 2 + 80, 'The city\'s secrets are only beginning to unravel...', {
+        addText(W / 2, H / 2 + 60, '📡 Comms Device received. Stay connected.', {
+            fontSize: '20px',
+            fill: '#00ccff',
+            fontStyle: 'italic'
+        })
+
+        addText(W / 2, H / 2 + 120, 'The city\'s secrets are only beginning to unravel...', {
             fontSize: '22px',
             fill: '#888888',
             fontStyle: 'italic'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(101)
+        })
 
-        this.add.text(W / 2, H / 2 + 180, '⭐ LEVEL 2 UNLOCKED ⭐', {
+        addText(W / 2, H / 2 + 200, '⭐ LEVEL 2 UNLOCKED ⭐', {
             fontSize: '36px',
             fill: '#00ff88',
             fontStyle: 'bold'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(101)
+        })
 
+        // ─── Continue Button ───────────────────────────
         const cont = this.add.text(W / 2, H / 2 + 280, '[ Click to continue ]', {
             fontSize: '22px',
             fill: '#888888'
         }).setOrigin(0.5).setScrollFactor(0).setDepth(101)
             .setInteractive({ useHandCursor: true })
 
+        this.cutsceneTexts.push(cont)
+
+        cont.on('pointerover', () => cont.setStyle({ fill: '#ffffff' }))
+        cont.on('pointerout',  () => cont.setStyle({ fill: '#888888' }))
         cont.on('pointerdown', () => {
+            // ─── Clean up before leaving ────────────
+            this.cutsceneTexts.forEach(t => t.destroy())
+            this.cutsceneTexts = []
+            if (this.cutsceneOverlay) this.cutsceneOverlay.destroy()
             this.scene.start('SecretBaseScene')
         })
     }

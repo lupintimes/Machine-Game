@@ -10,6 +10,7 @@ import WireConnectGame from './scenes/minigames/WireConnectGame.js'
 import PressureValveGame from './scenes/minigames/PressureValveGame.js'
 import CutsceneScene from './scenes/CutsceneScene.js'
 import EnergyCalibrationGame from './scenes/minigames/EnergyCalibrationGame.js'
+import Level3PalaceScene from './scenes/Level3PalaceScene.js'
 
 window.GameState = GameState
 
@@ -39,9 +40,10 @@ const config = {
         TownCenterScene,
         ParkScene,
         CutsceneScene, 
+        Level3PalaceScene,
         WireConnectGame,
         PressureValveGame,
-        EnergyCalibrationGame
+        EnergyCalibrationGame,
     ]
 }
 

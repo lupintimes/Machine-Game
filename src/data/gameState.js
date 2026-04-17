@@ -125,6 +125,8 @@ const GameState = {
 
     // ─── existing methods ──────────────────────────────
     flags: {
+        hasCommsDevice: false,
+        gaveCommsToGF: false,
 
         introSeen: false,
         // Level 1
@@ -151,8 +153,15 @@ const GameState = {
         gfDead: false,
         conspiracyRevealed: false,
         enemyTerritoryUnlocked: false,
-
-
+        armorServoInstalled: false,
+        armorPlatingInstalled: false,
+        armorComplete: false,
+        parkCleanerFriendship: 0,    // NOT a flag, add as property
+        gfCalledComms: false,
+        gfHeardConversation: false,
+        gfDead: false,
+        parkCleanerRevealed: false,
+        reasonForAttackKnown: false,
         researchClueFound: false,    // from workshop research
         luvazaClueFound: false,      // from talking to Luvaza
         parkClueFound: false,
