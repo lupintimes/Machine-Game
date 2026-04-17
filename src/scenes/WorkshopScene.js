@@ -120,10 +120,14 @@ export default class WorkshopScene extends Phaser.Scene {
         }).setOrigin(0.5).setScrollFactor(0).setDepth(20)
 
         this.nearStation = null
+
+
     }
 
     update() {
         const speed = 600
+
+        this.checkTruthUnlock()
 
         // ─── DEBUG (remove later) ──────
         if (this.input.keyboard.checkDown(this.input.keyboard.addKey('T'), 500)) {
@@ -156,7 +160,7 @@ export default class WorkshopScene extends Phaser.Scene {
         }
 
 
-        if (this.dialog.isActive ) {
+        if (this.dialog.isActive) {
             if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
                 this.dialog.next()
             }
@@ -246,6 +250,41 @@ export default class WorkshopScene extends Phaser.Scene {
         this.ui.updateStats()
     }
 
+
+    // ─── Truth Unlock Check ────────────────────────────
+    checkTruthUnlock() {
+        if (this.truthTriggered) return
+        if (GameState.getFlag('learnedTruth')) return
+
+        // Auto set research clue if research >= 30
+        if (GameState.skills.research >= 30) {
+            GameState.setFlag('researchClueFound')
+        }
+
+        // Check all 4 clues
+        const allClues =
+            GameState.getFlag('researchClueFound') &&
+            GameState.getFlag('luvazaClueFound') &&
+            GameState.getFlag('parkClueFound') &&
+            GameState.getFlag('traderClueFound')
+
+        if (allClues) {
+            this.truthTriggered = true
+            console.log('🎬 All clues found! Starting cutscene...')
+
+            // Set flag
+            GameState.setFlag('learnedTruth')
+
+            // Fade and go to cutscene
+            this.cameras.main.fade(800, 0, 0, 0)
+            this.time.delayedCall(800, () => {
+                this.scene.start('CutsceneScene', {
+                    key: 'truthDiscovered',
+                    returnScene: 'WorkshopScene'
+                })
+            })
+        }
+    }
     // ─── On Interact ───────────────────────────────────
     onInteract(station) {
         if (station.locked) {
@@ -450,7 +489,6 @@ export default class WorkshopScene extends Phaser.Scene {
                 { name: '', text: `🔬 Research Progress: ${research}/30` }
             ])
         } else if (research >= 30) {
-            // ─── Research complete ─────────
             GameState.setFlag('researchClueFound')
 
             const luvaza = GameState.getFlag('luvazaClueFound')
@@ -458,42 +496,27 @@ export default class WorkshopScene extends Phaser.Scene {
             const trader = GameState.getFlag('traderClueFound')
 
             if (luvaza && park && trader) {
-                // All clues found - trigger cutscene
                 this.dialog.show([
                     { name: 'You', text: 'Final analysis complete...' },
-                    { name: 'You', text: 'I have everything I need.' },
-                    { name: '', text: `🔬 Research Progress: ${research}/30 ✅` }
-                ], () => {
-                    this.triggerTruthCutscene()
-                })
+                    { name: 'You', text: 'I have everything I need now.' },
+                    { name: '', text: '🔬 All clues gathered!' }
+                ])
+                // checkTruthUnlock will handle the cutscene next frame
             } else {
-                // Missing clues
                 const missing = []
                 if (!luvaza) missing.push('💕 Talk more with Luvaza at Town Center')
                 if (!park) missing.push('🌿 Talk more with Park Cleaner at Park')
                 if (!trader) missing.push('🧑 Talk more with Trader at Junkyard')
 
                 this.dialog.show([
-                    { name: 'You', text: 'Research is complete...' },
-                    { name: 'You', text: 'But I need more info from others.' },
+                    { name: 'You', text: 'Research complete...' },
+                    { name: 'You', text: 'But I still need more from others.' },
                     ...missing.map(m => ({ name: '📌', text: m })),
-                    { name: '', text: `🔬 Research: ${research}/30 ✅` }
+                    { name: '', text: '🔬 Research: 30/30 ✅' }
                 ])
             }
         }
     }
 
-    // ─── Trigger Truth Cutscene ────────────────────────
-    triggerTruthCutscene() {
-        if (this.truthTriggered) return
-        this.truthTriggered = true
 
-        this.cameras.main.fade(800, 0, 0, 0)
-        this.time.delayedCall(800, () => {
-            this.scene.start('CutsceneScene', {
-                key: 'truthDiscovered',
-                returnScene: 'WorkshopScene'
-            })
-        })
-    }
 }

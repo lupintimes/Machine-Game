@@ -1,13 +1,83 @@
 const GameState = {
 
+    // ─── Time System ───────────────────────────────────
+    day: 1,
+    maxDays: 7,
+    timeOfDay: 'morning',    // morning, afternoon, evening, night
+    timeIndex: 0,            // 0=morning, 1=afternoon, 2=evening, 3=night
+
+    // ─── Time Methods ──────────────────────────────────
+    advanceTime() {
+        this.timeIndex++
+        if (this.timeIndex >= 4) {
+            this.timeIndex = 0
+            this.day++
+        }
+        const times = ['morning', 'afternoon', 'evening', 'night']
+        this.timeOfDay = times[this.timeIndex]
+
+        console.log(`📅 Day ${this.day} - ${this.timeOfDay}`)
+        return this.isGameOver()
+    },
+
+    skipToMorning() {
+        this.timeIndex = 0
+        this.timeOfDay = 'morning'
+        this.day++
+        console.log(`😴 Slept. Day ${this.day} - morning`)
+        return this.isGameOver()
+    },
+
+    skipToAfternoon() {
+        if (this.timeIndex < 1) {
+            this.timeIndex = 1
+            this.timeOfDay = 'afternoon'
+        }
+    },
+
+    skipToEvening() {
+        if (this.timeIndex < 2) {
+            this.timeIndex = 2
+            this.timeOfDay = 'evening'
+        }
+    },
+
+    isGameOver() {
+        return this.day > this.maxDays
+    },
+
+    getDaysLeft() {
+        return Math.max(0, this.maxDays - this.day + 1)
+    },
+
+    getTimeIcon() {
+        const icons = {
+            'morning': '🌅',
+            'afternoon': '☀️',
+            'evening': '🌆',
+            'night': '🌙'
+        }
+        return icons[this.timeOfDay]
+    },
+
+    getTimeColor() {
+        const colors = {
+            'morning': '#ffdd44',
+            'afternoon': '#ffffff',
+            'evening': '#ff8844',
+            'night': '#4444aa'
+        }
+        return colors[this.timeOfDay]
+    },
+
     level: 1,
     money: 5000,
     reputation: 0,
     elixir: 0,
 
     skills: {
-        repair: 0,
-        research: 0,
+        repair: 10,
+        research: 10,
         combat: 0
     },
 
@@ -55,6 +125,8 @@ const GameState = {
 
     // ─── existing methods ──────────────────────────────
     flags: {
+
+        introSeen: false,
         // Level 1
         workshopIntroSeen: false,
         junkyardIntroSeen: false,
@@ -83,7 +155,7 @@ const GameState = {
 
         researchClueFound: false,    // from workshop research
         luvazaClueFound: false,      // from talking to Luvaza
-        parkClueFound: false ,
+        parkClueFound: false,
         traderClueFound: false,       // from Park Cleaner
     },
 

@@ -45,7 +45,7 @@ export default class PalaceScene extends Phaser.Scene {
         this.menuActive = false
         this.menuItems = []
 
-        // ─── Trigger interaction on enter
+        // ─── Trigger interaction on enter ─
         if (!GameState.getFlag('metKing')) {
             this.dialog.show([
                 { name: '', text: 'The palace... still standing but the air is heavy.' },
@@ -75,13 +75,11 @@ export default class PalaceScene extends Phaser.Scene {
     }
 
     update() {
-        // ─── Only handle dialog space press ─
         if (this.dialog.isActive) {
             if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
                 this.dialog.next()
             }
         }
-        // No player movement at all
     }
 
     // ─── King Menu ─────────────────────────────────────
@@ -104,16 +102,19 @@ export default class PalaceScene extends Phaser.Scene {
             fontStyle: 'bold'
         }).setOrigin(0.5).setScrollFactor(0).setDepth(52)
 
+        // ─── Talk ──────────────────────
         this.createMenuButton(W / 2, H / 2 - 60, '💬 Talk', () => {
             this.closeMenu()
             this.kingTalk()
         })
 
+        // ─── Quest ─────────────────────
         this.createMenuButton(W / 2, H / 2 + 20, '📋 Rebuild Quest', () => {
             this.closeMenu()
             this.showQuestStatus()
         })
 
+        // ─── Leave ─────────────────────
         this.createMenuButton(W / 2, H / 2 + 100, '🔙 Leave', () => {
             this.closeMenu()
             this.scene.start('HubScene')
@@ -172,6 +173,7 @@ export default class PalaceScene extends Phaser.Scene {
             ], () => { this.showKingMenu() })
 
         } else if (!GameState.getFlag('toldKing')) {
+            // ─── Tell King the truth ───────
             this.dialog.show([
                 { name: 'You', text: 'Your Majesty. I know who attacked the city.' },
                 { name: 'King', text: 'What? Who?' },
@@ -183,8 +185,9 @@ export default class PalaceScene extends Phaser.Scene {
                 { name: 'You', text: 'Something about his reaction felt wrong.' },
                 { name: '', text: 'The King didn\'t seem surprised at all...' }
             ], () => {
+                // ─── Set flag then trigger cutscene ──
                 GameState.setFlag('toldKing')
-                this.showKingMenu()
+                this.triggerLevel2Complete()
             })
 
         } else {
@@ -195,6 +198,17 @@ export default class PalaceScene extends Phaser.Scene {
                 { name: '', text: 'He\'s hiding something. I can feel it.' }
             ], () => { this.showKingMenu() })
         }
+    }
+
+    // ─── Level 2 Complete Trigger ──────────────────────
+    triggerLevel2Complete() {
+        this.cameras.main.fade(800, 0, 0, 0)
+        this.time.delayedCall(800, () => {
+            this.scene.start('CutsceneScene', {
+                key: 'level2Complete',
+                returnScene: 'HubScene'
+            })
+        })
     }
 
     // ─── Quest Status ──────────────────────────────────
