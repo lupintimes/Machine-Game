@@ -3,8 +3,8 @@ const GameState = {
     // ─── Time System ───────────────────────────────────
     day: 1,
     maxDays: 7,
-    timeOfDay: 'morning',    // morning, afternoon, evening, night
-    timeIndex: 0,            // 0=morning, 1=afternoon, 2=evening, 3=night
+    timeOfDay: 'morning',
+    timeIndex: 0,
 
     // ─── Time Methods ──────────────────────────────────
     advanceTime() {
@@ -15,7 +15,6 @@ const GameState = {
         }
         const times = ['morning', 'afternoon', 'evening', 'night']
         this.timeOfDay = times[this.timeIndex]
-
         console.log(`📅 Day ${this.day} - ${this.timeOfDay}`)
         return this.isGameOver()
     },
@@ -52,25 +51,26 @@ const GameState = {
 
     getTimeIcon() {
         const icons = {
-            'morning': '🌅',
+            'morning':   '🌅',
             'afternoon': '☀️',
-            'evening': '🌆',
-            'night': '🌙'
+            'evening':   '🌆',
+            'night':     '🌙'
         }
         return icons[this.timeOfDay]
     },
 
     getTimeColor() {
         const colors = {
-            'morning': '#ffdd44',
+            'morning':   '#ffdd44',
             'afternoon': '#ffffff',
-            'evening': '#ff8844',
-            'night': '#4444aa'
+            'evening':   '#ff8844',
+            'night':     '#4444aa'
         }
         return colors[this.timeOfDay]
     },
 
-    level: 1,
+    // ─── Core Stats ────────────────────────────────────
+    level: 3,
     money: 5000,
     reputation: 0,
     elixir: 0,
@@ -92,6 +92,7 @@ const GameState = {
 
     // ─── Inventory Methods ─────────────────────────────
     addItem(item) {
+        if (!this.inventory) this.inventory = []
         const existing = this.inventory.find(i => i.id === item.id)
         if (existing) {
             existing.quantity += item.quantity || 1
@@ -101,6 +102,7 @@ const GameState = {
                 quantity: item.quantity || 1
             })
         }
+        console.log(`🎒 Item added: ${item.name}`, this.inventory)
     },
 
     removeItem(id, quantity = 1) {
@@ -123,13 +125,18 @@ const GameState = {
         return this.inventory.find(i => i.id === id)
     },
 
-    // ─── existing methods ──────────────────────────────
+    // ─── Flags ─────────────────────────────────────────
+    // ⚠️ Every flag MUST be listed here or setFlag() won't work
     flags: {
+
+        // ─── Items ─────────────────────────────────────
         hasCommsDevice: false,
         gaveCommsToGF: false,
 
+        // ─── Intro ─────────────────────────────────────
         introSeen: false,
-        // Level 1
+
+        // ─── Level 1 ───────────────────────────────────
         workshopIntroSeen: false,
         junkyardIntroSeen: false,
         electricalUnlocked: false,
@@ -139,7 +146,7 @@ const GameState = {
         secretBaseVisited: false,
         secretBaseIntroSeen: false,
 
-        // Level 2
+        // ─── Level 2 ───────────────────────────────────
         metKing: false,
         kingGaveQuest: false,
         metLuvaza: false,
@@ -148,37 +155,61 @@ const GameState = {
         toldKing: false,
         rebuiltBuildings: false,
 
-        // Level 3
-        gfHeardConversation: false,
-        gfDead: false,
+        // ─── Clues ─────────────────────────────────────
+        researchClueFound: false,
+        luvazaClueFound: false,
+        parkClueFound: false,
+        traderClueFound: false,
+
+        // ─── Level 3 ───────────────────────────────────
         conspiracyRevealed: false,
         enemyTerritoryUnlocked: false,
         armorServoInstalled: false,
         armorPlatingInstalled: false,
         armorComplete: false,
-        parkCleanerFriendship: 0,    // NOT a flag, add as property
+        parkCleanerRevealed: false,
+        reasonForAttackKnown: false,
+
+        // ─── GF Story ──────────────────────────────────
         gfCalledComms: false,
         gfHeardConversation: false,
         gfDead: false,
-        parkCleanerRevealed: false,
-        reasonForAttackKnown: false,
-        researchClueFound: false,    // from workshop research
-        luvazaClueFound: false,      // from talking to Luvaza
-        parkClueFound: false,
-        traderClueFound: false,       // from Park Cleaner
+
+        // ─── Friendship (numeric) ──────────────────────
+        parkCleanerFriendship: 0
     },
 
-    earnMoney(amount) { this.money += amount },
+    // ─── Flag Methods ──────────────────────────────────
+    setFlag(flag, value = true) {
+        // ✅ Fixed: creates flag even if it didn't exist before
+        this.flags[flag] = value
+        console.log(`🚩 Flag set: ${flag} =`, value)
+    },
+
+    getFlag(flag) {
+        return this.flags[flag]
+    },
+
+    // ─── Money Methods ─────────────────────────────────
+    earnMoney(amount) {
+        this.money += amount
+        console.log(`💰 Earned ${amount}. Total: ${this.money}`)
+    },
 
     spendMoney(amount) {
         if (this.money >= amount) {
             this.money -= amount
+            console.log(`💸 Spent ${amount}. Remaining: ${this.money}`)
             return true
         }
+        console.log(`❌ Not enough money. Need ${amount}, have ${this.money}`)
         return false
     },
 
-    addReputation(amount) { this.reputation += amount },
+    // ─── Other Methods ─────────────────────────────────
+    addReputation(amount) {
+        this.reputation += amount
+    },
 
     addSkill(skill, amount) {
         if (this.skills[skill] !== undefined) {
@@ -189,7 +220,9 @@ const GameState = {
         }
     },
 
-    addElixir(amount) { this.elixir += amount },
+    addElixir(amount) {
+        this.elixir += amount
+    },
 
     addArmorPart(part) {
         if (!this.armor.parts.includes(part)) {
@@ -197,20 +230,16 @@ const GameState = {
         }
     },
 
-    setFlag(flag, value = true) {
-        if (this.flags[flag] !== undefined) {
-            this.flags[flag] = value
-        }
+    advanceLevel() {
+        this.level++
+        console.log(`⭐ Level up! Now level ${this.level}`)
     },
 
-    getFlag(flag) { return this.flags[flag] },
-
-    advanceLevel() { this.level++ },
-
+    // ─── Completion Checks ─────────────────────────────
     isLevel1Complete() { return this.flags.boughtCore === true },
     isLevel2Complete() { return this.flags.learnedTruth && this.flags.toldKing },
     isLevel3Complete() { return this.flags.gfDead === true },
-    canMeetTrader() { return this.skills.repair >= 10 }
+    canMeetTrader()    { return this.skills.repair >= 10 }
 }
 
 export default GameState
