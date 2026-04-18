@@ -71,8 +71,8 @@ const GameState = {
     // ─── Core Stats ────────────────────────────────────
     level: 1,
     money: 5000,
-    reputation: 0,
-    elixir: 0,
+    reputation: 100,
+    elixir: 100,
 
     skills: {
         repair: 10,
@@ -174,9 +174,12 @@ const GameState = {
         // ─── Friendship ────────────────────────────────
         parkCleanerFriendship: 0,
 
-        
+
         traderCalledCleaner: false,   // trader radio call to park cleaner
         luvazaVisitedPark: false,     // luvaza sees king + cleaner talking
+
+        traderCalledArmor: false,
+        armorTested: false,
     },
 
     // ─── Flag Methods ──────────────────────────────────

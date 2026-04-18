@@ -40,8 +40,7 @@ export default class Level3PalaceScene extends Phaser.Scene {
         this.spaceKey = this.input.keyboard.addKey('SPACE')
         this.cutsceneItems = []
 
-        // ─── Start ─────────────────────────────────────
-        this.startBetrayalSequence()
+        this.startArrivalSequence()
     }
 
     update() {
@@ -52,8 +51,8 @@ export default class Level3PalaceScene extends Phaser.Scene {
         }
     }
 
-    // ─── The Betrayal Sequence ─────────────────────────
-    startBetrayalSequence() {
+    // ─── Arrival ───────────────────────────────────────
+    startArrivalSequence() {
         const W = this.cameras.main.width
         const H = this.cameras.main.height
 
@@ -82,106 +81,115 @@ export default class Level3PalaceScene extends Phaser.Scene {
 
             this.dialog.show([
                 { name: '',    text: 'You burst through the palace gates.' },
-                { name: '',    text: 'The guards look confused. Worried.' },
-                { name: 'You', text: 'WHERE IS LUVAZA?!' },
-                { name: '',    text: 'A guard points toward the throne room.' },
-                { name: '',    text: 'You hear shouting from inside...' },
-                { name: '',    text: 'You run. Faster than you\'ve ever run.' },
-                { name: '',    text: 'You reach the throne room doors.' },
-                { name: '',    text: 'They\'re open.' }
+                { name: '',    text: 'The guards look shaken. Some are crying.' },
+                { name: 'You', text: 'WHERE IS SHE?!' },
+                { name: '',    text: 'No one answers.' },
+                { name: '',    text: 'You run through the halls.' },
+                { name: '',    text: 'Past the gardens. Past the corridors.' },
+                { name: '',    text: 'You reach the throne room.' },
+                { name: '',    text: 'The doors are wide open.' },
+                { name: '',    text: '' },
+                { name: '',    text: 'You step inside.' },
+                { name: '',    text: '' },
+                { name: '',    text: 'And you see her.' },
+                { name: '',    text: '' },
+                { name: '',    text: 'On the marble floor.' },
+                { name: '',    text: 'Not moving.' },
+                { name: '',    text: '' },
+                { name: '',    text: 'The King is kneeling beside her.' },
+                { name: '',    text: 'His face is... broken.' },
+                { name: '',    text: 'The Park Cleaner stands against the wall.' },
+                { name: '',    text: 'Staring at nothing.' }
             ], () => {
-                this.showConfrontation()
+                this.showDiscovery()
             })
         })
     }
 
-    // ─── The Confrontation ─────────────────────────────
-    showConfrontation() {
+    // ─── Discovery ─────────────────────────────────────
+    showDiscovery() {
         this.dialog.show([
-            { name: '',      text: 'You step inside.' },
-            { name: '',      text: 'The scene freezes you in place.' },
-            { name: '',      text: 'Luvaza is standing in the center of the room.' },
-            { name: '',      text: 'She\'s facing the King. Tears streaming down her face.' },
-            { name: '',      text: 'The Park Cleaner stands beside the King.' },
-            { name: '',      text: 'Guards surround her.' },
-            { name: 'Luvaza', text: 'I HEARD YOU! I heard everything!' },
-            { name: 'Luvaza', text: 'You planned the attack! You and this... this CLEANER!' },
-            { name: 'King',   text: 'Luvaza, please calm down. You don\'t understand—' },
-            { name: 'Luvaza', text: 'DON\'T tell me I don\'t understand!' },
-            { name: 'Luvaza', text: 'You said "eliminate the threat"!' },
-            { name: 'Luvaza', text: 'You were talking about the boy I love!' },
-            { name: 'King',   text: 'No! Luvaza, we were talking about the ENEMY—' },
-            { name: 'Luvaza', text: 'LIAR!' },
-            { name: '',       text: 'Luvaza lunges forward toward the King.' },
-            { name: '',       text: 'The guards react.' },
-            { name: '',       text: '...' },
-            { name: '',       text: 'One of them pushes her back.' },
-            { name: '',       text: 'She stumbles.' },
-            { name: '',       text: 'She falls.' },
-            { name: '',       text: 'Her head hits the marble floor.' },
-            { name: '',       text: '...' },
-            { name: '',       text: 'A terrible silence fills the room.' },
-            { name: 'King',   text: 'LUVAZA!' },
-            { name: '',       text: 'The King rushes to her side.' },
-            { name: '',       text: 'The Park Cleaner\'s face goes white.' },
-            { name: 'You',    text: 'No...' },
-            { name: '',       text: 'You push past the guards.' },
-            { name: '',       text: 'You kneel beside her.' },
-            { name: '',       text: 'She\'s not moving.' },
-            { name: 'You',    text: 'Luvaza... please...' },
-            { name: 'King',   text: 'My daughter... what have I...' },
-            { name: 'Park Cleaner', text: 'She wasn\'t supposed to be here...' },
-            { name: 'Park Cleaner', text: 'She wasn\'t supposed to hear any of that...' },
-            { name: 'You',    text: 'What... what was she talking about?' },
-            { name: 'You',    text: 'What did she hear?!' },
-            { name: 'King',   text: '...' },
-            { name: 'King',   text: 'We were discussing protection of the Veridium.' },
-            { name: 'King',   text: 'The "threat" was the enemy spy in the city.' },
-            { name: 'King',   text: 'Not... not your friend. Not you.' },
-            { name: 'Park Cleaner', text: 'I\'m a royal agent. I was investigating the attack.' },
-            { name: 'Park Cleaner', text: 'I went undercover as a park cleaner.' },
+            { name: 'You',          text: 'No...' },
+            { name: '',             text: 'You rush to her side.' },
+            { name: '',             text: 'You kneel down.' },
+            { name: 'You',          text: 'Luvaza... Luvaza please...' },
+            { name: '',             text: 'Her eyes are closed.' },
+            { name: '',             text: 'Peaceful.' },
+            { name: '',             text: 'Like she\'s sleeping.' },
+            { name: '',             text: '' },
+            { name: '',             text: 'But she\'s not sleeping.' },
+            { name: '',             text: '' },
+            { name: 'You',          text: 'What happened?! WHAT HAPPENED?!' },
+            { name: 'King',         text: '...' },
+            { name: 'King',         text: 'She came in... she was screaming...' },
+            { name: 'King',         text: 'She said she heard us talking in the garden.' },
+            { name: 'King',         text: 'She thought...' },
+            { name: 'King',         text: 'She thought I planned the attack on the city.' },
+            { name: 'King',         text: 'She thought I wanted to kill you.' },
+            { name: 'You',          text: 'What...?' },
+            { name: 'Park Cleaner', text: 'She heard us discussing the Veridium defense plan.' },
+            { name: 'Park Cleaner', text: 'But she only heard pieces.' },
+            { name: 'Park Cleaner', text: 'Out of context.' },
+            { name: 'Park Cleaner', text: '"Eliminate the threat" meant the enemy spy.' },
+            { name: 'Park Cleaner', text: '"The boy investigating" was the enemy agent.' },
+            { name: 'Park Cleaner', text: 'Not you. Never you.' },
+            { name: 'You',          text: '...' },
+            { name: 'You',          text: 'Then what happened to her?' },
+            { name: 'King',         text: 'She lunged at him.' },
+            { name: 'King',         text: 'The guards... they reacted.' },
+            { name: 'King',         text: 'They grabbed her. She pulled free.' },
+            { name: 'King',         text: 'She fell.' },
+            { name: 'King',         text: 'Hit her head on the floor.' },
+            { name: 'King',         text: '...' },
+            { name: 'King',         text: 'An accident.' },
+            { name: 'King',         text: 'A stupid... horrible... accident.' },
+            { name: '',             text: '' },
+            { name: 'You',          text: 'She died...' },
+            { name: 'You',          text: 'Because she misheard a conversation.' },
+            { name: 'You',          text: 'Because she thought you were going to hurt me.' },
+            { name: 'You',          text: 'Because she loved me.' },
+            { name: '',             text: '' },
+            { name: 'King',         text: 'I loved her too.' },
+            { name: 'King',         text: 'More than this kingdom.' },
+            { name: 'King',         text: 'More than the Veridium.' },
+            { name: 'King',         text: 'More than anything.' },
+            { name: '',             text: '' },
+            { name: 'Park Cleaner', text: 'I\'m a royal agent.' },
+            { name: 'Park Cleaner', text: 'I went undercover to find who really attacked the city.' },
             { name: 'Park Cleaner', text: 'The King asked me to protect the Veridium.' },
-            { name: 'Park Cleaner', text: 'She... she heard us out of context.' },
-            { name: 'You',    text: '...' },
-            { name: 'You',    text: 'She thought you were the villains.' },
-            { name: 'You',    text: 'She thought she was protecting me.' },
-            { name: 'King',   text: 'She was trying to save you...' },
-            { name: 'King',   text: 'And it killed her.' },
-            { name: '',       text: '...' },
-            { name: '',       text: 'The King breaks down.' },
-            { name: '',       text: 'The Park Cleaner stares at the floor.' },
-            { name: '',       text: 'The guards stand frozen.' },
-            { name: 'You',    text: 'She died because of a misunderstanding.' },
-            { name: 'You',    text: 'Because she loved me too much.' },
-            { name: 'You',    text: 'Because she heard half a conversation.' },
-            { name: 'You',    text: 'And I wasn\'t there to stop her.' },
-            { name: '',       text: '...' },
-            { name: '',       text: 'You pick up the comms device from her hand.' },
-            { name: '',       text: 'The screen still shows your name.' },
-            { name: '',       text: 'Her last call.' },
-            { name: '',       text: '...' },
-            { name: 'You',    text: 'I should have been faster.' },
-            { name: 'You',    text: 'I should have told her to wait.' },
-            { name: 'You',    text: 'I should have...' },
-            { name: '',       text: '...' },
-            { name: 'King',   text: 'The real enemy is still out there.' },
-            { name: 'King',   text: 'The one who actually attacked our city.' },
-            { name: 'King',   text: 'We will find them. Together.' },
-            { name: 'King',   text: 'For her.' },
-            { name: 'You',    text: '...' },
-            { name: 'You',    text: 'For her.' },
-            { name: '',       text: 'You stand up.' },
-            { name: '',       text: 'You walk out of the palace.' },
-            { name: '',       text: 'The rain begins to fall.' }
+            { name: 'Park Cleaner', text: 'And to protect people like you.' },
+            { name: 'Park Cleaner', text: 'I failed to protect the one person who mattered most.' },
+            { name: '',             text: '' },
+            { name: 'You',          text: '...' },
+            { name: '',             text: 'You pick up the comms device from her pocket.' },
+            { name: '',             text: 'The screen shows one thing:' },
+            { name: '',             text: '📡 "EMERGENCY SIGNAL SENT"' },
+            { name: '',             text: 'She tried to warn you.' },
+            { name: '',             text: 'Even in her last moments.' },
+            { name: '',             text: '' },
+            { name: 'King',         text: 'The real enemy is still out there.' },
+            { name: 'King',         text: 'Whoever attacked this city...' },
+            { name: 'King',         text: 'They\'re still planning.' },
+            { name: 'King',         text: 'We will find them.' },
+            { name: 'King',         text: 'For her.' },
+            { name: 'You',          text: '...' },
+            { name: 'You',          text: 'For her.' },
+            { name: '',             text: '' },
+            { name: '',             text: 'You stand up slowly.' },
+            { name: '',             text: 'You look at the armor on your body.' },
+            { name: '',             text: 'Built for protection.' },
+            { name: '',             text: 'But you couldn\'t protect her.' },
+            { name: '',             text: '' },
+            { name: '',             text: 'You walk out of the palace.' },
+            { name: '',             text: 'Into the rain.' },
+            { name: '',             text: 'Alone.' }
         ], () => {
-            GameState.setFlag('gfDead')
             GameState.setFlag('learnedTruth')
-            GameState.setFlag('conspiracyRevealed')
             GameState.addItem({
                 id: 'luvaza_comms',
                 name: 'Luvaza\'s Comms Device',
                 icon: '📡',
-                description: 'Her comms device. Your name is still on the screen.',
+                description: 'Her comms device. Emergency signal still on screen.',
                 quantity: 1
             })
             this.showDeathCutscene()
@@ -222,42 +230,44 @@ export default class Level3PalaceScene extends Phaser.Scene {
             fontStyle: 'bold'
         }, 2500)
 
-        addText(W / 2, H / 2 - 100, '"I love y—"', {
-            fontSize: '28px',
+        addText(W / 2, H / 2 - 100, '"She tried to save the one she loved."', {
+            fontSize: '24px',
             fill: '#ff8888',
             fontStyle: 'italic'
         }, 4500)
 
-        addText(W / 2, H / 2 - 50, '— Her last words on the comms', {
-            fontSize: '18px',
-            fill: '#555555'
+        addText(W / 2, H / 2 - 50, '"Based on words she only half heard."', {
+            fontSize: '22px',
+            fill: '#aa6666',
+            fontStyle: 'italic'
         }, 6000)
 
-        addText(W / 2, H / 2 + 30, 'She died trying to protect someone she loved.', {
+        addText(W / 2, H / 2 + 30, 'No one planned her death.', {
             fontSize: '20px',
             fill: '#aaaaaa'
         }, 8000)
 
-        addText(W / 2, H / 2 + 65, 'Based on a conversation she only half heard.', {
+        addText(W / 2, H / 2 + 60, 'No one wanted it.', {
             fontSize: '20px',
             fill: '#aaaaaa'
-        }, 9500)
+        }, 9000)
 
-        addText(W / 2, H / 2 + 100, 'The cruelest tragedies are the ones that didn\'t need to happen.', {
+        addText(W / 2, H / 2 + 100, 'The cruelest tragedies are the ones\nthat didn\'t need to happen.', {
             fontSize: '20px',
             fill: '#ffffff',
-            fontStyle: 'italic'
-        }, 11000)
+            fontStyle: 'italic',
+            align: 'center'
+        }, 10500)
 
         addText(W / 2, H / 2 + 170, 'The real enemy is still out there.', {
             fontSize: '22px',
             fill: '#ff8800'
-        }, 13000)
+        }, 12500)
 
-        // ─── Level 4 unlock ────────────────────────────
-        this.time.delayedCall(15000, () => {
+        // ─── Level 4 ──────────────────────────────────
+        this.time.delayedCall(14500, () => {
             const levelUp = this.add.text(W / 2, H / 2 + 230,
-                '⚔️ LEVEL 4 UNLOCKED: FIND THE TRUE ENEMY ⚔️', {
+                '⚔️ LEVEL 4: FIND THE TRUE ENEMY ⚔️', {
                 fontSize: '30px',
                 fill: '#ff0000',
                 fontStyle: 'bold'

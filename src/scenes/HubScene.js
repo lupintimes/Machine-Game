@@ -71,11 +71,7 @@ export default class HubScene extends Phaser.Scene {
         this.createLocation(col1, row2, 'Park', '🌿', 0x2d5a27, 'ParkScene', GameState.getFlag('metLuvaza'))
         this.createLocation(col2, row2, 'Enemy Territory', '💀', 0x5a1a1a, 'EnemyScene', GameState.flags.enemyTerritoryUnlocked)
 
-        // ─── Level indicator ───────────
-        this.add.text(W / 2, H - 60, `Current Level: ${GameState.level}`, {
-            fontSize: '22px',
-            fill: '#00ff88'
-        }).setOrigin(0.5).setDepth(1)
+        
     }
 
     createLocation(x, y, label, icon, color, targetScene, unlocked) {

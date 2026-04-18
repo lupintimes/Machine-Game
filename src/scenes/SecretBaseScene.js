@@ -7,7 +7,6 @@ export default class SecretBaseScene extends Phaser.Scene {
     }
 
     preload() {
-        // Add a background image later if you have one
         // this.load.image('secretbase-bg', 'assets/images/secretbase-bg.png')
     }
 
@@ -15,43 +14,41 @@ export default class SecretBaseScene extends Phaser.Scene {
         const W = this.cameras.main.width
         const H = this.cameras.main.height
 
-        // ─── UI ────────────────────────
+        // ─── UI ────────────────────────────────────────
         this.ui = new UI(this)
         this.ui.create()
 
-        // ─── Background (Underground Bunker) ───────────
-        // Dark underground gradient feel
+        // ─── Background ────────────────────────────────
         this.add.rectangle(W / 2, H / 2, W, H, 0x0a0a12).setDepth(-2)
 
-        // Concrete walls
+        // ─── Concrete walls ────────────────────────────
         this.add.rectangle(W / 2, 40, W, 80, 0x1a1a22).setDepth(-1)
         this.add.rectangle(W / 2, H - 40, W, 80, 0x1a1a22).setDepth(-1)
 
-        // Wall pipes (left)
+        // ─── Wall pipes left ───────────────────────────
         for (let i = 0; i < 8; i++) {
             this.add.rectangle(30, 100 + (i * 120), 8, 80, 0x555566).setDepth(0)
         }
 
-        // Wall pipes (right)
+        // ─── Wall pipes right ──────────────────────────
         for (let i = 0; i < 8; i++) {
             this.add.rectangle(W - 30, 100 + (i * 120), 8, 80, 0x555566).setDepth(0)
         }
 
-        // Ceiling lights
+        // ─── Ceiling lights ────────────────────────────
         for (let i = 0; i < 5; i++) {
             const lx = 200 + (i * 380)
             this.add.rectangle(lx, 85, 60, 6, 0xffaa00, 0.3).setDepth(0)
-            // Light glow
             this.add.circle(lx, 130, 80, 0xffaa00, 0.03).setDepth(0)
         }
 
-        // Floor grating
+        // ─── Floor grating ─────────────────────────────
         for (let i = 0; i < 20; i++) {
             const fx = 50 + (i * 100)
             this.add.rectangle(fx, H - 80, 80, 2, 0x333344).setDepth(0)
         }
 
-        // ─── Armor Stand (Center) ──────────────────────
+        // ─── Armor Stand ───────────────────────────────
         this.armorStand = this.add.rectangle(W / 2, H / 2 - 50, 200, 300, 0x222233)
             .setStrokeStyle(2, 0x444466).setDepth(1)
 
@@ -72,49 +69,45 @@ export default class SecretBaseScene extends Phaser.Scene {
 
         this.updateArmorStatus()
 
-        // ─── Workbench (Left) ──────────────────────────
+        // ─── Workbench ─────────────────────────────────
         this.workbench = this.add.rectangle(300, H / 2, 200, 150, 0x3d2b1f)
             .setStrokeStyle(2, 0x5a3d2b).setDepth(1)
-
         this.add.text(300, H / 2 - 50, '🔧', { fontSize: '40px' })
             .setOrigin(0.5).setDepth(2)
-
         this.add.text(300, H / 2 + 20, 'Workbench', {
-            fontSize: '16px',
-            fill: '#ffffff'
+            fontSize: '16px', fill: '#ffffff'
         }).setOrigin(0.5).setDepth(2)
 
-        // ─── Parts Shelf (Right) ───────────────────────
+        // ─── Parts Shelf ───────────────────────────────
         this.partsShelf = this.add.rectangle(W - 300, H / 2, 200, 150, 0x2b2b3d)
             .setStrokeStyle(2, 0x3d3d5a).setDepth(1)
-
         this.add.text(W - 300, H / 2 - 50, '📦', { fontSize: '40px' })
             .setOrigin(0.5).setDepth(2)
-
         this.add.text(W - 300, H / 2 + 20, 'Parts Storage', {
-            fontSize: '16px',
-            fill: '#ffffff'
+            fontSize: '16px', fill: '#ffffff'
         }).setOrigin(0.5).setDepth(2)
 
-        // ─── Ambient particles ─────────────────────────
+        // ─── Dust Particles ────────────────────────────
         this.createDustParticles(W, H)
 
-        // ─── Scene Title ───────────────
+        // ─── Scene Title ───────────────────────────────
         this.add.text(W / 2, 30, '🔐 Secret Underground Base', {
             fontSize: '28px',
             fill: '#ff8800',
             fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(20)
 
-        // ─── Dialog ────────────────────
+        // ─── Dialog ────────────────────────────────────
         this.dialog = new DialogBox(this)
         this.spaceKey = this.input.keyboard.addKey('SPACE')
 
-        // ─── Menu ──────────────────────
+        // ─── State ─────────────────────────────────────
         this.menuActive = false
         this.menuItems = []
+        this.testItems = []
+        this.cutsceneItems = []
 
-        // ─── Intro dialog (first time) ─
+        // ─── Intro dialog ──────────────────────────────
         if (!GameState.getFlag('secretBaseIntroSeen')) {
             this.dialog.show([
                 { name: 'Trader', text: 'Welcome to my secret workshop.' },
@@ -181,7 +174,9 @@ export default class SecretBaseScene extends Phaser.Scene {
     // ─── Update Armor Display ──────────────────────────
     updateArmorStatus() {
         const parts = GameState.armor.parts
-        const hasCore = GameState.armor.hasCore
+        const hasCore = GameState.armor.hasCore ||
+            parts.includes('core') ||
+            GameState.getFlag('boughtCore')
 
         let status = `Core: ${hasCore ? '✅' : '❌'}`
         status += `  |  Servo: ${parts.includes('servo') ? '✅' : '❌'}`
@@ -190,7 +185,6 @@ export default class SecretBaseScene extends Phaser.Scene {
 
         this.armorStatus.setText(status)
 
-        // Change armor color based on completion
         if (parts.length >= 3) {
             this.armorStand.setStrokeStyle(3, 0x00ff88)
             this.armorLabel.setFill('#00ff88')
@@ -200,7 +194,9 @@ export default class SecretBaseScene extends Phaser.Scene {
         }
     }
 
+    // ═══════════════════════════════════════════════════
     // ─── Base Menu ─────────────────────────────────────
+    // ═══════════════════════════════════════════════════
     showBaseMenu() {
         const W = this.cameras.main.width
         const H = this.cameras.main.height
@@ -215,30 +211,42 @@ export default class SecretBaseScene extends Phaser.Scene {
             fontSize: '22px',
             fill: '#ff8800'
         }).setOrigin(0.5).setDepth(51)
+        this.menuItems.push(this.menuTitle)
 
-        // ─── Assemble Armor ────────────
+        // ─── Assemble Armor ────────────────────────────
         const canAssemble = this.getAvailableParts().length > 0
         this.createMenuButton(W / 2 - 400, H - 150, '🔧 Assemble Armor', () => {
             this.closeBaseMenu()
             this.showAssemblyMenu()
         }, !canAssemble)
 
-        // ─── Inspect Armor ─────────────
+        // ─── Inspect Armor ─────────────────────────────
         this.createMenuButton(W / 2 - 100, H - 150, '🔍 Inspect Armor', () => {
             this.closeBaseMenu()
             this.inspectArmor()
         })
 
-        // ─── Talk to Trader ────────────
-        this.createMenuButton(W / 2 + 200, H - 150, '💬 Talk to Trader', () => {
-            this.closeBaseMenu()
-            this.talkToTrader()
-        })
+        // ─── Test Armor OR Talk to Trader ──────────────
+        if (GameState.getFlag('traderCalledArmor') &&
+            GameState.getFlag('armorComplete') &&
+            !GameState.getFlag('armorTested')) {
+            // ─── Show Test Armor button ─────────────────
+            this.createMenuButton(W / 2 + 200, H - 150, '🤖 Test Armor', () => {
+                this.closeBaseMenu()
+                this.testArmor()
+            })
+        } else {
+            // ─── Show Talk to Trader button ─────────────
+            this.createMenuButton(W / 2 + 200, H - 150, '💬 Talk to Trader', () => {
+                this.closeBaseMenu()
+                this.talkToTrader()
+            })
+        }
 
-        // ─── Leave ─────────────────────
+        // ─── Leave ─────────────────────────────────────
         this.createMenuButton(W / 2 + 500, H - 150, '🔙 Leave', () => {
             this.closeBaseMenu()
-            this.scene.start('JunkyardScene')
+            this.leaveBase()
         })
     }
 
@@ -273,11 +281,43 @@ export default class SecretBaseScene extends Phaser.Scene {
         this.menuItems = []
     }
 
+    // ═══════════════════════════════════════════════════
+    // ─── Leave Base ────────────────────────────────────
+    // ═══════════════════════════════════════════════════
+    leaveBase() {
+        if (GameState.getFlag('armorTested') &&
+            GameState.getFlag('reasonForAttackKnown') &&
+            GameState.getFlag('gaveCommsToGF') &&
+            !GameState.getFlag('gfDead')) {
+
+            this.dialog.show([
+                { name: 'You', text: 'It\'s getting late.' },
+                { name: 'You', text: 'I should head home and rest.' },
+                { name: 'You', text: 'Tomorrow I\'ll figure out who really attacked the city.' }
+            ], () => {
+                this.cameras.main.fade(800, 0, 0, 0)
+                this.time.delayedCall(800, () => {
+                    // ─── Goes to CutsceneScene with eveningCutscene key ─
+                    this.scene.start('CutsceneScene', {
+                        key: 'eveningCutscene',
+                        returnScene: 'HubScene'
+                    })
+                })
+            })
+
+        } else {
+            this.cameras.main.fade(500, 0, 0, 0)
+            this.time.delayedCall(500, () => {
+                this.scene.start('JunkyardScene')
+            })
+        }
+    }
+    // ═══════════════════════════════════════════════════
     // ─── Assembly Menu ─────────────────────────────────
+    // ═══════════════════════════════════════════════════
     getAvailableParts() {
         const available = []
 
-        // ─── FIX: Check BOTH hasCore and parts array ──────
         const hasCore = GameState.armor.hasCore ||
             GameState.armor.parts.includes('core') ||
             GameState.getFlag('boughtCore')
@@ -292,14 +332,15 @@ export default class SecretBaseScene extends Phaser.Scene {
                 repairNeeded: 15
             })
         }
-        if (GameState.armor.parts.includes('servo') && !GameState.armor.parts.includes('plating')) {
+        if (GameState.armor.parts.includes('servo') &&
+            !GameState.armor.parts.includes('plating')) {
             available.push({
                 id: 'plating',
                 name: 'Armor Plating',
                 icon: '🛡️',
                 description: 'Heavy duty plating for protection.',
                 cost: 400,
-                repairNeeded: 25
+                repairNeeded: 20
             })
         }
         return available
@@ -325,8 +366,8 @@ export default class SecretBaseScene extends Phaser.Scene {
             fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(52)
 
-        // Current status
-        this.add.text(W / 2, H / 2 - 160, `💰 Money: ${GameState.money}  |  🔧 Repair: ${GameState.skills.repair}`, {
+        this.add.text(W / 2, H / 2 - 160,
+            `💰 Money: ${GameState.money}  |  🔧 Repair: ${GameState.skills.repair}`, {
             fontSize: '18px',
             fill: '#ffffff'
         }).setOrigin(0.5).setDepth(52)
@@ -335,7 +376,6 @@ export default class SecretBaseScene extends Phaser.Scene {
             const msg = GameState.armor.parts.length >= 3
                 ? '✅ Armor is fully assembled!'
                 : '🔒 No parts available yet. Progress further in the story.'
-
             this.add.text(W / 2, H / 2, msg, {
                 fontSize: '22px',
                 fill: '#888888'
@@ -344,34 +384,31 @@ export default class SecretBaseScene extends Phaser.Scene {
 
         available.forEach((part, i) => {
             const y = H / 2 - 60 + (i * 120)
-            const canBuild = GameState.money >= part.cost && GameState.skills.repair >= part.repairNeeded
+            const canBuild = GameState.money >= part.cost &&
+                GameState.skills.repair >= part.repairNeeded
 
-            // Part box
-            const box = this.add.rectangle(W / 2, y, 600, 100, canBuild ? 0x222244 : 0x1a1a22)
+            const box = this.add.rectangle(W / 2, y, 600, 100,
+                canBuild ? 0x222244 : 0x1a1a22)
                 .setStrokeStyle(2, canBuild ? 0x00ff88 : 0x444444)
                 .setDepth(52)
                 .setInteractive({ useHandCursor: canBuild })
 
-            // Icon + name
             this.add.text(W / 2 - 260, y - 20, `${part.icon} ${part.name}`, {
                 fontSize: '22px',
                 fill: canBuild ? '#ffffff' : '#666666',
                 fontStyle: 'bold'
             }).setOrigin(0, 0.5).setDepth(53)
 
-            // Description
             this.add.text(W / 2 - 260, y + 15, part.description, {
                 fontSize: '14px',
                 fill: '#aaaaaa'
             }).setOrigin(0, 0.5).setDepth(53)
 
-            // Cost
             this.add.text(W / 2 + 260, y - 15, `💰 ${part.cost}`, {
                 fontSize: '16px',
                 fill: canBuild ? '#ffaa00' : '#555555'
             }).setOrigin(1, 0.5).setDepth(53)
 
-            // Skill requirement
             this.add.text(W / 2 + 260, y + 15, `🔧 ${part.repairNeeded} repair`, {
                 fontSize: '14px',
                 fill: GameState.skills.repair >= part.repairNeeded ? '#00ff88' : '#ff4444'
@@ -380,15 +417,12 @@ export default class SecretBaseScene extends Phaser.Scene {
             if (canBuild) {
                 box.on('pointerover', () => box.setFillStyle(0x333366))
                 box.on('pointerout', () => box.setFillStyle(0x222244))
-                box.on('pointerdown', () => {
-                    this.buildPart(part)
-                })
+                box.on('pointerdown', () => { this.buildPart(part) })
             }
 
             this.menuItems.push(box)
         })
 
-        // Close
         const close = this.add.text(W / 2, H / 2 + 220, '[ Back ]', {
             fontSize: '18px',
             fill: '#888888'
@@ -401,64 +435,59 @@ export default class SecretBaseScene extends Phaser.Scene {
         this.menuItems.push(close)
     }
 
-    // Replace ONLY the buildPart() method in your existing SecretBaseScene.js
-
+    // ═══════════════════════════════════════════════════
+    // ─── Build Part ────────────────────────────────────
+    // ═══════════════════════════════════════════════════
     buildPart(part) {
-    GameState.spendMoney(part.cost)
-    GameState.addArmorPart(part.id)
-    GameState.addItem({
-        id: part.id,
-        name: part.name,
-        icon: part.icon,
-        description: part.description,
-        quantity: 1
-    })
+        GameState.spendMoney(part.cost)
+        GameState.addArmorPart(part.id)
+        GameState.addItem({
+            id: part.id,
+            name: part.name,
+            icon: part.icon,
+            description: part.description,
+            quantity: 1
+        })
 
-    // ─── Keep flags in sync ────────────────────────────
-    if (part.id === 'servo') {
-        GameState.setFlag('armorServoInstalled')
-    }
-    if (part.id === 'plating') {
-        GameState.setFlag('armorPlatingInstalled')
-    }
+        if (part.id === 'servo') GameState.setFlag('armorServoInstalled')
+        if (part.id === 'plating') GameState.setFlag('armorPlatingInstalled')
 
-    this.closeBaseMenu()
-    this.updateArmorStatus()
-    this.ui.updateStats()
+        this.closeBaseMenu()
+        this.updateArmorStatus()
+        this.ui.updateStats()
 
-    if (GameState.armor.parts.length >= 3) {
-        // ─── Armor complete! ───────────────────────────
-        GameState.setFlag('armorComplete')
-
-        this.dialog.show([
-            { name: 'You',    text: 'The last piece is in place...' },
-            { name: 'You',    text: 'The armor... it\'s complete!' },
-            { name: 'Trader', text: 'I knew you could do it, kid.' },
-            { name: 'Trader', text: 'Look at it. Ancient engineering, brought back to life.' },
-            { name: 'You',    text: 'It feels... right. Like it was made for me.' },
-            { name: 'Trader', text: 'No weapons. Pure protection.' },
-            { name: 'Trader', text: 'Now you\'re ready for what\'s coming.' },
-            { name: '',       text: '🤖 ROBOTIC ARMOR COMPLETED!' }
-        ], () => {
-            // ─── DON'T advance level here ──────────────
-            // Just check if ALL tasks are done
+        if (GameState.armor.parts.length >= 3) {
+            GameState.setFlag('armorComplete')
             GameState.tryAdvanceLevel()
             this.ui.updateStats()
-            this.showArmorCompleteCutscene()
-        })
 
-    } else {
-        this.dialog.show([
-            { name: 'You',    text: `${part.icon} ${part.name} installed!` },
-            { name: 'You',    text: 'The armor is getting stronger.' },
-            { name: 'Trader', text: 'Good work. Keep going.' }
-        ], () => {
-            this.showBaseMenu()
-        })
+            this.dialog.show([
+                { name: 'You', text: 'The last piece is in place...' },
+                { name: 'You', text: 'The armor... it\'s complete!' },
+                { name: 'Trader', text: 'I knew you could do it, kid.' },
+                { name: 'Trader', text: 'Look at it. Ancient engineering, brought back to life.' },
+                { name: 'You', text: 'It feels... right. Like it was made for me.' },
+                { name: 'Trader', text: 'No weapons. Pure protection.' },
+                { name: 'Trader', text: 'Now you\'re ready for what\'s coming.' },
+                { name: '', text: '🤖 ROBOTIC ARMOR COMPLETED!' }
+            ], () => {
+                this.showArmorCompleteCutscene()
+            })
+
+        } else {
+            this.dialog.show([
+                { name: 'You', text: `${part.icon} ${part.name} installed!` },
+                { name: 'You', text: 'The armor is getting stronger.' },
+                { name: 'Trader', text: 'Good work. Keep going.' }
+            ], () => {
+                this.showBaseMenu()
+            })
+        }
     }
-}
 
-    // ─── Add this NEW method to SecretBaseScene ────────────
+    // ═══════════════════════════════════════════════════
+    // ─── Armor Complete Cutscene ───────────────────────
+    // ═══════════════════════════════════════════════════
     showArmorCompleteCutscene() {
         const W = this.cameras.main.width
         const H = this.cameras.main.height
@@ -502,22 +531,17 @@ export default class SecretBaseScene extends Phaser.Scene {
             fontStyle: 'italic'
         }, 3500)
 
-        addText(W / 2, H / 2 + 80, '"The strongest armor is built not for war,\nbut for those we love."', {
+        addText(W / 2, H / 2 + 80,
+            '"The strongest armor is built not for war,\nbut for those we love."', {
             fontSize: '20px',
             fill: '#ff8800',
             fontStyle: 'italic',
             align: 'center'
         }, 5000)
 
-        addText(W / 2, H / 2 + 180, '⭐ LEVEL 3 REACHED ⭐', {
-            fontSize: '36px',
-            fill: '#ffdd00',
-            fontStyle: 'bold'
-        }, 6500)
-
-        // ─── Continue button ──────────────────────────────
-        this.time.delayedCall(8000, () => {
-            const cont = this.add.text(W / 2, H / 2 + 280, '[ Click to continue ]', {
+        // ─── Continue ──────────────────────────────────
+        this.time.delayedCall(7000, () => {
+            const cont = this.add.text(W / 2, H / 2 + 220, '[ Click to continue ]', {
                 fontSize: '22px',
                 fill: '#555555'
             }).setOrigin(0.5).setScrollFactor(0).setDepth(101)
@@ -537,32 +561,233 @@ export default class SecretBaseScene extends Phaser.Scene {
         })
     }
 
+    // ═══════════════════════════════════════════════════
+    // ─── Armor Test ────────────────────────────────────
+    // ═══════════════════════════════════════════════════
+    testArmor() {
+        this.dialog.show([
+            { name: 'Trader', text: 'Alright kid. Step into the frame.' },
+            { name: 'You', text: 'Here goes nothing...' },
+            { name: '', text: '⚙️ *mechanical whirring*' },
+            { name: '', text: '⚙️ *servos engaging*' },
+            { name: '', text: '⚙️ *plating locking into place*' },
+            { name: 'Trader', text: 'How does it feel?' },
+            { name: 'You', text: '...light. Like it weighs nothing.' },
+            { name: 'Trader', text: 'That\'s the servos. They carry the weight for you.' },
+            { name: 'Trader', text: 'Try moving your arms.' }
+        ], () => {
+            this.showTestPhase1()
+        })
+    }
+
+    // ─── Test Phase ────────────────────────────────────
+    showTestPhase1() {
+        const W = this.cameras.main.width
+        const H = this.cameras.main.height
+
+        this.testItems = []
+
+        const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.8)
+            .setScrollFactor(0).setDepth(60)
+        this.testItems.push(overlay)
+
+        const title = this.add.text(W / 2, 100, '🤖 ARMOR TEST: MOVEMENT', {
+            fontSize: '32px',
+            fill: '#00ff88',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(61)
+        this.testItems.push(title)
+
+        const instruction = this.add.text(W / 2, 170, 'Click each test to complete it', {
+            fontSize: '20px',
+            fill: '#aaaaaa'
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(61)
+        this.testItems.push(instruction)
+
+        this.testsCompleted = 0
+        this.totalTests = 4
+
+        const tests = [
+            { label: '💪 Arm Movement', response: '*Arms extend smoothly. Full range of motion.*' },
+            { label: '🦵 Leg Movement', response: '*Legs respond perfectly. Walking feels natural.*' },
+            { label: '🔄 Torso Rotation', response: '*Upper body rotates freely. No resistance.*' },
+            { label: '🛡️ Plating Lock', response: '*All plating segments locked tight. No gaps.*' }
+        ]
+
+        tests.forEach((test, i) => {
+            const y = 280 + (i * 90)
+
+            const btn = this.add.rectangle(W / 2, y, 500, 70, 0x222244)
+                .setStrokeStyle(2, 0x00ff88)
+                .setScrollFactor(0).setDepth(61)
+                .setInteractive({ useHandCursor: true })
+
+            const label = this.add.text(W / 2 - 200, y, `⬜ ${test.label}`, {
+                fontSize: '22px',
+                fill: '#ffffff'
+            }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(62)
+
+            const status = this.add.text(W / 2 + 200, y, 'PENDING', {
+                fontSize: '16px',
+                fill: '#888888'
+            }).setOrigin(1, 0.5).setScrollFactor(0).setDepth(62)
+
+            this.testItems.push(btn, label, status)
+
+            btn.on('pointerover', () => btn.setFillStyle(0x333366))
+            btn.on('pointerout', () => btn.setFillStyle(0x222244))
+            btn.on('pointerdown', () => {
+                btn.setFillStyle(0x224422)
+                btn.setStrokeStyle(2, 0x00ff88)
+                btn.disableInteractive()
+                label.setText(`✅ ${test.label}`)
+                label.setFill('#00ff88')
+                status.setText('PASS')
+                status.setFill('#00ff88')
+
+                this.testsCompleted++
+
+                const responseText = this.add.text(W / 2, y + 25, test.response, {
+                    fontSize: '14px',
+                    fill: '#44ff44',
+                    fontStyle: 'italic'
+                }).setOrigin(0.5).setScrollFactor(0).setDepth(62)
+                this.testItems.push(responseText)
+
+                if (this.testsCompleted >= this.totalTests) {
+                    this.time.delayedCall(1000, () => {
+                        this.testItems.forEach(item => item.destroy())
+                        this.testItems = []
+                        this.showTestComplete()
+                    })
+                }
+            })
+        })
+    }
+
+    // ─── Test Results ──────────────────────────────────
+    showTestComplete() {
+        const W = this.cameras.main.width
+        const H = this.cameras.main.height
+
+        this.testItems = []
+
+        const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.9)
+            .setScrollFactor(0).setDepth(60)
+        this.testItems.push(overlay)
+
+        const addText = (x, y, text, style, delay) => {
+            const t = this.add.text(x, y, text, style)
+                .setOrigin(0.5).setScrollFactor(0).setDepth(61)
+                .setAlpha(0)
+            this.testItems.push(t)
+            this.time.delayedCall(delay, () => {
+                this.tweens.add({ targets: t, alpha: 1, duration: 600 })
+            })
+            return t
+        }
+
+        addText(W / 2, H / 2 - 200, '🤖 TEST RESULTS', {
+            fontSize: '40px', fill: '#00ff88', fontStyle: 'bold'
+        }, 300)
+
+        addText(W / 2, H / 2 - 120, '✅ Arm Movement — PASS', {
+            fontSize: '20px', fill: '#00ff88'
+        }, 800)
+
+        addText(W / 2, H / 2 - 80, '✅ Leg Movement — PASS', {
+            fontSize: '20px', fill: '#00ff88'
+        }, 1200)
+
+        addText(W / 2, H / 2 - 40, '✅ Torso Rotation — PASS', {
+            fontSize: '20px', fill: '#00ff88'
+        }, 1600)
+
+        addText(W / 2, H / 2, '✅ Plating Lock — PASS', {
+            fontSize: '20px', fill: '#00ff88'
+        }, 2000)
+
+        addText(W / 2, H / 2 + 60, 'ALL SYSTEMS OPERATIONAL', {
+            fontSize: '28px', fill: '#ffffff', fontStyle: 'bold'
+        }, 3000)
+
+        addText(W / 2, H / 2 + 110, '"Not a weapon. Protection."', {
+            fontSize: '20px', fill: '#ff8800', fontStyle: 'italic'
+        }, 4000)
+
+        this.time.delayedCall(5000, () => {
+            const cont = this.add.text(W / 2, H / 2 + 200, '[ Continue ]', {
+                fontSize: '22px',
+                fill: '#555555'
+            }).setOrigin(0.5).setScrollFactor(0).setDepth(61)
+                .setAlpha(0)
+                .setInteractive({ useHandCursor: true })
+            this.testItems.push(cont)
+
+            this.tweens.add({ targets: cont, alpha: 1, duration: 600 })
+
+            cont.on('pointerover', () => cont.setStyle({ fill: '#ffffff' }))
+            cont.on('pointerout', () => cont.setStyle({ fill: '#555555' }))
+            cont.on('pointerdown', () => {
+                this.testItems.forEach(item => item.destroy())
+                this.testItems = []
+                this.showPostTestDialog()
+            })
+        })
+    }
+
+    // ─── Post Test Dialog ──────────────────────────────
+    showPostTestDialog() {
+        this.dialog.show([
+            { name: 'Trader', text: 'All tests passed. 100% operational.' },
+            { name: 'Trader', text: 'The armor is yours now kid.' },
+            { name: 'You', text: 'It feels... incredible.' },
+            { name: 'You', text: 'Like I can do anything.' },
+            { name: 'Trader', text: 'You CAN do a lot.' },
+            { name: 'Trader', text: 'But remember what it\'s for.' },
+            { name: 'You', text: 'Protection.' },
+            { name: 'Trader', text: 'Exactly.' },
+            { name: 'Trader', text: 'Now go home. Get some rest.' },
+            { name: 'Trader', text: 'You\'ve earned it.' },
+            { name: 'You', text: 'Thanks. For everything.' },
+            { name: 'Trader', text: 'Don\'t thank me yet.' },
+            { name: 'Trader', text: 'Something tells me the hard part hasn\'t started.' },
+            { name: '', text: '🤖 Armor fully tested and ready!' }
+        ], () => {
+            GameState.setFlag('armorTested')
+            this.updateArmorStatus()
+            this.ui.updateStats()
+            this.showBaseMenu()
+        })
+    }
+
+    // ═══════════════════════════════════════════════════
     // ─── Inspect Armor ─────────────────────────────────
+    // ═══════════════════════════════════════════════════
     inspectArmor() {
         const parts = GameState.armor.parts
         const hasCore = GameState.armor.hasCore ||
             parts.includes('core') ||
             GameState.getFlag('boughtCore')
-        const total = 3
 
-        let lines = [
+        const lines = [
             { name: '', text: '─── ARMOR STATUS ───' },
             { name: 'Core', text: hasCore ? '✅ Installed - Powers the entire suit' : '❌ Missing - Need to buy from Trader' },
             { name: 'Servo', text: parts.includes('servo') ? '✅ Installed - Enables movement' : '❌ Missing - Assemble at workbench' },
             { name: 'Plating', text: parts.includes('plating') ? '✅ Installed - Full protection' : '❌ Missing - Assemble at workbench' },
-            { name: '', text: `Progress: ${parts.length}/${total} parts` }
+            { name: '', text: `Progress: ${parts.length}/3 parts` }
         ]
 
         if (parts.length >= 3) {
             lines.push({ name: '⭐', text: 'The armor is COMPLETE and ready!' })
         }
 
-        this.dialog.show(lines, () => {
-            this.showBaseMenu()
-        })
+        this.dialog.show(lines, () => { this.showBaseMenu() })
     }
 
+    // ═══════════════════════════════════════════════════
     // ─── Talk to Trader ────────────────────────────────
+    // ═══════════════════════════════════════════════════
     talkToTrader() {
         const parts = GameState.armor.parts
 
@@ -572,26 +797,23 @@ export default class SecretBaseScene extends Phaser.Scene {
                 { name: 'Trader', text: 'Next you need servo motors for movement.' },
                 { name: 'Trader', text: 'It\'ll cost you, but it\'s worth it.' },
                 { name: 'You', text: 'I\'ll get to work.' }
-            ], () => {
-                this.showBaseMenu()
-            })
+            ], () => { this.showBaseMenu() })
+
         } else if (parts.length === 1) {
             this.dialog.show([
                 { name: 'Trader', text: 'Servos are in. Nice work.' },
                 { name: 'Trader', text: 'Last thing you need is the plating.' },
                 { name: 'Trader', text: 'Heavy stuff. But it\'ll keep you alive.' },
                 { name: 'You', text: 'Almost there...' }
-            ], () => {
-                this.showBaseMenu()
-            })
+            ], () => { this.showBaseMenu() })
+
         } else if (parts.length >= 2 && parts.length < 3) {
             this.dialog.show([
                 { name: 'Trader', text: 'One more part to go.' },
                 { name: 'Trader', text: 'You\'re close, kid. Real close.' },
                 { name: 'You', text: 'I can feel it coming together.' }
-            ], () => {
-                this.showBaseMenu()
-            })
+            ], () => { this.showBaseMenu() })
+
         } else {
             this.dialog.show([
                 { name: 'Trader', text: 'The armor is complete.' },
@@ -599,9 +821,7 @@ export default class SecretBaseScene extends Phaser.Scene {
                 { name: 'Trader', text: 'The city needs you now more than ever.' },
                 { name: 'You', text: 'I\'m ready.' },
                 { name: 'Trader', text: 'Good. Because what\'s coming won\'t wait.' }
-            ], () => {
-                this.showBaseMenu()
-            })
+            ], () => { this.showBaseMenu() })
         }
     }
 }

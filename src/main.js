@@ -39,7 +39,7 @@ const config = {
         PalaceScene,
         TownCenterScene,
         ParkScene,
-        CutsceneScene, 
+        CutsceneScene,
         Level3PalaceScene,
         WireConnectGame,
         PressureValveGame,

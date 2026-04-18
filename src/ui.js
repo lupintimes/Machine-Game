@@ -626,11 +626,9 @@ export default class UI {
                 { text: '─── Park Cleaner ───', done: false },
                 { text: `Friendship (${GameState.flags.parkCleanerFriendship || 0}/3)`, done: (GameState.flags.parkCleanerFriendship || 0) >= 3 },
                 { text: 'Learn reason for attack', done: GameState.getFlag('reasonForAttackKnown') },
-                { text: '─── The Betrayal ───', done: false },
-                { text: '📡 Overheard transmission', done: GameState.getFlag('traderCalledCleaner') },
-                { text: '👀 Luvaza\'s discovery', done: GameState.getFlag('luvazaVisitedPark') },
-                { text: '📡 Receive Luvaza\'s call', done: GameState.getFlag('gfCalledComms') },
-                { text: '💔 Rush to the Palace', done: GameState.getFlag('gfDead') }
+                { text: '─── The Tragedy ───', done: false },
+                { text: '📡 Trader: Armor ready', done: GameState.getFlag('traderCalledArmor') },
+                { text: '💔 That evening...', done: GameState.getFlag('gfDead') }
             ]
         }
         return [{ text: 'No tasks yet', done: false }]

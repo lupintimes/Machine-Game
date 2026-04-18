@@ -90,6 +90,9 @@ export default class ParkScene extends Phaser.Scene {
         this.menuActive = false
         this.menuItems = []
 
+        // ─── Daily tracking ────────────────────────────
+        this.lastCleanedDay = -1
+
         // ─── Scene Title ───────────────────────────────
         this.add.text(W / 2, 30, '🌿 Park', {
             fontSize: '28px',
@@ -101,30 +104,6 @@ export default class ParkScene extends Phaser.Scene {
             GameState.flags.parkCleanerFriendship = 0
         }
 
-        // ─── Check for comms call trigger ──────────────
-        if (this.shouldTriggerCommsCall()) {
-            this.time.delayedCall(500, () => {
-                this.triggerCommsCall()
-            })
-            return
-        }
-
-        // ─── Check for Luvaza park visit trigger ───────
-        if (this.shouldTriggerLuvazaParkVisit()) {
-            this.time.delayedCall(500, () => {
-                this.triggerLuvazaParkVisit()
-            })
-            return
-        }
-
-        // ─── Check for trader transmission trigger ─────
-        if (this.shouldTriggerTraderTransmission()) {
-            this.time.delayedCall(1000, () => {
-                this.triggerTraderTransmission()
-            })
-            return
-        }
-
         // ─── First time intro ──────────────────────────
         if (!GameState.getFlag('metParkCleaner')) {
             this.dialog.show([
@@ -132,35 +111,6 @@ export default class ParkScene extends Phaser.Scene {
                 { name: '', text: 'But someone is already cleaning it up...' }
             ])
         }
-    }
-
-    // ─── Trigger Condition Checks ──────────────────────
-
-    shouldTriggerTraderTransmission() {
-        return (
-            GameState.getFlag('reasonForAttackKnown') &&
-            GameState.getFlag('armorComplete') &&
-            !GameState.getFlag('traderCalledCleaner') &&
-            GameState.level >= 3
-        )
-    }
-
-    shouldTriggerLuvazaParkVisit() {
-        return (
-            GameState.getFlag('traderCalledCleaner') &&
-            GameState.getFlag('gaveCommsToGF') &&
-            !GameState.getFlag('luvazaVisitedPark') &&
-            GameState.level >= 3
-        )
-    }
-
-    shouldTriggerCommsCall() {
-        return (
-            GameState.getFlag('luvazaVisitedPark') &&
-            GameState.getFlag('gaveCommsToGF') &&
-            !GameState.getFlag('gfCalledComms') &&
-            GameState.level >= 3
-        )
     }
 
     update() {
@@ -221,16 +171,16 @@ export default class ParkScene extends Phaser.Scene {
         if (!GameState.getFlag('metParkCleaner')) {
             this.dialog.show([
                 { name: 'Park Cleaner', text: 'Oh! A visitor! Not many people come to the park these days.' },
-                { name: 'You',          text: 'Understandable. The whole city is in chaos.' },
+                { name: 'You', text: 'Understandable. The whole city is in chaos.' },
                 { name: 'Park Cleaner', text: 'Haha, yeah. But someone has to clean up!' },
                 { name: 'Park Cleaner', text: 'Might as well be me. I love this park.' },
-                { name: 'You',          text: 'You seem very cheerful for someone cleaning up after an attack.' },
+                { name: 'You', text: 'You seem very cheerful for someone cleaning up after an attack.' },
                 { name: 'Park Cleaner', text: 'What can I say? A clean park means a happy city!' },
                 { name: 'Park Cleaner', text: 'Besides, worrying doesn\'t fix anything. Action does!' },
-                { name: 'You',          text: 'Fair enough. I\'m an engineer. I\'m trying to help rebuild.' },
+                { name: 'You', text: 'Fair enough. I\'m an engineer. I\'m trying to help rebuild.' },
                 { name: 'Park Cleaner', text: 'An engineer! Perfect.' },
                 { name: 'Park Cleaner', text: 'Maybe you could help me fix the park fountain sometime?' },
-                { name: 'You',          text: 'Sure. I\'d be happy to.' },
+                { name: 'You', text: 'Sure. I\'d be happy to.' },
                 { name: 'Park Cleaner', text: 'Come back anytime. The park is always open!' }
             ], () => {
                 GameState.setFlag('metParkCleaner')
@@ -241,7 +191,7 @@ export default class ParkScene extends Phaser.Scene {
         }
     }
 
-    // ─── Park Cleaner Menu ─────────────────────────────
+    // ─── Cleaner Menu ──────────────────────────────────
     showCleanerMenu() {
         const W = this.cameras.main.width
         const H = this.cameras.main.height
@@ -279,7 +229,7 @@ export default class ParkScene extends Phaser.Scene {
         })
         btnY += 70
 
-        // 🌿 Help Clean (only if friendship < 3)
+        // 🌿 Help Clean
         if (friendship < 3) {
             this.createMenuButton(W / 2, btnY, '🌿 Help Clean Park', () => {
                 this.closeMenu()
@@ -288,7 +238,7 @@ export default class ParkScene extends Phaser.Scene {
             btnY += 70
         }
 
-        // 📡 Think about comms (hint to go to TownCenter)
+        // 📡 Think about comms
         if (GameState.getFlag('hasCommsDevice') &&
             !GameState.getFlag('gaveCommsToGF') &&
             GameState.getFlag('metLuvaza')) {
@@ -318,7 +268,7 @@ export default class ParkScene extends Phaser.Scene {
         }).setOrigin(0.5).setScrollFactor(0).setDepth(53)
 
         btn.on('pointerover', () => btn.setFillStyle(0x224422))
-        btn.on('pointerout',  () => btn.setFillStyle(0x333355))
+        btn.on('pointerout', () => btn.setFillStyle(0x333355))
         btn.on('pointerdown', onClick)
 
         this.menuItems.push(btn, label)
@@ -338,26 +288,26 @@ export default class ParkScene extends Phaser.Scene {
     cleanerChat() {
         const friendship = GameState.flags.parkCleanerFriendship || 0
 
-        // ─── Level 2 clue (rebuiltBuildings) ───────────
+        // ─── Level 2 clue ──────────────────────────────
         if (GameState.getFlag('rebuiltBuildings') &&
             !GameState.getFlag('parkClueFound') &&
             GameState.level < 3) {
             this.dialog.show([
                 { name: 'Park Cleaner', text: 'Ah! The city engineer! How goes the rebuilding?' },
-                { name: 'You',          text: 'Good. Almost done.' },
+                { name: 'You', text: 'Good. Almost done.' },
                 { name: 'Park Cleaner', text: 'Wonderful! This city deserves to shine again.' },
-                { name: 'You',          text: 'Hey... can I ask you something?' },
+                { name: 'You', text: 'Hey... can I ask you something?' },
                 { name: 'Park Cleaner', text: 'Of course! Anything!' },
-                { name: 'You',          text: 'Do you know anything about the material vaults?' },
+                { name: 'You', text: 'Do you know anything about the material vaults?' },
                 { name: 'Park Cleaner', text: '...' },
                 { name: 'Park Cleaner', text: 'The Veridium vaults? Under the east district?' },
-                { name: 'You',          text: 'How do you know about those?' },
+                { name: 'You', text: 'How do you know about those?' },
                 { name: 'Park Cleaner', text: 'Oh! I uh... I clean the parks near there.' },
                 { name: 'Park Cleaner', text: 'You hear things. Haha!' },
-                { name: 'You',          text: 'The name Veridium... that\'s classified.' },
+                { name: 'You', text: 'The name Veridium... that\'s classified.' },
                 { name: 'Park Cleaner', text: 'Is it? I had no idea. Haha!' },
-                { name: 'You',          text: '(He knew the exact name. Something isn\'t right.)' },
-                { name: '',             text: '📌 Clue found! Keep investigating.' }
+                { name: 'You', text: '(He knew the exact name. Something isn\'t right.)' },
+                { name: '', text: '📌 Clue found! Keep investigating.' }
             ], () => {
                 GameState.setFlag('parkClueFound')
                 this.showCleanerMenu()
@@ -370,9 +320,9 @@ export default class ParkScene extends Phaser.Scene {
             if (friendship === 0) {
                 this.dialog.show([
                     { name: 'Park Cleaner', text: 'You seem different lately.' },
-                    { name: 'You',          text: 'A lot has happened.' },
+                    { name: 'You', text: 'A lot has happened.' },
                     { name: 'Park Cleaner', text: 'Want to talk about it?' },
-                    { name: 'You',          text: 'Maybe another time.' },
+                    { name: 'You', text: 'Maybe another time.' },
                     { name: 'Park Cleaner', text: 'I\'m always here. That\'s what friends are for!' }
                 ], () => {
                     GameState.flags.parkCleanerFriendship = 1
@@ -383,12 +333,12 @@ export default class ParkScene extends Phaser.Scene {
             } else if (friendship === 1) {
                 this.dialog.show([
                     { name: 'Park Cleaner', text: 'You know... I wasn\'t always a park cleaner.' },
-                    { name: 'You',          text: 'Oh? What did you do before?' },
+                    { name: 'You', text: 'Oh? What did you do before?' },
                     { name: 'Park Cleaner', text: 'I was... in the military. Long time ago.' },
                     { name: 'Park Cleaner', text: 'Seen things. Done things.' },
-                    { name: 'You',          text: 'Why become a park cleaner then?' },
+                    { name: 'You', text: 'Why become a park cleaner then?' },
                     { name: 'Park Cleaner', text: 'Sometimes... you just want peace. Haha!' },
-                    { name: 'You',          text: '(Military background... interesting.)' }
+                    { name: 'You', text: '(Military background... interesting.)' }
                 ], () => {
                     GameState.flags.parkCleanerFriendship = 2
                     this.updateFriendshipDisplay()
@@ -399,28 +349,36 @@ export default class ParkScene extends Phaser.Scene {
                 // ─── VERIDIUM REVELATION ───────────────
                 this.dialog.show([
                     { name: 'Park Cleaner', text: 'Can I tell you something? As a friend?' },
-                    { name: 'You',          text: 'Of course.' },
+                    { name: 'You', text: 'Of course.' },
                     { name: 'Park Cleaner', text: 'This city... it\'s sitting on something big.' },
-                    { name: 'You',          text: 'The Veridium.' },
+                    { name: 'You', text: 'The Veridium.' },
                     { name: 'Park Cleaner', text: '... You know about it?' },
-                    { name: 'You',          text: 'I know enough. Tell me more.' },
+                    { name: 'You', text: 'I know enough. Tell me more.' },
                     { name: 'Park Cleaner', text: 'The Veridium can power anything.' },
                     { name: 'Park Cleaner', text: 'Weapons. Shields. Entire cities.' },
                     { name: 'Park Cleaner', text: 'Whoever controls it... controls everything.' },
                     { name: 'Park Cleaner', text: 'That\'s why they came. Not to destroy.' },
                     { name: 'Park Cleaner', text: 'To extract. To take what can\'t be taken publicly.' },
-                    { name: 'You',          text: 'And the King knows this?' },
+                    { name: 'You', text: 'And the King knows this?' },
                     { name: 'Park Cleaner', text: '...' },
                     { name: 'Park Cleaner', text: 'Everyone who matters knows.' },
-                    { name: 'You',          text: '(He knows too much. Way too much.)' },
-                    { name: '',             text: '📌 The reason for the attack: Veridium extraction' }
+                    { name: 'You', text: '(He knows too much. Way too much.)' },
+                    { name: '', text: '📌 The reason for the attack: Veridium extraction' }
                 ], () => {
                     GameState.flags.parkCleanerFriendship = 3
                     GameState.setFlag('reasonForAttackKnown')
                     GameState.setFlag('parkClueFound')
                     this.updateFriendshipDisplay()
                     this.ui.updateStats()
-                    this.showCleanerMenu()
+
+                    // ─── Check if armor is complete ─────
+                    // If yes, trigger trader call + evening cutscene
+                    if (GameState.getFlag('armorComplete') &&
+                        GameState.getFlag('gaveCommsToGF')) {
+                        this.triggerTraderCall()
+                    } else {
+                        this.showCleanerMenu()
+                    }
                 })
 
             } else {
@@ -428,12 +386,12 @@ export default class ParkScene extends Phaser.Scene {
                 const chats = [
                     [
                         { name: 'Park Cleaner', text: 'The park looks better every day.' },
-                        { name: 'You',          text: 'Thanks to you.' },
+                        { name: 'You', text: 'Thanks to you.' },
                         { name: 'Park Cleaner', text: 'Thanks to US. Haha!' }
                     ],
                     [
                         { name: 'Park Cleaner', text: 'You seem ready for something big.' },
-                        { name: 'You',          text: 'Maybe I am.' },
+                        { name: 'You', text: 'Maybe I am.' },
                         { name: 'Park Cleaner', text: 'Good. The world needs people who are ready.' }
                     ]
                 ]
@@ -447,7 +405,7 @@ export default class ParkScene extends Phaser.Scene {
         const chats = [
             [
                 { name: 'Park Cleaner', text: 'Beautiful day isn\'t it?' },
-                { name: 'You',          text: 'The city is half destroyed.' },
+                { name: 'You', text: 'The city is half destroyed.' },
                 { name: 'Park Cleaner', text: 'But the sky is still blue! Haha!' }
             ],
             [
@@ -456,7 +414,7 @@ export default class ParkScene extends Phaser.Scene {
             ],
             [
                 { name: 'Park Cleaner', text: 'I heard you\'re rebuilding the town.' },
-                { name: 'You',          text: 'Trying to.' },
+                { name: 'You', text: 'Trying to.' },
                 { name: 'Park Cleaner', text: 'Keep going. Don\'t let anything stop you.' }
             ]
         ]
@@ -466,7 +424,7 @@ export default class ParkScene extends Phaser.Scene {
 
     // ─── Help Clean ────────────────────────────────────
     helpClean() {
-        if (this.cleanedToday) {
+        if (this.lastCleanedDay === GameState.day) {
             this.dialog.show([
                 { name: 'Park Cleaner', text: 'We\'ve done enough for today!' },
                 { name: 'Park Cleaner', text: 'Come back tomorrow. Haha!' }
@@ -476,14 +434,15 @@ export default class ParkScene extends Phaser.Scene {
 
         this.dialog.show([
             { name: 'Park Cleaner', text: 'Really? You\'ll help? Wonderful!' },
-            { name: 'You',          text: 'What needs doing?' },
+            { name: 'You', text: 'What needs doing?' },
             { name: 'Park Cleaner', text: 'Clear the debris near the fountain.' },
-            { name: 'You',          text: 'On it.' },
-            { name: '',             text: '... some time later ...' },
+            { name: 'You', text: 'On it.' },
+            { name: '', text: '... some time later ...' },
             { name: 'Park Cleaner', text: 'You work fast for an engineer!' },
             { name: 'Park Cleaner', text: 'Here. Take this.' },
-            { name: '',             text: '⚗️ You received an Elixir!' }
+            { name: '', text: '⚗️ You received an Elixir!' }
         ], () => {
+            this.lastCleanedDay = GameState.day
             GameState.addElixir(1)
             GameState.addReputation(10)
             GameState.addItem({
@@ -493,7 +452,6 @@ export default class ParkScene extends Phaser.Scene {
                 description: 'A mysterious liquid found in the park.',
                 quantity: 1
             })
-            this.cleanedToday = true
             this.ui.updateStats()
             this.updateFriendshipDisplay()
             this.showCleanerMenu()
@@ -516,215 +474,281 @@ export default class ParkScene extends Phaser.Scene {
     }
 
     // ═══════════════════════════════════════════════════
-    // ═══ STEP 1: TRADER TRANSMISSION ═══════════════════
-    // After friendship 3 + armor complete
-    // Trader calls Park Cleaner about armor upgrade part
+    // ═══ TRADER CALLS PLAYER ═══════════════════════════
+    // "Your armor is ready to wear!"
+    // Then triggers the evening cutscene
     // ═══════════════════════════════════════════════════
 
-    triggerTraderTransmission() {
+    triggerTraderCall() {
         const W = this.cameras.main.width
         const H = this.cameras.main.height
 
         this.menuActive = true
 
-        this.dialog.show([
-            { name: '',             text: 'You\'re walking through the park when...' },
-            { name: '',             text: '📡 *bzzt* A radio crackle comes from the Park Cleaner\'s pocket.' },
-            { name: 'Park Cleaner', text: 'Oh! Excuse me for a moment.' },
-            { name: '',             text: 'The Park Cleaner steps away and answers.' },
-            { name: '',             text: 'You can only hear bits of the conversation...' },
-            { name: 'Park Cleaner', text: '...yes... I understand...' },
-            { name: 'Park Cleaner', text: '...the Veridium deposits... yes...' },
-            { name: 'Park Cleaner', text: '...I\'ll meet you at the palace tonight...' },
-            { name: 'Park Cleaner', text: '...the King needs to know about the extraction plan...' },
-            { name: '',             text: 'He hangs up and turns back to you.' },
-            { name: 'Park Cleaner', text: 'Sorry about that! Old friend checking in.' },
-            { name: 'Park Cleaner', text: 'Nothing important. Haha!' },
-            { name: 'You',          text: '...' },
-            { name: 'You',          text: '(Veridium... extraction plan... the palace...)' },
-            { name: 'You',          text: '(He\'s meeting someone at the palace tonight.)' },
-            { name: 'You',          text: '(Something is very wrong.)' },
-            { name: '',             text: '📌 The Park Cleaner is meeting someone at the palace tonight.' },
-            { name: '',             text: '📌 This could be connected to the attack.' }
-        ], () => {
-            GameState.setFlag('traderCalledCleaner')
-            this.menuActive = false
-            this.ui.updateStats()
-
-            // ─── If Luvaza has comms, next event triggers ─
-            if (GameState.getFlag('gaveCommsToGF')) {
-                this.dialog.show([
-                    { name: 'You', text: '(Luvaza is at the palace sometimes...)' },
-                    { name: 'You', text: '(I hope she doesn\'t run into anything...)' },
-                    { name: 'You', text: '(I should check on her soon.)' }
-                ], () => {
-                    this.showCleanerMenu()
-                })
-            } else {
-                this.showCleanerMenu()
-            }
-        })
-    }
-
-    // ═══════════════════════════════════════════════════
-    // ═══ STEP 2: LUVAZA VISITS PARK ════════════════════
-    // She comes to the park, sees King + Cleaner talking
-    // She MISHEARS their conversation
-    // ═══════════════════════════════════════════════════
-
-    triggerLuvazaParkVisit() {
-        const W = this.cameras.main.width
-        const H = this.cameras.main.height
-
-        this.menuActive = true
-
-        // ─── Dark overlay for cutscene feel ────────────
-        const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.85)
+        // ─── Transmission effect ───────────────────────
+        const staticOverlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.8)
             .setScrollFactor(0).setDepth(90)
 
-        const sceneLabel = this.add.text(W / 2, 80, '🌙 Later that evening...', {
-            fontSize: '28px',
-            fill: '#4444aa',
-            fontStyle: 'italic'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(91)
-
-        this.time.delayedCall(2000, () => {
-            overlay.destroy()
-            sceneLabel.destroy()
-
-            this.dialog.show([
-                { name: '',      text: '── Meanwhile, at the Palace Garden ──' },
-                { name: '',      text: 'Luvaza was walking through the palace gardens.' },
-                { name: '',      text: 'She heard voices near the old fountain.' },
-                { name: '',      text: 'She recognized her father\'s voice...' },
-                { name: '',      text: '...and someone else.' },
-                { name: '',      text: 'She hid behind the hedges and listened.' },
-                { name: '',      text: '── What she heard ──' },
-                { name: 'King',         text: '...the Veridium extraction must proceed.' },
-                { name: 'Park Cleaner', text: '...the boy is getting too close.' },
-                { name: 'King',         text: '...we need to move faster.' },
-                { name: 'Park Cleaner', text: '...if he finds out about our plan...' },
-                { name: 'King',         text: '...then we eliminate the threat.' },
-                { name: 'Park Cleaner', text: '...understood. I\'ll handle it.' },
-                { name: '',      text: '── What they were ACTUALLY discussing ──' },
-                { name: '',      text: 'The King was discussing PROTECTING the Veridium.' },
-                { name: '',      text: 'The "boy getting close" was the enemy spy.' },
-                { name: '',      text: '"Eliminate the threat" meant stopping the ENEMY.' },
-                { name: '',      text: 'The Park Cleaner was actually a royal agent.' },
-                { name: '',      text: 'He was investigating who attacked the city.' },
-                { name: '',      text: '── But Luvaza didn\'t hear the full context ──' },
-                { name: '',      text: 'She thought "the boy" meant YOU.' },
-                { name: '',      text: 'She thought her father planned the attack.' },
-                { name: '',      text: 'She thought the Park Cleaner was the enemy.' },
-                { name: '',      text: 'She was WRONG.' },
-                { name: '',      text: 'But she didn\'t know that.' },
-                { name: '',      text: '...' },
-                { name: 'Luvaza', text: '(whispering) No... father... how could you...' },
-                { name: 'Luvaza', text: '(whispering) I have to warn him...' },
-                { name: 'Luvaza', text: '(whispering) I have to use the comms device...' },
-                { name: '',       text: 'Luvaza ran from the garden.' },
-                { name: '',       text: 'She didn\'t see the King\'s worried face.' },
-                { name: '',       text: 'She didn\'t hear what came next.' },
-                { name: 'King',         text: '...did you hear something?' },
-                { name: 'Park Cleaner', text: '...probably just the wind.' },
-                { name: 'King',         text: '...I hope the boy is safe. He\'s done so much for this city.' },
-                { name: 'Park Cleaner', text: '...I\'ll make sure nothing happens to him.' },
-                { name: '',      text: '── Luvaza grabs the comms device ──' }
-            ], () => {
-                GameState.setFlag('luvazaVisitedPark')
-                GameState.setFlag('gfHeardConversation')
-                this.menuActive = false
-                this.ui.updateStats()
-
-                // ─── Trigger comms call immediately ────
-                this.time.delayedCall(1000, () => {
-                    this.triggerCommsCall()
-                })
-            })
-        })
-    }
-
-    // ═══════════════════════════════════════════════════
-    // ═══ STEP 3: COMMS CALL FROM LUVAZA ════════════════
-    // She calls the player — panicked, misunderstanding
-    // ═══════════════════════════════════════════════════
-
-    triggerCommsCall() {
-        const W = this.cameras.main.width
-        const H = this.cameras.main.height
-
-        this.menuActive = true
-
-        // ─── Static effect ─────────────────────────────
-        const staticOverlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.85)
-            .setScrollFactor(0).setDepth(100)
-
-        const signalText = this.add.text(W / 2, H / 2 - 60, '📡 INCOMING TRANSMISSION', {
-            fontSize: '36px',
-            fill: '#00ff88',
+        const signalText = this.add.text(W / 2, H / 2, '📡 INCOMING: TRADER', {
+            fontSize: '32px',
+            fill: '#ff8800',
             fontStyle: 'bold'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(101)
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(91)
 
         this.tweens.add({
             targets: signalText,
-            alpha: { from: 1, to: 0.2 },
-            duration: 150,
+            alpha: { from: 1, to: 0.3 },
+            duration: 200,
             yoyo: true,
-            repeat: 7,
+            repeat: 4,
             onComplete: () => {
                 signalText.destroy()
                 staticOverlay.destroy()
 
                 this.dialog.show([
-                    { name: '',       text: '📡 *static*... *crackle*...' },
-                    { name: 'Luvaza', text: '...can you hear me?!' },
-                    { name: 'You',    text: 'Luvaza?! What\'s wrong?' },
-                    { name: 'Luvaza', text: 'I\'m at the palace!' },
-                    { name: 'Luvaza', text: 'I heard my father talking to the park cleaner!' },
-                    { name: 'You',    text: 'What? What did you hear?' },
-                    { name: 'Luvaza', text: 'They\'re planning something! The Veridium!' },
-                    { name: 'Luvaza', text: 'My father... he said to "eliminate the threat"!' },
-                    { name: 'Luvaza', text: 'I think he means YOU!' },
-                    { name: 'You',    text: 'Luvaza, calm down. What exactly—' },
-                    { name: 'Luvaza', text: 'NO! You don\'t understand!' },
-                    { name: 'Luvaza', text: 'He planned the attack! The park cleaner is working with him!' },
-                    { name: 'Luvaza', text: 'I\'m going to confront him!' },
-                    { name: 'You',    text: 'WAIT! Don\'t do anything! Let me—' },
-                    { name: 'Luvaza', text: 'I can\'t just stand by while my father—' },
-                    { name: 'Luvaza', text: 'I have to know the truth!' },
-                    { name: 'You',    text: 'Luvaza PLEASE! You might be wrong! Just WAIT!' },
-                    { name: 'Luvaza', text: 'I\'m going to the throne room. Right now.' },
-                    { name: 'You',    text: 'NO! DON\'T!' },
-                    { name: 'Luvaza', text: 'I\'m sorry. I have to do this.' },
-                    { name: 'Luvaza', text: 'I love y—' },
-                    { name: '',       text: '📡 *she hangs up*' },
-                    { name: '',       text: '...' },
-                    { name: 'You',    text: 'LUVAZA!' },
-                    { name: 'You',    text: 'She\'s going to confront the King...' },
-                    { name: 'You',    text: 'Based on what she THINKS she heard...' },
-                    { name: 'You',    text: 'If the King is innocent and she accuses him...' },
-                    { name: 'You',    text: 'Or if he\'s NOT innocent...' },
-                    { name: 'You',    text: 'Either way she\'s in danger.' },
-                    { name: 'You',    text: 'I have to get there NOW.' },
-                    { name: '',       text: '⚠️ RUSH TO THE PALACE' }
+                    { name: '', text: '📡 *bzzt*' },
+                    { name: 'Trader', text: 'Kid! Can you hear me?' },
+                    { name: 'You', text: 'Trader? What is it?' },
+                    { name: 'Trader', text: 'I\'ve been running diagnostics on your armor.' },
+                    { name: 'Trader', text: 'Everything checks out.' },
+                    { name: 'Trader', text: 'Core. Servos. Plating. All systems green.' },
+                    { name: 'You', text: 'So it\'s...' },
+                    { name: 'Trader', text: 'Ready to wear. Fully operational.' },
+                    { name: 'Trader', text: 'But I need you to come test it.' },
+                    { name: 'Trader', text: 'Full movement test. Stress test. The works.' },
+                    { name: 'Trader', text: 'Come to the base. Now if you can.' },
+                    { name: 'You', text: 'On my way.' },
+                    { name: 'Trader', text: 'Good. And kid...' },
+                    { name: 'Trader', text: 'It\'s not a weapon. Remember that.' },
+                    { name: '', text: '📡 *transmission ends*' },
+                    { name: '', text: '🤖 Head to the Secret Base to test the armor!' }
                 ], () => {
-                    GameState.setFlag('gfCalledComms')
-                    this.showRushScreen()
+                    GameState.setFlag('traderCalledArmor')
+                    this.menuActive = false
+                    this.ui.updateStats()
+                    this.showCleanerMenu()
                 })
             }
         })
     }
 
-    // ─── Rush to Palace ────────────────────────────────
+    // ═══════════════════════════════════════════════════
+    // ═══ EVENING CUTSCENE ══════════════════════════════
+    // Luvaza sees King + Park Cleaner at palace
+    // She mishears their conversation
+    // She confronts them — accident happens
+    // Player gets the call too late
+    // ═══════════════════════════════════════════════════
+
+    triggerEveningCutscene() {
+        const W = this.cameras.main.width
+        const H = this.cameras.main.height
+
+        this.menuActive = true
+
+        // ─── Fade to black ─────────────────────────────
+        const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0)
+            .setScrollFactor(0).setDepth(100)
+
+        this.tweens.add({
+            targets: overlay,
+            alpha: 0.95,
+            duration: 1500,
+            onComplete: () => {
+
+                // ─── Evening label ─────────────────────
+                const eveningText = this.add.text(W / 2, H / 2, '🌙 Later that evening...', {
+                    fontSize: '36px',
+                    fill: '#4444aa',
+                    fontStyle: 'italic'
+                }).setOrigin(0.5).setScrollFactor(0).setDepth(101).setAlpha(0)
+
+                this.tweens.add({
+                    targets: eveningText,
+                    alpha: 1,
+                    duration: 1000,
+                    onComplete: () => {
+                        this.time.delayedCall(2000, () => {
+                            this.tweens.add({
+                                targets: eveningText,
+                                alpha: 0,
+                                duration: 800,
+                                onComplete: () => {
+                                    eveningText.destroy()
+                                    this.showLuvazaDiscovery(overlay)
+                                }
+                            })
+                        })
+                    }
+                })
+            }
+        })
+    }
+
+    // ─── Luvaza's Discovery ────────────────────────────
+    showLuvazaDiscovery(overlay) {
+        this.dialog.show([
+            { name: '', text: '── Palace Gardens ──' },
+            { name: '', text: 'Luvaza was walking through the palace grounds.' },
+            { name: '', text: 'She often came here to think.' },
+            { name: '', text: 'Tonight the gardens were quiet.' },
+            { name: '', text: 'Too quiet.' },
+            { name: '', text: '...' },
+            { name: '', text: 'Then she heard voices.' },
+            { name: '', text: 'Her father\'s voice. And someone else.' },
+            { name: '', text: 'Coming from behind the old fountain.' },
+            { name: '', text: 'She crept closer and hid behind the hedges.' },
+            { name: '', text: '' },
+            { name: '', text: '── What she heard ──' },
+            { name: 'King', text: '...the Veridium extraction must be stopped.' },
+            { name: 'Park Cleaner', text: '...the boy has been investigating...' },
+            { name: 'King', text: '...we need to act before the enemy does.' },
+            { name: 'Park Cleaner', text: '...if the enemy finds him first...' },
+            { name: 'King', text: '...then we eliminate the threat. Whatever it takes.' },
+            { name: 'Park Cleaner', text: '...understood. I\'ll handle the situation.' },
+            { name: '', text: '' },
+            { name: '', text: '── What they ACTUALLY meant ──' },
+            { name: '', text: 'The King wanted to PROTECT the Veridium from enemies.' },
+            { name: '', text: '"The boy" who\'s been investigating = the ENEMY spy.' },
+            { name: '', text: '"Eliminate the threat" = stop the ENEMY\'s plan.' },
+            { name: '', text: 'The Park Cleaner was a ROYAL AGENT investigating the attack.' },
+            { name: '', text: '' },
+            { name: '', text: '── But Luvaza only heard fragments ──' },
+            { name: '', text: 'She heard "the boy" and thought they meant YOU.' },
+            { name: '', text: 'She heard "eliminate" and thought they meant KILL.' },
+            { name: '', text: 'She heard "Veridium extraction" and thought THEY planned it.' },
+            { name: '', text: '' },
+            { name: '', text: 'She was wrong about everything.' },
+            { name: '', text: 'But she didn\'t know that.' },
+            { name: '', text: '' },
+            { name: 'Luvaza', text: '(whispering) No... father... you can\'t...' },
+            { name: 'Luvaza', text: '(whispering) He\'s going to kill him...' },
+            { name: 'Luvaza', text: '(whispering) I have to stop this. I have to confront him.' },
+            { name: '', text: '' },
+            { name: '', text: 'Luvaza didn\'t run away.' },
+            { name: '', text: 'She didn\'t call for help.' },
+            { name: '', text: 'She didn\'t use the comms device.' },
+            { name: '', text: '' },
+            { name: '', text: 'She walked straight into the throne room.' }
+        ], () => {
+            this.showConfrontationCutscene(overlay)
+        })
+    }
+
+    // ─── Confrontation + Death ─────────────────────────
+    showConfrontationCutscene(overlay) {
+        this.dialog.show([
+            { name: '', text: '── The Throne Room ──' },
+            { name: '', text: 'The King and the Park Cleaner were standing by the map table.' },
+            { name: '', text: 'Planning. Strategizing.' },
+            { name: '', text: 'Luvaza burst through the doors.' },
+            { name: '', text: '' },
+            { name: 'Luvaza', text: 'FATHER!' },
+            { name: 'King', text: 'Luvaza?! What are you—' },
+            { name: 'Luvaza', text: 'I HEARD YOU!' },
+            { name: 'Luvaza', text: 'I heard everything in the garden!' },
+            { name: 'Luvaza', text: 'You\'re going to kill him! The engineer!' },
+            { name: 'King', text: 'What? No! Luvaza, you don\'t understand—' },
+            { name: 'Luvaza', text: 'DON\'T LIE TO ME!' },
+            { name: 'Luvaza', text: 'You said "eliminate the threat"!' },
+            { name: 'Luvaza', text: 'You were talking about the boy I LOVE!' },
+            { name: 'King', text: 'No! We were talking about the ENEMY spy!' },
+            { name: 'Luvaza', text: 'And the Veridium! You planned the attack!' },
+            { name: 'King', text: 'I\'m trying to PROTECT the Veridium!' },
+            { name: 'Park Cleaner', text: 'Princess, please. I\'m a royal agent. I\'m on your side—' },
+            { name: 'Luvaza', text: 'YOU! You\'re the one he said would "handle it"!' },
+            { name: 'Luvaza', text: 'I won\'t let you hurt him!' },
+            { name: '', text: '' },
+            { name: '', text: 'Luvaza lunged toward the Park Cleaner.' },
+            { name: '', text: 'The royal guards reacted on instinct.' },
+            { name: '', text: 'One of them grabbed her arm.' },
+            { name: '', text: 'She pulled free—' },
+            { name: '', text: 'Lost her balance—' },
+            { name: '', text: 'And fell.' },
+            { name: '', text: '' },
+            { name: '', text: 'Her head hit the marble floor.' },
+            { name: '', text: '' },
+            { name: '', text: 'The sound echoed through the empty halls.' },
+            { name: '', text: '' },
+            { name: '', text: '...' },
+            { name: '', text: '' },
+            { name: '', text: 'Silence.' },
+            { name: '', text: '' },
+            { name: 'King', text: '...Luvaza?' },
+            { name: 'King', text: 'LUVAZA!' },
+            { name: '', text: '' },
+            { name: '', text: 'The King rushed to her side.' },
+            { name: '', text: 'The Park Cleaner stood frozen.' },
+            { name: '', text: 'The guards looked at their hands in horror.' },
+            { name: '', text: '' },
+            { name: '', text: 'She wasn\'t moving.' },
+            { name: '', text: '' },
+            { name: 'King', text: 'No... no no no... my little girl...' },
+            { name: 'Park Cleaner', text: '...she... she wasn\'t supposed to...' },
+            { name: '', text: '' },
+            { name: '', text: 'The comms device in her pocket lit up.' },
+            { name: '', text: 'One last automatic signal sent to the only contact.' },
+            { name: '', text: '' },
+            { name: '', text: 'Your name on the screen.' }
+        ], () => {
+            GameState.setFlag('gfDead')
+            GameState.setFlag('luvazaVisitedPark')
+            GameState.setFlag('gfHeardConversation')
+
+            // ─── Now trigger comms alert ──────────────
+            this.showCommsAlert(overlay)
+        })
+    }
+
+    // ─── Comms Alert ───────────────────────────────────
+    showCommsAlert(overlay) {
+        const W = this.cameras.main.width
+        const H = this.cameras.main.height
+
+        this.dialog.show([
+            { name: '', text: '' },
+            { name: '', text: '── Back at your workshop ──' },
+            { name: '', text: '' },
+            { name: '', text: 'You were calibrating the armor when...' },
+            { name: '', text: '' },
+            { name: '', text: '📡 *BUZZ BUZZ BUZZ*' },
+            { name: '', text: '' },
+            { name: '', text: 'The comms channel crackles.' },
+            { name: '', text: 'But there\'s no voice.' },
+            { name: '', text: 'Just static.' },
+            { name: '', text: 'And a location ping.' },
+            { name: '', text: '' },
+            { name: '', text: '📡 LOCATION: ROYAL PALACE' },
+            { name: '', text: '📡 SIGNAL: LUVAZA\'S DEVICE' },
+            { name: '', text: '📡 STATUS: EMERGENCY' },
+            { name: '', text: '' },
+            { name: 'You', text: '...' },
+            { name: 'You', text: 'Luvaza.' },
+            { name: 'You', text: 'Something happened.' },
+            { name: 'You', text: 'Something bad.' },
+            { name: '', text: '' },
+            { name: 'You', text: 'I have to get to the palace. NOW.' },
+            { name: '', text: '' },
+            { name: '', text: '⚠️ RUSH TO THE PALACE' }
+        ], () => {
+            GameState.setFlag('gfCalledComms')
+            GameState.setFlag('conspiracyRevealed')
+
+            if (overlay) overlay.destroy()
+            this.showRushScreen()
+        })
+    }
+
+    // ─── Rush Screen ───────────────────────────────────
     showRushScreen() {
         const W = this.cameras.main.width
         const H = this.cameras.main.height
 
         this.rushItems = []
 
-        const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.95)
+        const rushOverlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.95)
             .setScrollFactor(0).setDepth(100)
-        this.rushItems.push(overlay)
+        this.rushItems.push(rushOverlay)
 
         const addText = (x, y, text, style) => {
             const t = this.add.text(x, y, text, style)
@@ -733,7 +757,7 @@ export default class ParkScene extends Phaser.Scene {
             return t
         }
 
-        const urgentText = addText(W / 2, H / 2 - 80, '⚠️ LUVAZA IS IN DANGER', {
+        const urgentText = addText(W / 2, H / 2 - 80, '⚠️ EMERGENCY SIGNAL', {
             fontSize: '48px',
             fill: '#ff0000',
             fontStyle: 'bold'
@@ -747,18 +771,23 @@ export default class ParkScene extends Phaser.Scene {
             repeat: -1
         })
 
-        addText(W / 2, H / 2, 'She\'s confronting the King based on a misunderstanding.', {
+        addText(W / 2, H / 2, 'Luvaza\'s comms device sent an emergency ping.', {
             fontSize: '22px',
             fill: '#ffffff'
         })
 
-        addText(W / 2, H / 2 + 40, 'You must stop her before it\'s too late.', {
+        addText(W / 2, H / 2 + 40, 'Location: Royal Palace. No voice. Just static.', {
+            fontSize: '20px',
+            fill: '#ff8888'
+        })
+
+        addText(W / 2, H / 2 + 80, 'Something is very wrong.', {
             fontSize: '22px',
             fill: '#ff4444',
             fontStyle: 'italic'
         })
 
-        const goBtn = addText(W / 2, H / 2 + 160, '[ RUSH TO PALACE ]', {
+        const goBtn = addText(W / 2, H / 2 + 170, '[ RUSH TO PALACE ]', {
             fontSize: '30px',
             fill: '#ff0000',
             fontStyle: 'bold'
@@ -766,7 +795,7 @@ export default class ParkScene extends Phaser.Scene {
         goBtn.setInteractive({ useHandCursor: true })
 
         goBtn.on('pointerover', () => goBtn.setStyle({ fill: '#ffffff' }))
-        goBtn.on('pointerout',  () => goBtn.setStyle({ fill: '#ff0000' }))
+        goBtn.on('pointerout', () => goBtn.setStyle({ fill: '#ff0000' }))
         goBtn.on('pointerdown', () => {
             this.rushItems.forEach(item => {
                 if (item && item.active) item.destroy()

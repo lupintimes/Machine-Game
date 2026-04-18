@@ -18,6 +18,9 @@ export default class WorkshopScene extends Phaser.Scene {
         this.ui = new UI(this)
         this.ui.create()
 
+        // ─── Shutdown cleanup ──────────────────────────
+        this.events.on('shutdown', () => { if (this.ui) this.ui.destroy() })
+
         // ─── Background ────────────────────────────────
         this.bg = this.add.image(0, 0, 'workshop-bg')
         this.bg.setOrigin(0, 0)
@@ -108,17 +111,14 @@ export default class WorkshopScene extends Phaser.Scene {
         // ─── Dialog ────────────────────────────────────
         this.dialog = new DialogBox(this)
 
-        // ─── State flags ───────────────────────────────
+        // ─── State ─────────────────────────────────────
         this.menuActive = false
         this.menuItems = []
         this.nearStation = null
-
-        // ─── One-time trigger guards ───────────────────
         this.truthTriggered = false
         this.electricalJustUnlocked = false
         this.traderHintShown = false
 
-        // ─── If truth already known skip future checks ─
         if (GameState.getFlag('learnedTruth')) {
             this.truthTriggered = true
         }
@@ -194,7 +194,7 @@ export default class WorkshopScene extends Phaser.Scene {
             return
         }
 
-        // ─── Truth unlock check (called once per frame) ─
+        // ─── Truth unlock check ────────────────────────
         this.checkTruthUnlock()
 
         // ─── Station proximity ─────────────────────────
@@ -230,31 +230,110 @@ export default class WorkshopScene extends Phaser.Scene {
             this.onInteract(this.nearStation)
         }
 
+
         this.ui.updateStats()
     }
 
-    // ───────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════
+    // ─── Can Do Work (night check) ─────────────────────
+    // ═══════════════════════════════════════════════════
+    canDoWork() {
+        if (GameState.timeOfDay === 'night') {
+            this.dialog.show([
+                { name: 'You', text: 'It\'s too late to work...' },
+                { name: 'You', text: 'I should get some rest.' },
+                { name: '', text: '😴 Come back in the morning.' }
+            ])
+            return false
+        }
+        return true
+    }
+
+    // ═══════════════════════════════════════════════════
+    // ─── Advance Work Time ─────────────────────────────
+    // ═══════════════════════════════════════════════════
+    advanceWorkTime() {
+        GameState.advanceTime()
+        this.ui.updateStats()
+        this.ui.showTimeTransition()
+    }
+
+    // ═══════════════════════════════════════════════════
+    // ─── On Interact ───────────────────────────────────
+    // ═══════════════════════════════════════════════════
+    onInteract(station) {
+        if (station.locked) {
+            this.dialog.show([
+                { name: 'You', text: '🔒 I need more repair skill to work on this.' }
+            ])
+            return
+        }
+
+        if (station.cooldown) {
+            this.dialog.show([
+                { name: 'You', text: 'I just worked on this. Let me rest a bit.' }
+            ])
+            return
+        }
+
+        // ─── Hardware Bench ────────────────────────────
+        if (station.name === 'Hardware Bench') {
+            if (!this.canDoWork()) return
+            this.advanceWorkTime()
+            this.scene.pause('WorkshopScene')
+            this.scene.launch('PressureValveGame')
+            station.cooldown = true
+            this.time.delayedCall(5000, () => { station.cooldown = false })
+        }
+
+        // ─── Electrical Bench ──────────────────────────
+        if (station.name === 'Electrical Bench') {
+            if (!this.canDoWork()) return
+            this.advanceWorkTime()
+            this.scene.pause('WorkshopScene')
+            this.scene.launch('WireConnectGame')
+            station.cooldown = true
+            this.time.delayedCall(5000, () => { station.cooldown = false })
+        }
+
+        // ─── Magical Bench (NIGHT ONLY) ────────────────
+        if (station.name === 'Magical Bench') {
+            if (GameState.timeOfDay !== 'night') {
+                this.dialog.show([
+                    { name: 'You', text: 'The magical bench needs darkness to work...' },
+                    { name: 'You', text: 'Ancient energy only flows at night.' },
+                    { name: '', text: '🌙 Come back at night to use this bench.' }
+                ])
+                return
+            }
+
+            if (GameState.level >= 2) {
+                this.showMagicalBenchMenu(station)
+            } else {
+                this.scene.pause('WorkshopScene')
+                this.scene.launch('EnergyCalibrationGame')
+                station.cooldown = true
+                this.time.delayedCall(5000, () => { station.cooldown = false })
+            }
+        }
+    }
+
+    // ═══════════════════════════════════════════════════
     // ─── Truth Unlock Check ────────────────────────────
-    // ✅ Exits immediately if already triggered
-    // ✅ Sets researchClueFound ONCE with guard
-    // ✅ Only fires cutscene once
-    // ───────────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════
     checkTruthUnlock() {
-        // ─── Already done - exit immediately ───────────
         if (this.truthTriggered) return
         if (GameState.getFlag('learnedTruth')) {
             this.truthTriggered = true
             return
         }
 
-        // ─── Set research clue ONCE when >= 30 ─────────
         if (GameState.skills.research >= 30 &&
             !GameState.getFlag('researchClueFound')) {
             GameState.setFlag('researchClueFound')
             console.log('🔬 Research clue unlocked!')
         }
 
-        // ─── Check all 4 clues ─────────────────────────
         const allClues =
             GameState.getFlag('researchClueFound') &&
             GameState.getFlag('luvazaClueFound') &&
@@ -263,7 +342,6 @@ export default class WorkshopScene extends Phaser.Scene {
 
         if (!allClues) return
 
-        // ─── All clues found - trigger cutscene ────────
         this.truthTriggered = true
         console.log('🎬 All clues found! Starting cutscene...')
 
@@ -280,7 +358,9 @@ export default class WorkshopScene extends Phaser.Scene {
         })
     }
 
-    // ─── On Interact ───────────────────────────────────
+    // ═══════════════════════════════════════════════════
+    // ─── Magical Bench Menu ────────────────────────────
+    // ═══════════════════════════════════════════════════
     onInteract(station) {
         if (station.locked) {
             this.dialog.show([
@@ -296,21 +376,37 @@ export default class WorkshopScene extends Phaser.Scene {
             return
         }
 
+        // ─── Hardware Bench ────────────────────────────
         if (station.name === 'Hardware Bench') {
+            if (!this.canDoWork()) return
+            this.advanceWorkTime()
             this.scene.pause('WorkshopScene')
             this.scene.launch('PressureValveGame')
             station.cooldown = true
             this.time.delayedCall(5000, () => { station.cooldown = false })
         }
 
+        // ─── Electrical Bench ──────────────────────────
         if (station.name === 'Electrical Bench') {
+            if (!this.canDoWork()) return
+            this.advanceWorkTime()
             this.scene.pause('WorkshopScene')
             this.scene.launch('WireConnectGame')
             station.cooldown = true
             this.time.delayedCall(5000, () => { station.cooldown = false })
         }
 
+        // ─── Magical Bench (NIGHT ONLY) ────────────────
         if (station.name === 'Magical Bench') {
+            if (GameState.timeOfDay !== 'night') {
+                this.dialog.show([
+                    { name: 'You', text: 'The magical bench needs darkness to work...' },
+                    { name: 'You', text: 'Ancient energy only flows at night.' },
+                    { name: '', text: '🌙 Come back at night to use this bench.' }
+                ])
+                return
+            }
+
             if (GameState.level >= 2) {
                 this.showMagicalBenchMenu(station)
             } else {
@@ -320,87 +416,6 @@ export default class WorkshopScene extends Phaser.Scene {
                 this.time.delayedCall(5000, () => { station.cooldown = false })
             }
         }
-    }
-
-    // ─── Magical Bench Menu ────────────────────────────
-    showMagicalBenchMenu(station) {
-        const W = this.cameras.main.width
-        const H = this.cameras.main.height
-
-        this.menuActive = true
-        this.menuItems = []
-
-        this.menuOverlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.7)
-            .setScrollFactor(0).setDepth(50)
-
-        this.menuPanel = this.add.rectangle(W / 2, H / 2, 600, 500, 0x1a1a2e)
-            .setStrokeStyle(3, 0x9b59b6).setScrollFactor(0).setDepth(51)
-
-        this.menuTitle = this.add.text(W / 2, H / 2 - 210, '🔮 Magical Bench', {
-            fontSize: '28px',
-            fill: '#9b59b6',
-            fontStyle: 'bold'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(52)
-
-        this.menuStats = this.add.text(W / 2, H / 2 - 160,
-            `🔬 Research: ${GameState.skills.research}/30   ⚗️ Elixir: ${GameState.elixir}`, {
-            fontSize: '18px',
-            fill: '#aaaaaa'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(52)
-
-        // ─── Energy Calibration ────────────────────────
-        this.createBenchButton(
-            W / 2, H / 2 - 70,
-            '⚡ Energy Calibration',
-            'Earn elixir + research skill',
-            () => {
-                this.closeMagicalMenu()
-                station.cooldown = true
-                this.time.delayedCall(5000, () => { station.cooldown = false })
-                this.scene.pause('WorkshopScene')
-                this.scene.launch('EnergyCalibrationGame')
-            }
-        )
-
-        // ─── Research ─────────────────────────────────
-        const researchDone = GameState.skills.research >= 30
-        const canResearch = GameState.elixir >= 1 && !researchDone
-
-        this.createBenchButton(
-            W / 2, H / 2 + 40,
-            researchDone ? '✅ Research Complete' : '🔬 Research Attack Data',
-            researchDone
-                ? 'All clues gathered'
-                : canResearch
-                    ? `Costs ⚗️1 elixir | Progress: ${GameState.skills.research}/30`
-                    : '❌ Need at least 1 elixir',
-            () => {
-                if (researchDone) {
-                    this.closeMagicalMenu()
-                    this.dialog.show([
-                        { name: 'You', text: 'Research is complete.' },
-                        { name: 'You', text: 'I need to gather all clues from others.' }
-                    ])
-                    return
-                }
-                if (GameState.elixir < 1) {
-                    this.closeMagicalMenu()
-                    this.dialog.show([
-                        { name: 'You', text: 'I need at least 1 elixir to run the analysis.' },
-                        { name: 'You', text: 'Play Energy Calibration to earn elixir.' }
-                    ])
-                    return
-                }
-                this.closeMagicalMenu()
-                this.doResearch()
-            },
-            !canResearch && !researchDone
-        )
-
-        // ─── Back ──────────────────────────────────────
-        this.createBenchButton(W / 2, H / 2 + 150, '🔙 Back', '', () => {
-            this.closeMagicalMenu()
-        })
     }
 
     createBenchButton(x, y, text, subtitle, onClick, locked = false) {
@@ -424,7 +439,7 @@ export default class WorkshopScene extends Phaser.Scene {
 
         if (!locked) {
             btn.on('pointerover', () => btn.setFillStyle(0x442266))
-            btn.on('pointerout',  () => btn.setFillStyle(0x333355))
+            btn.on('pointerout', () => btn.setFillStyle(0x333355))
         }
         btn.on('pointerdown', () => { if (!locked) onClick() })
 
@@ -436,14 +451,16 @@ export default class WorkshopScene extends Phaser.Scene {
     closeMagicalMenu() {
         this.menuActive = false
         if (this.menuOverlay) this.menuOverlay.destroy()
-        if (this.menuPanel)   this.menuPanel.destroy()
-        if (this.menuTitle)   this.menuTitle.destroy()
-        if (this.menuStats)   this.menuStats.destroy()
+        if (this.menuPanel) this.menuPanel.destroy()
+        if (this.menuTitle) this.menuTitle.destroy()
+        if (this.menuStats) this.menuStats.destroy()
         this.menuItems.forEach(item => item.destroy())
         this.menuItems = []
     }
 
+    // ═══════════════════════════════════════════════════
     // ─── Research System ───────────────────────────────
+    // ═══════════════════════════════════════════════════
     doResearch() {
         GameState.addElixir(-1)
         GameState.addSkill('research', 5)
@@ -487,10 +504,8 @@ export default class WorkshopScene extends Phaser.Scene {
                 { name: '', text: `🔬 Research Progress: ${research}/30` }
             ])
         } else if (research >= 30) {
-            // ─── Don't call setFlag here ───────────────
-            // checkTruthUnlock() handles it safely next frame
             const luvaza = GameState.getFlag('luvazaClueFound')
-            const park   = GameState.getFlag('parkClueFound')
+            const park = GameState.getFlag('parkClueFound')
             const trader = GameState.getFlag('traderClueFound')
 
             if (luvaza && park && trader) {
@@ -502,7 +517,7 @@ export default class WorkshopScene extends Phaser.Scene {
             } else {
                 const missing = []
                 if (!luvaza) missing.push('💕 Talk more with Luvaza at Town Center')
-                if (!park)   missing.push('🌿 Talk more with Park Cleaner at Park')
+                if (!park) missing.push('🌿 Talk more with Park Cleaner at Park')
                 if (!trader) missing.push('🧑 Talk more with Trader at Junkyard')
 
                 this.dialog.show([
