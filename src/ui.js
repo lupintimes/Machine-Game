@@ -32,12 +32,114 @@ export default class UI {
         }).setOrigin(0.5, 0).setDepth(51).setScrollFactor(0)
 
         // ─── Level Text (right side) ───────────────────
-        // FIX #11: Properly right-anchored with setOrigin(1,0)
-        this.levelText = this.scene.add.text(W - 20, 8, '', {
+        // [FIX] Move levelText to left to make room for time pill
+        this.levelText = this.scene.add.text(W - 220, 8, '', {
             fontSize: '18px',
             fill: '#00ff88',
             fontStyle: 'bold'
         }).setOrigin(1, 0).setDepth(51).setScrollFactor(0)
+
+        // ─── Time Pill Indicator ───────────────────────
+        this.timePillContainer = this.scene.add.container(W - 100, 20).setDepth(51).setScrollFactor(0);
+
+        this.pillGraphics = this.scene.add.graphics();
+        this.timePillContainer.add(this.pillGraphics);
+
+        // Morning (0) - x: -80 to -40
+        this.pillGraphics.fillStyle(0xdcdedc);
+        this.pillGraphics.beginPath();
+        this.pillGraphics.arc(-65, 0, 15, Phaser.Math.DegToRad(90), Phaser.Math.DegToRad(270), false);
+        this.pillGraphics.lineTo(-40, -15);
+        this.pillGraphics.lineTo(-40, 15);
+        this.pillGraphics.closePath();
+        this.pillGraphics.fillPath();
+        
+        this.pillGraphics.fillStyle(0xaaaaaa);
+        this.pillGraphics.beginPath();
+        this.pillGraphics.arc(-60, 15, 10, Phaser.Math.DegToRad(180), Phaser.Math.DegToRad(0), false);
+        this.pillGraphics.fillPath();
+
+        // Afternoon (1) - x: -40 to 0
+        this.pillGraphics.fillStyle(0x77ccff);
+        this.pillGraphics.fillRect(-40, -15, 40, 30);
+        this.pillGraphics.fillStyle(0xffaa00);
+        this.pillGraphics.fillCircle(-20, 2, 8);
+        this.pillGraphics.fillStyle(0xffffff);
+        this.pillGraphics.fillCircle(-25, 8, 6);
+        this.pillGraphics.fillCircle(-15, 8, 5);
+        this.pillGraphics.fillCircle(-20, 10, 4);
+
+        // Evening (2) - x: 0 to 40
+        this.pillGraphics.fillStyle(0x555566);
+        this.pillGraphics.fillRect(0, -15, 40, 30);
+        this.pillGraphics.fillStyle(0xdddddd);
+        this.pillGraphics.fillCircle(20, 0, 6);
+        this.pillGraphics.fillStyle(0x555566); // match background to cut out crescent
+        this.pillGraphics.fillCircle(23, -2, 5);
+
+        // Night (3) - x: 40 to 80
+        this.pillGraphics.fillStyle(0x1a1a24);
+        this.pillGraphics.beginPath();
+        this.pillGraphics.lineTo(40, -15);
+        this.pillGraphics.lineTo(65, -15);
+        this.pillGraphics.arc(65, 0, 15, Phaser.Math.DegToRad(-90), Phaser.Math.DegToRad(90), false);
+        this.pillGraphics.lineTo(40, 15);
+        this.pillGraphics.closePath();
+        this.pillGraphics.fillPath();
+        this.pillGraphics.fillStyle(0xffffff);
+        this.pillGraphics.fillRect(48, -5, 2, 2);
+        this.pillGraphics.fillRect(63, -8, 1, 1);
+        this.pillGraphics.fillRect(52, 5, 2, 2);
+        this.pillGraphics.fillRect(68, 2, 1, 1);
+
+        // Dark dimmers overlay for unselected times
+        this.timeDimmer = [];
+        for (let i = 0; i < 4; i++) {
+            let dim;
+            if (i === 0) {
+                dim = this.scene.add.graphics();
+                dim.fillStyle(0x000000, 0.6);
+                dim.beginPath();
+                dim.arc(-65, 0, 15, Phaser.Math.DegToRad(90), Phaser.Math.DegToRad(270), false);
+                dim.lineTo(-40, -15);
+                dim.lineTo(-40, 15);
+                dim.closePath();
+                dim.fillPath();
+            } else if (i === 3) {
+                dim = this.scene.add.graphics();
+                dim.fillStyle(0x000000, 0.6);
+                dim.beginPath();
+                dim.lineTo(40, -15);
+                dim.lineTo(65, -15);
+                dim.arc(65, 0, 15, Phaser.Math.DegToRad(-90), Phaser.Math.DegToRad(90), false);
+                dim.lineTo(40, 15);
+                dim.closePath();
+                dim.fillPath();
+            } else {
+                dim = this.scene.add.rectangle(-40 + (i - 1) * 40 + 20, 0, 40, 30, 0x000000, 0.6);
+            }
+            this.timePillContainer.add(dim);
+            this.timeDimmer.push(dim);
+        }
+
+        // Pill outline border
+        const border = this.scene.add.graphics();
+        border.lineStyle(2, 0xffffff, 1);
+        border.strokeRoundedRect(-80, -15, 160, 30, 15);
+        this.timePillContainer.add(border);
+
+        // Day tab indicator underneath
+        this.dayPillTab = this.scene.add.rectangle(-60, 25, 45, 20, 0x5a3a9a);
+        this.dayPillText = this.scene.add.text(-60, 25, `Day ${GameState.day}`, { fontSize: '11px', fill: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5);
+        this.timePillContainer.add(this.dayPillTab);
+        this.timePillContainer.add(this.dayPillText);
+
+        // Sliding bottom highlight
+        this.timeSlider = this.scene.add.graphics();
+        this.timeSlider.fillStyle(0xffffff, 1);
+        this.timeSlider.fillRect(-15, 11, 30, 4); 
+        this.timeSlider.x = -60 + (GameState.timeIndex || 0) * 40;
+        this.timePillContainer.add(this.timeSlider);
 
         // ─── Crisis Bar ────────────────────────────────
         this.crisisBarBg = this.scene.add.rectangle(W / 2, 50, W - 40, 16, 0x222222)
@@ -314,14 +416,37 @@ export default class UI {
         )
         this.levelText.setText(`Lv.${GameState.level}`)
 
-        const icon = GameState.getTimeIcon()
+        // [FIX] Update Day text and animate Time Indicator
         const daysLeft = GameState.getDaysLeft()
-        this.dayText.setText(`${icon} Day ${GameState.day}/7 - ${GameState.timeOfDay} | ⏳ ${daysLeft} days left`)
+        this.dayText.setText(`⏳ ${daysLeft} days remaining`)
+        this.dayText.setFill('#ffffff')
 
-        // FIX #17: Safe color setting handling potential Hex numbers vs CSS strings
-        const timeColor = GameState.getTimeColor()
-        const colorStr = typeof timeColor === 'number' ? '#' + timeColor.toString(16).padStart(6, '0') : timeColor
-        this.dayText.setFill(colorStr)
+        // Animate visual pill indicators
+        const tIndex = GameState.timeIndex || 0;
+        const targetX = -60 + tIndex * 40;
+        
+        if (this.timeSlider) {
+            this.scene.tweens.add({
+                targets: this.timeSlider,
+                x: targetX,
+                duration: 400,
+                ease: 'Back.easeOut'
+            });
+        }
+
+        if (this.timeDimmer) {
+            this.timeDimmer.forEach((dim, i) => {
+                this.scene.tweens.add({
+                    targets: dim,
+                    alpha: i === tIndex ? 0 : 0.6,
+                    duration: 400
+                });
+            });
+        }
+        
+        if (this.dayPillText) {
+            this.dayPillText.setText(`Day ${GameState.day}`);
+        }
 
         const W = this.scene.cameras.main.width
         const progress = (GameState.day - 1) / GameState.maxDays
