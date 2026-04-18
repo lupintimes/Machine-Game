@@ -6,6 +6,7 @@ export default class UI {
         this.invVisible = false
         this.invSlots = []
         this.sleepItems = []
+        this.sleepVisible = false // FIX #10: Prevent double-opening sleep menu
     }
 
     create() {
@@ -17,6 +18,7 @@ export default class UI {
             .setDepth(50).setScrollFactor(0)
 
         // ─── Stats Text (left side) ────────────────────
+        // FIX #5: Condensed spacing to prevent overlap with center text
         this.statsText = this.scene.add.text(20, 8, '', {
             fontSize: '16px',
             fill: '#ffffff'
@@ -30,11 +32,12 @@ export default class UI {
         }).setOrigin(0.5, 0).setDepth(51).setScrollFactor(0)
 
         // ─── Level Text (right side) ───────────────────
-        this.levelText = this.scene.add.text(W - 120, 8, '', {
+        // FIX #11: Properly right-anchored with setOrigin(1,0)
+        this.levelText = this.scene.add.text(W - 20, 8, '', {
             fontSize: '18px',
             fill: '#00ff88',
             fontStyle: 'bold'
-        }).setDepth(51).setScrollFactor(0)
+        }).setOrigin(1, 0).setDepth(51).setScrollFactor(0)
 
         // ─── Crisis Bar ────────────────────────────────
         this.crisisBarBg = this.scene.add.rectangle(W / 2, 50, W - 40, 16, 0x222222)
@@ -43,94 +46,135 @@ export default class UI {
         this.crisisBar = this.scene.add.rectangle(20, 50, 0, 12, 0xff4444)
             .setOrigin(0, 0.5).setDepth(51).setScrollFactor(0)
 
+        // FIX #8: Renamed from CRISIS to TIMELINE for better UX semantics
         this.crisisLabel = this.scene.add.text(W / 2, 50, '', {
             fontSize: '11px',
             fill: '#ffffff',
             fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(52).setScrollFactor(0)
 
-        // ─── Sleep Button ──────────────────────────────
-        this.sleepBtn = this.scene.add.rectangle(W / 2 + 80, H - 30, 130, 40, 0x333355)
-            .setDepth(50).setScrollFactor(0)
-            .setStrokeStyle(1, 0x4444aa)
-            .setInteractive({ useHandCursor: true })
+        // ─── Bottom Buttons ─────────────────────────────
+        // FIX #6: Dynamic button spacing to prevent overlap on narrow screens
+        const btnY = H - 30
+        const btnW = 130
+        const btnCount = this.scene.scene.key !== 'HubScene' ? 4 : 3
+        const gap = Math.max(10, (W - btnCount * btnW) / (btnCount + 1))
+        const getBtnX = (index) => gap + btnW / 2 + index * (btnW + gap)
 
-        this.scene.add.text(W / 2 + 80, H - 30, '😴 Sleep', {
-            fontSize: '16px',
-            fill: '#ffffff'
-        }).setOrigin(0.5).setDepth(51).setScrollFactor(0)
-
-        this.sleepBtn.on('pointerover', () => this.sleepBtn.setFillStyle(0x444477))
-        this.sleepBtn.on('pointerout', () => this.sleepBtn.setFillStyle(0x333355))
-        this.sleepBtn.on('pointerdown', () => this.openSleepMenu())
+        let btnIndex = 0;
 
         // ─── Hub Button ────────────────────────────────
         if (this.scene.scene.key !== 'HubScene') {
-            this.hubBtn = this.scene.add.rectangle(80, H - 30, 130, 40, 0x333355)
+            const hubX = getBtnX(btnIndex);
+            // FIX #16: Tinted fills for visual grouping
+            this.hubBtn = this.scene.add.rectangle(hubX, btnY, btnW, 40, 0x1a3328)
                 .setDepth(50).setScrollFactor(0)
                 .setStrokeStyle(1, 0x00ff88)
                 .setInteractive({ useHandCursor: true })
 
-            this.scene.add.text(80, H - 30, '🗺️ Hub', {
+            this.scene.add.text(hubX, btnY, '🗺️ Hub', {
                 fontSize: '16px',
                 fill: '#ffffff'
             }).setOrigin(0.5).setDepth(51).setScrollFactor(0)
 
-            this.hubBtn.on('pointerover', () => this.hubBtn.setFillStyle(0x444477))
-            this.hubBtn.on('pointerout', () => this.hubBtn.setFillStyle(0x333355))
+            this.hubBtn.on('pointerover', () => this.hubBtn.setFillStyle(0x2a5540))
+            this.hubBtn.on('pointerout', () => this.hubBtn.setFillStyle(0x1a3328))
             this.hubBtn.on('pointerdown', () => {
                 this.scene.cameras.main.fade(300, 0, 0, 0)
                 this.scene.time.delayedCall(300, () => {
                     this.scene.scene.start('HubScene')
                 })
             })
+            btnIndex++;
         }
 
         // ─── Inventory Button ──────────────────────────
-        this.invBtn = this.scene.add.rectangle(W / 2 - 80, H - 30, 130, 40, 0x333355)
+        const invX = getBtnX(btnIndex);
+        this.invBtn = this.scene.add.rectangle(invX, btnY, btnW, 40, 0x2a2a33)
             .setDepth(50).setScrollFactor(0)
             .setStrokeStyle(1, 0xffffff)
             .setInteractive({ useHandCursor: true })
 
-        this.scene.add.text(W / 2 - 80, H - 30, '🎒 Inventory', {
+        this.scene.add.text(invX, btnY, '🎒 Inventory', {
             fontSize: '16px',
             fill: '#ffffff'
         }).setOrigin(0.5).setDepth(51).setScrollFactor(0)
 
-        this.invBtn.on('pointerover', () => this.invBtn.setFillStyle(0x444477))
-        this.invBtn.on('pointerout', () => this.invBtn.setFillStyle(0x333355))
+        this.invBtn.on('pointerover', () => this.invBtn.setFillStyle(0x3a3a44))
+        this.invBtn.on('pointerout', () => this.invBtn.setFillStyle(0x2a2a33))
         this.invBtn.on('pointerdown', () => this.toggleInventory())
+        btnIndex++;
+
+        // ─── Sleep Button ──────────────────────────────
+        const sleepX = getBtnX(btnIndex);
+        this.sleepBtn = this.scene.add.rectangle(sleepX, btnY, btnW, 40, 0x1a1a33)
+            .setDepth(50).setScrollFactor(0)
+            .setStrokeStyle(1, 0x4444aa)
+            .setInteractive({ useHandCursor: true })
+
+        this.scene.add.text(sleepX, btnY, '😴 Sleep', {
+            fontSize: '16px',
+            fill: '#ffffff'
+        }).setOrigin(0.5).setDepth(51).setScrollFactor(0)
+
+        this.sleepBtn.on('pointerover', () => this.sleepBtn.setFillStyle(0x2a2a55))
+        this.sleepBtn.on('pointerout', () => this.sleepBtn.setFillStyle(0x1a1a33))
+        this.sleepBtn.on('pointerdown', () => this.openSleepMenu())
+        btnIndex++;
 
         // ─── Task Button ───────────────────────────────
-        this.taskBtn = this.scene.add.rectangle(W - 80, H - 30, 130, 40, 0x333355)
+        const taskX = getBtnX(btnIndex);
+        this.taskBtn = this.scene.add.rectangle(taskX, btnY, btnW, 40, 0x332a1a)
             .setDepth(50).setScrollFactor(0)
             .setStrokeStyle(1, 0xffaa00)
             .setInteractive({ useHandCursor: true })
 
-        this.scene.add.text(W - 80, H - 30, '📋 Tasks', {
+        this.scene.add.text(taskX, btnY, '📋 Tasks', {
             fontSize: '16px',
             fill: '#ffffff'
         }).setOrigin(0.5).setDepth(51).setScrollFactor(0)
 
-        this.taskBtn.on('pointerover', () => this.taskBtn.setFillStyle(0x444477))
-        this.taskBtn.on('pointerout', () => this.taskBtn.setFillStyle(0x333355))
+        this.taskBtn.on('pointerover', () => this.taskBtn.setFillStyle(0x553a2a))
+        this.taskBtn.on('pointerout', () => this.taskBtn.setFillStyle(0x332a1a))
         this.taskBtn.on('pointerdown', () => this.toggleTaskPanel())
+
+        // FIX #18: Escape key binding to close panels
+        this.scene.input.keyboard.on('keydown-ESC', () => {
+            if (this.sleepVisible) {
+                this.sleepItems.forEach(i => { if (i) i.destroy() })
+                this.sleepItems = []
+                this.sleepVisible = false
+            } else if (this.invVisible) {
+                this.hideInventory()
+            } else if (this.taskVisible) {
+                this.hideTaskPanel()
+            }
+        })
 
         this.updateStats()
     }
 
     // ─── Sleep Menu ────────────────────────────────────
     openSleepMenu() {
+        // FIX #10: Prevent double-opening
+        if (this.sleepVisible) return
+        this.sleepVisible = true
+
         const W = this.scene.cameras.main.width
         const H = this.scene.cameras.main.height
 
+        // FIX #2: Responsive panel sizes
+        const panelW = Math.min(500, W - 40)
+        const panelH = Math.min(430, H - 60)
+
         this.sleepItems = []
 
+        // FIX #1 & #7: Overlay is interactive and closes on click-outside
         this.sleepOverlay = this.scene.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.7)
-            .setScrollFactor(0).setDepth(200)
+            .setScrollFactor(0).setDepth(200).setInteractive()
 
-        this.sleepPanel = this.scene.add.rectangle(W / 2, H / 2, 500, 430, 0x0a0a1a)
-            .setStrokeStyle(3, 0x4444aa).setScrollFactor(0).setDepth(201)
+        this.sleepPanel = this.scene.add.rectangle(W / 2, H / 2, panelW, panelH, 0x0a0a1a)
+            .setStrokeStyle(3, 0x4444aa).setScrollFactor(0).setDepth(201).setInteractive() // Eats clicks so they don't close panel
 
         const title = this.scene.add.text(W / 2, H / 2 - 180,
             `${GameState.getTimeIcon()} Day ${GameState.day} - ${GameState.timeOfDay}`, {
@@ -150,7 +194,15 @@ export default class UI {
         const closeAll = () => {
             this.sleepItems.forEach(i => { if (i) i.destroy() })
             this.sleepItems = []
+            this.sleepVisible = false // FIX #10
         }
+
+        // Clicking overlay background closes menu
+        this.sleepOverlay.on('pointerdown', closeAll)
+
+        // FIX #12: Fade-in animation
+        this.sleepPanel.setAlpha(0)
+        this.scene.tweens.add({ targets: this.sleepPanel, alpha: 1, duration: 150 })
 
         // ─── Skip to Afternoon ─────────
         this.createSleepBtn(W / 2, H / 2 - 60, '☀️ Skip to Afternoon', () => {
@@ -209,8 +261,9 @@ export default class UI {
         const W = this.scene.cameras.main.width
         const H = this.scene.cameras.main.height
 
+        // FIX #13: Overlay blocks input during transition
         const overlay = this.scene.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.9)
-            .setScrollFactor(0).setDepth(300)
+            .setScrollFactor(0).setDepth(300).setInteractive()
 
         const text = this.scene.add.text(W / 2, H / 2 - 20,
             `${GameState.getTimeIcon()} Day ${GameState.day} - ${GameState.timeOfDay}`, {
@@ -248,15 +301,20 @@ export default class UI {
 
     // ─── Stats ─────────────────────────────────────────
     updateStats() {
+        // FIX #5: Condensed spacing between stats icons
         this.statsText.setText(
-            `⭐ ${GameState.reputation}   💰 ${GameState.money}   ⚗️ ${GameState.elixir}   🔧 ${GameState.skills.repair}   🔬 ${GameState.skills.research}`
+            `⭐${GameState.reputation}  💰${GameState.money}  ⚗️${GameState.elixir}  🔧${GameState.skills.repair}  🔬${GameState.skills.research}`
         )
         this.levelText.setText(`Lv.${GameState.level}`)
 
         const icon = GameState.getTimeIcon()
         const daysLeft = GameState.getDaysLeft()
         this.dayText.setText(`${icon} Day ${GameState.day}/7 - ${GameState.timeOfDay} | ⏳ ${daysLeft} days left`)
-        this.dayText.setFill(GameState.getTimeColor())
+
+        // FIX #17: Safe color setting handling potential Hex numbers vs CSS strings
+        const timeColor = GameState.getTimeColor()
+        const colorStr = typeof timeColor === 'number' ? '#' + timeColor.toString(16).padStart(6, '0') : timeColor
+        this.dayText.setFill(colorStr)
 
         const W = this.scene.cameras.main.width
         const progress = (GameState.day - 1) / GameState.maxDays
@@ -271,7 +329,8 @@ export default class UI {
             this.crisisBar.setFillStyle(0xff4444)
         }
 
-        this.crisisLabel.setText(`CRISIS: Day ${GameState.day} of ${GameState.maxDays}`)
+        // FIX #8: Label renamed from CRISIS to TIMELINE
+        this.crisisLabel.setText(`TIMELINE: Day ${GameState.day} of ${GameState.maxDays}`)
     }
 
     // ─── Inventory ─────────────────────────────────────
@@ -288,20 +347,26 @@ export default class UI {
         const W = this.scene.cameras.main.width
         const H = this.scene.cameras.main.height
 
+        // FIX #2: Responsive panel sizing
+        const panelW = Math.min(900, W - 40)
+        const panelH = Math.min(650, H - 60)
+
+        // FIX #1 & #7: Overlay interactive + closes on click outside
         this.invOverlay = this.scene.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.7)
-            .setScrollFactor(0).setDepth(200)
+            .setScrollFactor(0).setDepth(200).setInteractive()
+            .on('pointerdown', () => this.hideInventory())
 
-        this.invPanel = this.scene.add.rectangle(W / 2, H / 2, 900, 650, 0x1a1a2e)
+        this.invPanel = this.scene.add.rectangle(W / 2, H / 2, panelW, panelH, 0x1a1a2e)
             .setStrokeStyle(3, 0x00ff88)
-            .setScrollFactor(0).setDepth(201)
+            .setScrollFactor(0).setDepth(201).setInteractive() // Eats clicks
 
-        this.invTitle = this.scene.add.text(W / 2, H / 2 - 290, '🎒 Inventory', {
+        this.invTitle = this.scene.add.text(W / 2, H / 2 - (panelH / 2) + 30, '🎒 Inventory', {
             fontSize: '30px',
             fill: '#00ff88',
             fontStyle: 'bold'
         }).setOrigin(0.5).setScrollFactor(0).setDepth(202)
 
-        this.invClose = this.scene.add.text(W / 2 + 420, H / 2 - 290, '✖', {
+        this.invClose = this.scene.add.text(W / 2 + (panelW / 2) - 30, H / 2 - (panelH / 2) + 30, '✖', {
             fontSize: '28px',
             fill: '#ff4444'
         }).setOrigin(0.5).setScrollFactor(0).setDepth(202)
@@ -311,10 +376,17 @@ export default class UI {
         this.invClose.on('pointerout', () => this.invClose.setFill('#ff4444'))
         this.invClose.on('pointerdown', () => this.hideInventory())
 
+        // FIX #12: Panel fade-in
+        this.invPanel.setAlpha(0)
+        this.scene.tweens.add({ targets: this.invPanel, alpha: 1, duration: 150 })
+
         this.invSlots = []
-        const cols = 6
+
+        // FIX #14: Dynamic grid that scales with panel width
+        const maxSlotSize = 100
+        const cols = Math.min(6, Math.floor((panelW - 40) / maxSlotSize))
+        const slotSize = Math.min(maxSlotSize, (panelW - 40) / cols)
         const rows = 4
-        const slotSize = 100
         const startX = W / 2 - (cols * slotSize) / 2 + slotSize / 2
         const startY = H / 2 - 170
 
@@ -328,12 +400,14 @@ export default class UI {
                 const slot = this.scene.add.rectangle(x, y, slotSize - 8, slotSize - 8, 0x222233)
                     .setStrokeStyle(1, 0x444466)
                     .setScrollFactor(0).setDepth(202)
-                    .setInteractive({ useHandCursor: !!item })
 
                 let icon = null
                 let qty = null
 
                 if (item) {
+                    // FIX #9: Only make filled slots interactive
+                    slot.setInteractive({ useHandCursor: true })
+
                     icon = this.scene.add.text(x, y - 10, item.icon, {
                         fontSize: '30px'
                     }).setOrigin(0.5).setScrollFactor(0).setDepth(203)
@@ -345,15 +419,15 @@ export default class UI {
 
                     slot.on('pointerover', () => {
                         slot.setFillStyle(0x333355)
-                        this.showInvTooltip(x, y - 70, item)
+                        this.showInvTooltip(x, y, item)
                     })
                     slot.on('pointerout', () => {
                         slot.setFillStyle(0x222233)
                         this.hideInvTooltip()
                     })
                 } else {
-                    slot.on('pointerover', () => slot.setFillStyle(0x2a2a44))
-                    slot.on('pointerout', () => slot.setFillStyle(0x222233))
+                    // FIX #9: Empty slots have no hover effect or interactivity
+                    slot.setFillStyle(0x1a1a2e)
                 }
 
                 this.invSlots.push({ slot, icon, qty })
@@ -376,17 +450,29 @@ export default class UI {
     }
 
     showInvTooltip(x, y, item) {
-        this.invTooltipBg = this.scene.add.rectangle(x, y, 220, 80, 0x000000, 0.95)
+        this.hideInvTooltip() // Prevent duplicates
+
+        // FIX #3: Viewport clamping for tooltips
+        const tooltipW = 220, tooltipH = 80;
+        const W = this.scene.cameras.main.width;
+        const H = this.scene.cameras.main.height;
+        let tx = x, ty = y - 70;
+
+        if (ty - tooltipH / 2 < 10) ty = y + 60; // Flip below if too high
+        if (tx - tooltipW / 2 < 10) tx = tooltipW / 2 + 10;
+        if (tx + tooltipW / 2 > W - 10) tx = W - tooltipW / 2 - 10;
+
+        this.invTooltipBg = this.scene.add.rectangle(tx, ty, tooltipW, tooltipH, 0x000000, 0.95)
             .setStrokeStyle(1, 0x00ff88)
             .setScrollFactor(0).setDepth(210)
 
-        this.invTooltipName = this.scene.add.text(x, y - 20, item.name, {
+        this.invTooltipName = this.scene.add.text(tx, ty - 20, item.name, {
             fontSize: '16px',
             fill: '#00ff88',
             fontStyle: 'bold'
         }).setOrigin(0.5).setScrollFactor(0).setDepth(211)
 
-        this.invTooltipDesc = this.scene.add.text(x, y + 10, item.description, {
+        this.invTooltipDesc = this.scene.add.text(tx, ty + 10, item.description, {
             fontSize: '13px',
             fill: '#aaaaaa',
             wordWrap: { width: 200 }
@@ -397,6 +483,9 @@ export default class UI {
         if (this.invTooltipBg) this.invTooltipBg.destroy()
         if (this.invTooltipName) this.invTooltipName.destroy()
         if (this.invTooltipDesc) this.invTooltipDesc.destroy()
+        this.invTooltipBg = null
+        this.invTooltipName = null
+        this.invTooltipDesc = null
     }
 
     hideInventory() {
@@ -432,36 +521,51 @@ export default class UI {
         this.taskVisible = true
         const tasks = this.getCurrentTasks()
 
+        // FIX #2 & #15: Responsive panel with dynamic height
+        const panelW = Math.min(700, W - 40)
+        const contentHeight = tasks.length * 38 + 200
+        const panelH = Math.min(contentHeight, H - 60)
+
+        // FIX #1 & #7: Overlay interactive + closes on click-out
         this.taskOverlay = this.scene.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.6)
-            .setDepth(60).setScrollFactor(0)
+            .setDepth(60).setScrollFactor(0).setInteractive()
+            .on('pointerdown', () => this.hideTaskPanel())
 
-        this.taskPanel = this.scene.add.rectangle(W / 2, H / 2, 700, 600, 0x1a1a2e)
+        this.taskPanel = this.scene.add.rectangle(W / 2, H / 2, panelW, panelH, 0x1a1a2e)
             .setStrokeStyle(2, 0xffaa00)
-            .setDepth(61).setScrollFactor(0)
+            .setDepth(61).setScrollFactor(0).setInteractive() // Eats clicks
 
-        this.taskTitle = this.scene.add.text(W / 2, H / 2 - 270, `📋 Level ${GameState.level} Tasks`, {
+        this.taskTitle = this.scene.add.text(W / 2, H / 2 - (panelH / 2) + 30, `📋 Level ${GameState.level} Tasks`, {
             fontSize: '24px',
             fill: '#ffaa00',
             fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(62).setScrollFactor(0)
 
+        // FIX #12: Fade-in
+        this.taskPanel.setAlpha(0)
+        this.scene.tweens.add({ targets: this.taskPanel, alpha: 1, duration: 150 })
+
         this.taskItems = []
+
+        // FIX #15: Dynamic spacing for tasks
+        const itemSpacing = Math.min(38, (panelH - 180) / Math.max(1, tasks.length))
+
         tasks.forEach((task, i) => {
             const check = task.done ? '✅' : '⬜'
             const color = task.done ? '#00ff88' : task.text.includes('───') ? '#555555' : '#ffffff'
-            const text = this.scene.add.text(W / 2 - 300, H / 2 - 220 + (i * 38), `${task.text.includes('───') ? task.text : check + ' ' + task.text}`, {
+            const text = this.scene.add.text(W / 2 - 300, H / 2 - (panelH / 2) + 80 + (i * itemSpacing), `${task.text.includes('───') ? task.text : check + ' ' + task.text}`, {
                 fontSize: '17px',
                 fill: color
             }).setDepth(62).setScrollFactor(0)
             this.taskItems.push(text)
         })
 
-        this.armorText = this.scene.add.text(W / 2, H / 2 + 260, this.getArmorStatus(), {
+        this.armorText = this.scene.add.text(W / 2, H / 2 + (panelH / 2) - 60, this.getArmorStatus(), {
             fontSize: '18px',
             fill: '#888888'
         }).setOrigin(0.5).setDepth(62).setScrollFactor(0)
 
-        this.taskClose = this.scene.add.text(W / 2, H / 2 + 300, '[ Close ]', {
+        this.taskClose = this.scene.add.text(W / 2, H / 2 + (panelH / 2) - 30, '[ Close ]', {
             fontSize: '18px',
             fill: '#888888'
         }).setOrigin(0.5).setDepth(62).setScrollFactor(0)
@@ -524,5 +628,32 @@ export default class UI {
 
     getArmorStatus() {
         return `🤖 Armor: ${GameState.armor.parts.length}/3 parts  |  Core: ${GameState.armor.hasCore ? '✅' : '❌'}`
+    }
+
+    // FIX #4: Proper cleanup on scene transition
+    destroy() {
+        // Top bar
+        if (this.bar) this.bar.destroy()
+        if (this.statsText) this.statsText.destroy()
+        if (this.dayText) this.dayText.destroy()
+        if (this.levelText) this.levelText.destroy()
+        if (this.crisisBarBg) this.crisisBarBg.destroy()
+        if (this.crisisBar) this.crisisBar.destroy()
+        if (this.crisisLabel) this.crisisLabel.destroy()
+
+        // Buttons
+        if (this.sleepBtn) this.sleepBtn.destroy()
+        if (this.hubBtn) this.hubBtn.destroy()
+        if (this.invBtn) this.invBtn.destroy()
+        if (this.taskBtn) this.taskBtn.destroy()
+
+        // Open panels
+        this.hideInventory()
+        this.hideTaskPanel()
+        this.sleepItems.forEach(i => { if (i) i.destroy() })
+        this.sleepItems = []
+
+        // Remove ESC listener
+        this.scene.input.keyboard.off('keydown-ESC')
     }
 }
