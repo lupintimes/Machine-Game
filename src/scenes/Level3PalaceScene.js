@@ -1,179 +1,56 @@
 import DialogBox from '../dialog.js'
+import UI from '../ui.js'
 
 export default class Level3PalaceScene extends Phaser.Scene {
     constructor() {
         super('Level3PalaceScene')
     }
 
+    preload() {
+        this.load.image('palace-bg', 'assets/images/palace-bg.png')
+    }
+
     create() {
         const W = this.cameras.main.width
         const H = this.cameras.main.height
 
-        this.add.rectangle(W / 2, H / 2, W, H, 0x000000)
+        // ─── UI ────────────────────────────────────────
+        this.ui = new UI(this)
+        this.ui.create()
 
+        // ─── Dark background ───────────────────────────
+        this.add.rectangle(W / 2, H / 2, W, H, 0x000000).setDepth(-2)
+
+        // ─── Background ────────────────────────────────
+        this.bg = this.add.image(W / 2, H / 2, 'palace-bg')
+        this.bg.setOrigin(0.5, 0.5)
+        this.bg.setDepth(-1)
+        this.bg.setDisplaySize(W, H)
+        this.bg.setAlpha(0.3) // ← dark tint for night feel
+
+        // ─── Dark red overlay for mood ─────────────────
+        this.add.rectangle(W / 2, H / 2, W, H, 0x220000, 0.4).setDepth(0)
+
+        // ─── Scene Title ───────────────────────────────
+        this.add.text(W / 2, 30, '👑 King\'s Palace — Night', {
+            fontSize: '28px',
+            fill: '#441111'
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(20)
+
+        // ─── Luvaza on ground ──────────────────────────
+        this.add.rectangle(W / 2, H / 2 + 50, 50, 30, 0xff69b4, 0.5).setDepth(2)
+        this.add.text(W / 2, H / 2 + 80, 'Luvaza...', {
+            fontSize: '20px',
+            fill: '#ff69b4',
+            fontStyle: 'italic'
+        }).setOrigin(0.5).setDepth(2)
+
+        // ─── Dialog ────────────────────────────────────
         this.dialog = new DialogBox(this)
         this.spaceKey = this.input.keyboard.addKey('SPACE')
 
-        // Dark palace scene
-        this.add.text(W / 2, 50, '👑 King\'s Palace - Night', {
-            fontSize: '28px',
-            fill: '#441111'
-        }).setOrigin(0.5)
-
-        // Luvaza on ground
-        this.add.rectangle(W / 2, H / 2 + 50, 50, 30, 0xff69b4, 0.5)
-        this.add.text(W / 2, H / 2 + 80, 'Luvaza...', {
-            fontSize: '18px',
-            fill: '#ff69b4',
-            fontStyle: 'italic'
-        }).setOrigin(0.5)
-
-        this.dialog.show([
-            { name: '', text: 'You rush to the palace...' },
-            { name: '', text: 'The halls are dark. Silent.' },
-            { name: 'You', text: 'Luvaza! LUVAZA!' },
-            { name: '', text: '...' },
-            { name: '', text: 'You find her in the throne room.' },
-            { name: '', text: 'She\'s on the ground. Not moving.' },
-            { name: 'You', text: 'No... no no no...' },
-            { name: 'You', text: 'Luvaza... please...' },
-            { name: '', text: 'The comms device is still in her hand.' },
-            { name: '', text: 'Her last words echo in your mind:' },
-            { name: 'Luvaza (recording)', text: '"I heard everything... my father and the park cleaner..."' },
-            { name: 'Luvaza (recording)', text: '"They planned the whole attack together..."' },
-            { name: 'Luvaza (recording)', text: '"The Veridium... they want to sell it to..."' },
-            { name: 'Luvaza (recording)', text: '"Please... be careful... I lo—"' },
-            { name: '', text: 'The recording cuts off.' },
-            { name: 'You', text: '...' },
-            { name: 'You', text: 'They killed her.' },
-            { name: 'You', text: 'Her own father...' },
-            { name: 'You', text: 'Let her die to protect his secret.' },
-            { name: 'You', text: '...' },
-            { name: 'You', text: 'I will make them pay.' },
-            { name: 'You', text: 'Every. Single. One of them.' },
-            { name: '', text: 'You pick up the comms device.' },
-            { name: '', text: 'The recording is the proof you need.' },
-            { name: '', text: '📡 Obtained: Luvaza\'s Recording' }
-        ], () => {
-            GameState.setFlag('gfDead')
-            GameState.addItem({
-                id: 'luvaza_recording',
-                name: 'Luvaza\'s Recording',
-                icon: '📡',
-                description: 'Her final words. Proof of the King\'s betrayal.',
-                quantity: 1
-            })
-
-            this.cameras.main.fade(1000, 0, 0, 0)
-            this.time.delayedCall(1000, () => {
-                this.scene.start('CutsceneScene', {
-                    key: 'gfDeath',
-                    returnScene: 'HubScene'
-                })
-            })
-        })
-    }
-
-    cleanerChat() {
-        const friendship = GameState.parkCleanerFriendship || 0
-
-        // ─── Rebuild done clue (existing) ──
-        if (GameState.getFlag('rebuiltBuildings') && !GameState.getFlag('parkClueFound')) {
-            // ... existing clue dialog
-            return
-        }
-
-        // ─── Level 3 friendship dialogs ────
-        if (GameState.level >= 3) {
-
-            if (friendship === 0) {
-                this.dialog.show([
-                    { name: 'Park Cleaner', text: 'You seem different lately.' },
-                    { name: 'You', text: 'A lot has happened.' },
-                    { name: 'Park Cleaner', text: 'Want to talk about it?' },
-                    { name: 'You', text: 'Maybe another time.' },
-                    { name: 'Park Cleaner', text: 'I\'m always here. That\'s what friends are for!' }
-                ], () => {
-                    GameState.parkCleanerFriendship = 1
-                    this.showCleanerMenu()
-                })
-
-            } else if (friendship === 1) {
-                this.dialog.show([
-                    { name: 'Park Cleaner', text: 'You know... I wasn\'t always a park cleaner.' },
-                    { name: 'You', text: 'Oh? What did you do before?' },
-                    { name: 'Park Cleaner', text: 'I was... in the military. Long time ago.' },
-                    { name: 'Park Cleaner', text: 'Seen things. Done things.' },
-                    { name: 'You', text: 'Why become a park cleaner then?' },
-                    { name: 'Park Cleaner', text: 'Sometimes... you just want peace. Haha!' },
-                    { name: 'You', text: '(Military background... interesting.)' }
-                ], () => {
-                    GameState.parkCleanerFriendship = 2
-                    this.showCleanerMenu()
-                })
-
-            } else if (friendship === 2) {
-                this.dialog.show([
-                    { name: 'Park Cleaner', text: 'Can I tell you something? As a friend?' },
-                    { name: 'You', text: 'Of course.' },
-                    { name: 'Park Cleaner', text: 'This city... it\'s sitting on something big.' },
-                    { name: 'You', text: 'The Veridium.' },
-                    { name: 'Park Cleaner', text: '...' },
-                    { name: 'Park Cleaner', text: 'You know about it?' },
-                    { name: 'You', text: 'I know enough.' },
-                    { name: 'Park Cleaner', text: 'Then you know why they attacked.' },
-                    { name: 'You', text: 'Tell me more.' },
-                    { name: 'Park Cleaner', text: 'The Veridium can power anything.' },
-                    { name: 'Park Cleaner', text: 'Weapons. Shields. Entire cities.' },
-                    { name: 'Park Cleaner', text: 'Whoever controls it... controls everything.' },
-                    { name: 'Park Cleaner', text: 'That\'s why they came. Not to destroy.' },
-                    { name: 'Park Cleaner', text: 'To extract. To take what can\'t be taken publicly.' },
-                    { name: 'You', text: 'And the King knows this?' },
-                    { name: 'Park Cleaner', text: '...' },
-                    { name: 'Park Cleaner', text: 'Everyone who matters knows.' },
-                    { name: 'You', text: '(He knows too much. Way too much.)' },
-                    { name: '', text: '📌 The full reason for the attack is now clear.' },
-                    { name: '', text: 'The Veridium can control everything. That\'s what they want.' }
-                ], () => {
-                    GameState.parkCleanerFriendship = 3
-                    GameState.setFlag('reasonForAttackKnown')
-                    this.showCleanerMenu()
-                })
-
-            } else {
-                // Random chats after friendship maxed
-                const chats = [
-                    [
-                        { name: 'Park Cleaner', text: 'The park looks better every day.' },
-                        { name: 'You', text: 'Thanks to you.' },
-                        { name: 'Park Cleaner', text: 'Thanks to US. Haha!' }
-                    ],
-                    [
-                        { name: 'Park Cleaner', text: 'You seem ready for something big.' },
-                        { name: 'You', text: 'Maybe I am.' },
-                        { name: 'Park Cleaner', text: 'Good. The world needs people who are ready.' }
-                    ]
-                ]
-                const chat = chats[Math.floor(Math.random() * chats.length)]
-                this.dialog.show(chat, () => { this.showCleanerMenu() })
-            }
-            return
-        }
-
-        // ─── Level 2 random chats ──────────
-        const chats = [
-            [
-                { name: 'Park Cleaner', text: 'Beautiful day isn\'t it?' },
-                { name: 'You', text: 'The city is half destroyed.' },
-                { name: 'Park Cleaner', text: 'But the sky is still blue! Haha!' }
-            ],
-            [
-                { name: 'Park Cleaner', text: 'More flowers. Always more flowers.' },
-                { name: 'Park Cleaner', text: 'Even in the darkest times, flowers grow.' }
-            ]
-        ]
-        const chat = chats[Math.floor(Math.random() * chats.length)]
-        this.dialog.show(chat, () => { this.showCleanerMenu() })
+        // ─── Start the betrayal sequence ───────────────
+        this.startBetrayalSequence()
     }
 
     update() {
@@ -182,5 +59,223 @@ export default class Level3PalaceScene extends Phaser.Scene {
                 this.dialog.next()
             }
         }
+    }
+
+    // ─── The Betrayal Sequence ─────────────────────────
+    startBetrayalSequence() {
+        const W = this.cameras.main.width
+        const H = this.cameras.main.height
+
+        // ─── Running to palace animation ───────────────
+        const runOverlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.95)
+            .setScrollFactor(0).setDepth(100)
+
+        const runText = this.add.text(W / 2, H / 2, 'Running to the Palace...', {
+            fontSize: '30px',
+            fill: '#ff4444',
+            fontStyle: 'italic'
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(101)
+
+        // ─── Dots animation ────────────────────────────
+        let dots = 0
+        this.time.addEvent({
+            delay: 400,
+            callback: () => {
+                dots++
+                runText.setText('Running to the Palace' + '.'.repeat(dots % 4))
+            },
+            repeat: 8
+        })
+
+        this.time.delayedCall(3500, () => {
+            runOverlay.destroy()
+            runText.destroy()
+
+            this.dialog.show([
+                { name: '',    text: 'You burst through the palace gates.' },
+                { name: '',    text: 'The guards step aside. They look... afraid.' },
+                { name: 'You', text: 'LUVAZA!' },
+                { name: '',    text: 'Your voice echoes through empty halls.' },
+                { name: '',    text: 'You run deeper. Past the throne room.' },
+                { name: '',    text: 'Past the gardens. Down the corridor.' },
+                { name: '',    text: 'Until you reach the back chamber.' },
+                { name: '',    text: 'The door is open.' },
+                { name: '',    text: 'You step inside.' },
+                { name: '',    text: '...' },
+                { name: '',    text: 'On the floor...' },
+                { name: '',    text: 'Luvaza.' },
+                { name: '',    text: 'She\'s not moving.' },
+                { name: 'You', text: 'No...' },
+                { name: '',    text: 'You rush to her side.' },
+                { name: '',    text: 'Her eyes are closed.' },
+                { name: '',    text: 'The comms device is shattered beside her.' },
+                { name: 'You', text: 'Luvaza... please... wake up...' },
+                { name: '',    text: '...' },
+                { name: '',    text: 'She doesn\'t respond.' },
+                { name: 'You', text: 'No. NO!' }
+            ], () => {
+                this.showConfrontation()
+            })
+        })
+    }
+
+    // ─── Confrontation with King and Park Cleaner ──────
+    showConfrontation() {
+        this.dialog.show([
+            { name: '',             text: 'Behind you... footsteps.' },
+            { name: 'King',         text: 'I told her not to come here tonight.' },
+            { name: 'You',          text: '...you.' },
+            { name: 'King',         text: 'She was my daughter.' },
+            { name: 'King',         text: 'But she heard too much.' },
+            { name: 'You',          text: 'YOU KILLED HER!' },
+            { name: 'King',         text: 'I didn\'t pull the trigger.' },
+            { name: '',             text: 'The Park Cleaner steps out of the shadows.' },
+            { name: 'Park Cleaner', text: 'She would have ruined everything.' },
+            { name: 'You',          text: 'YOU...' },
+            { name: 'You',          text: 'I cleaned the park with you.' },
+            { name: 'You',          text: 'I TRUSTED you.' },
+            { name: 'Park Cleaner', text: 'And I told you the truth.' },
+            { name: 'Park Cleaner', text: 'About the Veridium. About everything.' },
+            { name: 'Park Cleaner', text: 'I told you someone this city trusts completely.' },
+            { name: 'Park Cleaner', text: 'Did you never wonder who that was?' },
+            { name: 'You',          text: '...' },
+            { name: 'King',         text: 'The Veridium under this city...' },
+            { name: 'King',         text: 'It\'s worth more than every life in it.' },
+            { name: 'King',         text: 'I did what was necessary.' },
+            { name: 'You',          text: 'Necessary?!' },
+            { name: 'You',          text: 'You destroyed your own city!' },
+            { name: 'You',          text: 'You killed your own DAUGHTER!' },
+            { name: 'King',         text: 'Sacrifices must be made for power.' },
+            { name: 'Park Cleaner', text: 'Walk away boy. You can\'t fight us both.' },
+            { name: 'You',          text: '...' },
+            { name: 'You',          text: 'You\'re right.' },
+            { name: 'You',          text: 'I can\'t fight you. Not today.' },
+            { name: 'You',          text: 'But I will come back.' },
+            { name: 'You',          text: 'And when I do...' },
+            { name: 'You',          text: 'This armor isn\'t just protection anymore.' },
+            { name: 'King',         text: 'Guards. Let him go.' },
+            { name: 'King',         text: 'He\'s nothing without her.' },
+            { name: '',             text: '...' },
+            { name: '',             text: 'You kneel beside Luvaza one last time.' },
+            { name: 'You',          text: 'I\'m sorry I wasn\'t fast enough.' },
+            { name: 'You',          text: 'I promise...' },
+            { name: 'You',          text: 'They will answer for this.' },
+            { name: '',             text: 'You pick up the shattered comms device.' },
+            { name: '',             text: 'The recording is still there.' },
+            { name: '',             text: '📡 Obtained: Luvaza\'s Recording' },
+            { name: '',             text: 'You walk out of the palace.' },
+            { name: '',             text: 'The doors close behind you.' },
+            { name: '',             text: 'The rain begins to fall.' }
+        ], () => {
+            GameState.setFlag('gfDead')
+            GameState.setFlag('learnedTruth')
+            GameState.setFlag('conspiracyRevealed')
+            GameState.addItem({
+                id: 'luvaza_recording',
+                name: 'Luvaza\'s Recording',
+                icon: '📡',
+                description: 'Her final words. Proof of the King\'s betrayal.',
+                quantity: 1
+            })
+            this.showDeathCutscene()
+        })
+    }
+
+    // ─── Death Cutscene ────────────────────────────────
+    showDeathCutscene() {
+        const W = this.cameras.main.width
+        const H = this.cameras.main.height
+
+        this.cutsceneItems = []
+
+        const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 1)
+            .setScrollFactor(0).setDepth(200)
+        this.cutsceneItems.push(overlay)
+
+        const addText = (x, y, text, style, delay) => {
+            const t = this.add.text(x, y, text, style)
+                .setOrigin(0.5).setScrollFactor(0).setDepth(201)
+                .setAlpha(0)
+            this.cutsceneItems.push(t)
+            this.time.delayedCall(delay, () => {
+                this.tweens.add({ targets: t, alpha: 1, duration: 1200 })
+            })
+            return t
+        }
+
+        addText(W / 2, H / 2 - 220, 'In memory of', {
+            fontSize: '22px',
+            fill: '#666666',
+            fontStyle: 'italic'
+        }, 1000)
+
+        addText(W / 2, H / 2 - 160, '💔 Luvaza', {
+            fontSize: '52px',
+            fill: '#ff4444',
+            fontStyle: 'bold'
+        }, 2500)
+
+        addText(W / 2, H / 2 - 80, '"I love y—"', {
+            fontSize: '28px',
+            fill: '#ff8888',
+            fontStyle: 'italic'
+        }, 4500)
+
+        addText(W / 2, H / 2 - 30, '— Her last words', {
+            fontSize: '18px',
+            fill: '#555555'
+        }, 6000)
+
+        addText(W / 2, H / 2 + 60, 'The King betrayed his city.', {
+            fontSize: '20px',
+            fill: '#aaaaaa'
+        }, 8000)
+
+        addText(W / 2, H / 2 + 95, 'The Park Cleaner took her life.', {
+            fontSize: '20px',
+            fill: '#aaaaaa'
+        }, 9500)
+
+        addText(W / 2, H / 2 + 130, 'And now... nothing will ever be the same.', {
+            fontSize: '20px',
+            fill: '#ffffff',
+            fontStyle: 'italic'
+        }, 11000)
+
+        // ─── Level 4 unlock ────────────────────────────
+        this.time.delayedCall(13000, () => {
+            const levelUp = this.add.text(W / 2, H / 2 + 210, '⚔️ LEVEL 4 UNLOCKED: REVENGE ⚔️', {
+                fontSize: '34px',
+                fill: '#ff0000',
+                fontStyle: 'bold'
+            }).setOrigin(0.5).setScrollFactor(0).setDepth(201).setAlpha(0)
+            this.cutsceneItems.push(levelUp)
+            this.tweens.add({ targets: levelUp, alpha: 1, duration: 1000 })
+        })
+
+        // ─── Continue button ───────────────────────────
+        this.time.delayedCall(15500, () => {
+            const cont = this.add.text(W / 2, H / 2 + 290, '[ Continue... ]', {
+                fontSize: '22px',
+                fill: '#333333'
+            }).setOrigin(0.5).setScrollFactor(0).setDepth(201)
+                .setAlpha(0)
+                .setInteractive({ useHandCursor: true })
+            this.cutsceneItems.push(cont)
+
+            this.tweens.add({ targets: cont, alpha: 1, duration: 800 })
+
+            cont.on('pointerover', () => cont.setStyle({ fill: '#ffffff' }))
+            cont.on('pointerout',  () => cont.setStyle({ fill: '#333333' }))
+            cont.on('pointerdown', () => {
+                GameState.advanceLevel() // → Level 4
+                this.ui.updateStats()
+                this.cutsceneItems.forEach(item => item.destroy())
+                this.cameras.main.fade(1000, 0, 0, 0)
+                this.time.delayedCall(1000, () => {
+                    this.scene.start('HubScene')
+                })
+            })
+        })
     }
 }

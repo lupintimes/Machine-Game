@@ -276,7 +276,13 @@ export default class SecretBaseScene extends Phaser.Scene {
     // ─── Assembly Menu ─────────────────────────────────
     getAvailableParts() {
         const available = []
-        if (GameState.armor.hasCore && !GameState.armor.parts.includes('servo')) {
+
+        // ─── FIX: Check BOTH hasCore and parts array ──────
+        const hasCore = GameState.armor.hasCore ||
+            GameState.armor.parts.includes('core') ||
+            GameState.getFlag('boughtCore')
+
+        if (hasCore && !GameState.armor.parts.includes('servo')) {
             available.push({
                 id: 'servo',
                 name: 'Servo Motors',
@@ -395,6 +401,8 @@ export default class SecretBaseScene extends Phaser.Scene {
         this.menuItems.push(close)
     }
 
+    // Replace ONLY the buildPart() method in your existing SecretBaseScene.js
+
     buildPart(part) {
         GameState.spendMoney(part.cost)
         GameState.addArmorPart(part.id)
@@ -406,20 +414,34 @@ export default class SecretBaseScene extends Phaser.Scene {
             quantity: 1
         })
 
+        // ─── Keep flags in sync ────────────────────────────
+        if (part.id === 'servo') {
+            GameState.setFlag('armorServoInstalled')
+        }
+        if (part.id === 'plating') {
+            GameState.setFlag('armorPlatingInstalled')
+        }
+
         this.closeBaseMenu()
         this.updateArmorStatus()
         this.ui.updateStats()
 
         if (GameState.armor.parts.length >= 3) {
-            // Armor complete!
+            GameState.setFlag('armorComplete')
+
             this.dialog.show([
                 { name: 'You', text: 'The last piece is in place...' },
                 { name: 'You', text: 'The armor... it\'s complete!' },
                 { name: 'Trader', text: 'I knew you could do it, kid.' },
+                { name: 'Trader', text: 'Look at it. Ancient engineering, brought back to life.' },
+                { name: 'You', text: 'It feels... right. Like it was made for me.' },
+                { name: 'Trader', text: 'No weapons. Pure protection.' },
                 { name: 'Trader', text: 'Now you\'re ready for what\'s coming.' },
                 { name: '', text: '🤖 ROBOTIC ARMOR COMPLETED!' }
             ], () => {
-                this.showBaseMenu()
+                GameState.advanceLevel()
+                this.ui.updateStats()
+                this.showArmorCompleteCutscene()
             })
         } else {
             this.dialog.show([
@@ -432,21 +454,103 @@ export default class SecretBaseScene extends Phaser.Scene {
         }
     }
 
+    // ─── Add this NEW method to SecretBaseScene ────────────
+    showArmorCompleteCutscene() {
+        const W = this.cameras.main.width
+        const H = this.cameras.main.height
+
+        this.cutsceneItems = []
+
+        const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.95)
+            .setScrollFactor(0).setDepth(100)
+        this.cutsceneItems.push(overlay)
+
+        const addText = (x, y, text, style, delay) => {
+            const t = this.add.text(x, y, text, style)
+                .setOrigin(0.5).setScrollFactor(0).setDepth(101)
+                .setAlpha(0)
+            this.cutsceneItems.push(t)
+            this.time.delayedCall(delay, () => {
+                this.tweens.add({ targets: t, alpha: 1, duration: 800 })
+            })
+            return t
+        }
+
+        addText(W / 2, H / 2 - 220, '🤖 ARMOR COMPLETE', {
+            fontSize: '48px',
+            fill: '#00ff88',
+            fontStyle: 'bold'
+        }, 500)
+
+        addText(W / 2, H / 2 - 140, '✅ Power Core   ✅ Servo Motors   ✅ Armor Plating', {
+            fontSize: '22px',
+            fill: '#ffffff'
+        }, 1500)
+
+        addText(W / 2, H / 2 - 60, 'No weapons. No destruction.', {
+            fontSize: '24px',
+            fill: '#aaaaaa'
+        }, 2500)
+
+        addText(W / 2, H / 2 - 20, 'Just pure protection for those who need it most.', {
+            fontSize: '22px',
+            fill: '#888888',
+            fontStyle: 'italic'
+        }, 3500)
+
+        addText(W / 2, H / 2 + 80, '"The strongest armor is built not for war,\nbut for those we love."', {
+            fontSize: '20px',
+            fill: '#ff8800',
+            fontStyle: 'italic',
+            align: 'center'
+        }, 5000)
+
+        addText(W / 2, H / 2 + 180, '⭐ LEVEL 3 REACHED ⭐', {
+            fontSize: '36px',
+            fill: '#ffdd00',
+            fontStyle: 'bold'
+        }, 6500)
+
+        // ─── Continue button ──────────────────────────────
+        this.time.delayedCall(8000, () => {
+            const cont = this.add.text(W / 2, H / 2 + 280, '[ Click to continue ]', {
+                fontSize: '22px',
+                fill: '#555555'
+            }).setOrigin(0.5).setScrollFactor(0).setDepth(101)
+                .setAlpha(0)
+                .setInteractive({ useHandCursor: true })
+
+            this.cutsceneItems.push(cont)
+            this.tweens.add({ targets: cont, alpha: 1, duration: 600 })
+
+            cont.on('pointerover', () => cont.setStyle({ fill: '#ffffff' }))
+            cont.on('pointerout', () => cont.setStyle({ fill: '#555555' }))
+            cont.on('pointerdown', () => {
+                this.cutsceneItems.forEach(item => item.destroy())
+                this.cutsceneItems = []
+                this.showBaseMenu()
+            })
+        })
+    }
+
     // ─── Inspect Armor ─────────────────────────────────
     inspectArmor() {
         const parts = GameState.armor.parts
+        const hasCore = GameState.armor.hasCore ||
+            parts.includes('core') ||
+            GameState.getFlag('boughtCore')
         const total = 3
 
         let lines = [
             { name: '', text: '─── ARMOR STATUS ───' },
-            { name: 'Core', text: GameState.armor.hasCore ? '✅ Installed - Powers the entire suit' : '❌ Missing - Need to buy from Trader' },
+            { name: 'Core', text: hasCore ? '✅ Installed - Powers the entire suit' : '❌ Missing - Need to buy from Trader' },
             { name: 'Servo', text: parts.includes('servo') ? '✅ Installed - Enables movement' : '❌ Missing - Assemble at workbench' },
             { name: 'Plating', text: parts.includes('plating') ? '✅ Installed - Full protection' : '❌ Missing - Assemble at workbench' },
             { name: '', text: `Progress: ${parts.length}/${total} parts` }
         ]
 
         if (parts.length >= 3) {
-            lines.push({ name: '⭐', text: 'The armor is COMPLETE and ready for battle!' })
+            lines.push({ name: '⭐', text: 'The armor is COMPLETE and ready!' })
         }
 
         this.dialog.show(lines, () => {

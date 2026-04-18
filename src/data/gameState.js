@@ -70,7 +70,7 @@ const GameState = {
     },
 
     // ─── Core Stats ────────────────────────────────────
-    level: 3,
+    level: 1,
     money: 5000,
     reputation: 0,
     elixir: 0,
