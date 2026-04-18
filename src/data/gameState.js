@@ -174,6 +174,7 @@ const GameState = {
         // ─── Friendship ────────────────────────────────
         parkCleanerFriendship: 0,
 
+        
         traderCalledCleaner: false,   // trader radio call to park cleaner
         luvazaVisitedPark: false,     // luvaza sees king + cleaner talking
     },
