@@ -6,7 +6,6 @@ const GameState = {
     timeOfDay: 'morning',
     timeIndex: 0,
 
-    // ─── Time Methods ──────────────────────────────────
     advanceTime() {
         this.timeIndex++
         if (this.timeIndex >= 4) {
@@ -90,7 +89,6 @@ const GameState = {
     // ─── Inventory ─────────────────────────────────────
     inventory: [],
 
-    // ─── Inventory Methods ─────────────────────────────
     addItem(item) {
         if (!this.inventory) this.inventory = []
         const existing = this.inventory.find(i => i.id === item.id)
@@ -126,9 +124,7 @@ const GameState = {
     },
 
     // ─── Flags ─────────────────────────────────────────
-    // ⚠️ Every flag MUST be listed here or setFlag() won't work
     flags: {
-
         // ─── Items ─────────────────────────────────────
         hasCommsDevice: false,
         gaveCommsToGF: false,
@@ -175,15 +171,17 @@ const GameState = {
         gfHeardConversation: false,
         gfDead: false,
 
-        // ─── Friendship (numeric) ──────────────────────
+        // ─── Friendship ────────────────────────────────
         parkCleanerFriendship: 0
     },
 
     // ─── Flag Methods ──────────────────────────────────
     setFlag(flag, value = true) {
-        // ✅ Fixed: creates flag even if it didn't exist before
         this.flags[flag] = value
         console.log(`🚩 Flag set: ${flag} =`, value)
+
+        // ─── Auto-check level advance on every flag set ─
+        this.tryAdvanceLevel()
     },
 
     getFlag(flag) {
@@ -235,11 +233,57 @@ const GameState = {
         console.log(`⭐ Level up! Now level ${this.level}`)
     },
 
-    // ─── Completion Checks ─────────────────────────────
-    isLevel1Complete() { return this.flags.boughtCore === true },
-    isLevel2Complete() { return this.flags.learnedTruth && this.flags.toldKing },
-    isLevel3Complete() { return this.flags.gfDead === true },
-    canMeetTrader()    { return this.skills.repair >= 10 }
+    // ─── Level Completion Checks ───────────────────────
+    isLevel1Complete() {
+        return this.flags.boughtCore === true
+    },
+
+    isLevel2ReadyToAdvance() {
+        return (
+            this.flags.metKing &&
+            this.flags.metLuvaza &&
+            this.flags.rebuiltBuildings &&
+            this.flags.metParkCleaner &&
+            this.flags.learnedTruth &&
+            this.flags.toldKing
+        )
+    },
+
+    isLevel3ReadyToAdvance() {
+        return (
+            this.flags.armorComplete &&
+            this.flags.reasonForAttackKnown &&
+            this.flags.gfDead
+        )
+    },
+
+    tryAdvanceLevel() {
+        let advanced = false
+
+        if (this.level === 1 && this.isLevel1Complete()) {
+            this.level = 2
+            console.log('⭐ Level up! Now level 2')
+            advanced = true
+        }
+
+        if (this.level === 2 && this.isLevel2ReadyToAdvance()) {
+            this.level = 3
+            console.log('⭐ Level up! Now level 3')
+            advanced = true
+        }
+
+        if (this.level === 3 && this.isLevel3ReadyToAdvance()) {
+            this.level = 4
+            console.log('⭐ Level up! Now level 4')
+            advanced = true
+        }
+
+        return advanced
+    },
+
+    canMeetTrader() {
+        return this.skills.repair >= 10
+    }
 }
 
 export default GameState

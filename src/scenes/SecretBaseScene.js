@@ -404,55 +404,59 @@ export default class SecretBaseScene extends Phaser.Scene {
     // Replace ONLY the buildPart() method in your existing SecretBaseScene.js
 
     buildPart(part) {
-        GameState.spendMoney(part.cost)
-        GameState.addArmorPart(part.id)
-        GameState.addItem({
-            id: part.id,
-            name: part.name,
-            icon: part.icon,
-            description: part.description,
-            quantity: 1
+    GameState.spendMoney(part.cost)
+    GameState.addArmorPart(part.id)
+    GameState.addItem({
+        id: part.id,
+        name: part.name,
+        icon: part.icon,
+        description: part.description,
+        quantity: 1
+    })
+
+    // ─── Keep flags in sync ────────────────────────────
+    if (part.id === 'servo') {
+        GameState.setFlag('armorServoInstalled')
+    }
+    if (part.id === 'plating') {
+        GameState.setFlag('armorPlatingInstalled')
+    }
+
+    this.closeBaseMenu()
+    this.updateArmorStatus()
+    this.ui.updateStats()
+
+    if (GameState.armor.parts.length >= 3) {
+        // ─── Armor complete! ───────────────────────────
+        GameState.setFlag('armorComplete')
+
+        this.dialog.show([
+            { name: 'You',    text: 'The last piece is in place...' },
+            { name: 'You',    text: 'The armor... it\'s complete!' },
+            { name: 'Trader', text: 'I knew you could do it, kid.' },
+            { name: 'Trader', text: 'Look at it. Ancient engineering, brought back to life.' },
+            { name: 'You',    text: 'It feels... right. Like it was made for me.' },
+            { name: 'Trader', text: 'No weapons. Pure protection.' },
+            { name: 'Trader', text: 'Now you\'re ready for what\'s coming.' },
+            { name: '',       text: '🤖 ROBOTIC ARMOR COMPLETED!' }
+        ], () => {
+            // ─── DON'T advance level here ──────────────
+            // Just check if ALL tasks are done
+            GameState.tryAdvanceLevel()
+            this.ui.updateStats()
+            this.showArmorCompleteCutscene()
         })
 
-        // ─── Keep flags in sync ────────────────────────────
-        if (part.id === 'servo') {
-            GameState.setFlag('armorServoInstalled')
-        }
-        if (part.id === 'plating') {
-            GameState.setFlag('armorPlatingInstalled')
-        }
-
-        this.closeBaseMenu()
-        this.updateArmorStatus()
-        this.ui.updateStats()
-
-        if (GameState.armor.parts.length >= 3) {
-            GameState.setFlag('armorComplete')
-
-            this.dialog.show([
-                { name: 'You', text: 'The last piece is in place...' },
-                { name: 'You', text: 'The armor... it\'s complete!' },
-                { name: 'Trader', text: 'I knew you could do it, kid.' },
-                { name: 'Trader', text: 'Look at it. Ancient engineering, brought back to life.' },
-                { name: 'You', text: 'It feels... right. Like it was made for me.' },
-                { name: 'Trader', text: 'No weapons. Pure protection.' },
-                { name: 'Trader', text: 'Now you\'re ready for what\'s coming.' },
-                { name: '', text: '🤖 ROBOTIC ARMOR COMPLETED!' }
-            ], () => {
-                GameState.advanceLevel()
-                this.ui.updateStats()
-                this.showArmorCompleteCutscene()
-            })
-        } else {
-            this.dialog.show([
-                { name: 'You', text: `${part.icon} ${part.name} installed!` },
-                { name: 'You', text: 'The armor is getting stronger.' },
-                { name: 'Trader', text: 'Good work. Keep going.' }
-            ], () => {
-                this.showBaseMenu()
-            })
-        }
+    } else {
+        this.dialog.show([
+            { name: 'You',    text: `${part.icon} ${part.name} installed!` },
+            { name: 'You',    text: 'The armor is getting stronger.' },
+            { name: 'Trader', text: 'Good work. Keep going.' }
+        ], () => {
+            this.showBaseMenu()
+        })
     }
+}
 
     // ─── Add this NEW method to SecretBaseScene ────────────
     showArmorCompleteCutscene() {

@@ -172,8 +172,8 @@ export default class PalaceScene extends Phaser.Scene {
                 { name: 'King', text: 'But be careful. These are dangerous times.' }
             ], () => { this.showKingMenu() })
 
+            // In the toldKing section, replace triggerLevel2Complete:
         } else if (!GameState.getFlag('toldKing')) {
-            // ─── Tell King the truth ───────
             this.dialog.show([
                 { name: 'You', text: 'Your Majesty. I know who attacked the city.' },
                 { name: 'King', text: 'What? Who?' },
@@ -185,9 +185,17 @@ export default class PalaceScene extends Phaser.Scene {
                 { name: 'You', text: 'Something about his reaction felt wrong.' },
                 { name: '', text: 'The King didn\'t seem surprised at all...' }
             ], () => {
-                // ─── Set flag then trigger cutscene ──
                 GameState.setFlag('toldKing')
-                this.triggerLevel2Complete()
+
+                // ─── Try to advance level ──────────────────────
+                const advanced = GameState.tryAdvanceLevel()
+                this.ui.updateStats()
+
+                if (advanced) {
+                    this.triggerLevel2Complete()
+                } else {
+                    this.showKingMenu()
+                }
             })
 
         } else {

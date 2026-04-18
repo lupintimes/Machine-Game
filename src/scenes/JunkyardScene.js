@@ -321,7 +321,7 @@ export default class JunkyardScene extends Phaser.Scene {
                         { name: 'You',    text: 'Show me.' }
                     ], () => {
                         GameState.setFlag('secretBaseRevealed')
-                        GameState.advanceLevel()
+                        GameState.tryAdvanceLevel()
                         this.ui.updateStats()
                         this.showSecretBaseCutscene()
                     })

@@ -268,7 +268,7 @@ export default class Level3PalaceScene extends Phaser.Scene {
             cont.on('pointerover', () => cont.setStyle({ fill: '#ffffff' }))
             cont.on('pointerout',  () => cont.setStyle({ fill: '#333333' }))
             cont.on('pointerdown', () => {
-                GameState.advanceLevel() // → Level 4
+                GameState.tryAdvanceLevel()
                 this.ui.updateStats()
                 this.cutsceneItems.forEach(item => item.destroy())
                 this.cameras.main.fade(1000, 0, 0, 0)
