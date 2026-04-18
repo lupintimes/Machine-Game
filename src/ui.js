@@ -66,8 +66,8 @@ export default class UI {
         // ─── Hub Button ────────────────────────────────
         if (this.scene.scene.key !== 'HubScene') {
             const hubX = getBtnX(btnIndex);
-            // FIX #16: Tinted fills for visual grouping
-            this.hubBtn = this.scene.add.rectangle(hubX, btnY, btnW, 40, 0x1a3328)
+            // [FIX] Harmonized navigation button to cohesive base and hover
+            this.hubBtn = this.scene.add.rectangle(hubX, btnY, btnW, 40, 0x1a1a2e)
                 .setDepth(50).setScrollFactor(0)
                 .setStrokeStyle(1, 0x00ff88)
                 .setInteractive({ useHandCursor: true })
@@ -77,8 +77,9 @@ export default class UI {
                 fill: '#ffffff'
             }).setOrigin(0.5).setDepth(51).setScrollFactor(0)
 
-            this.hubBtn.on('pointerover', () => this.hubBtn.setFillStyle(0x2a5540))
-            this.hubBtn.on('pointerout', () => this.hubBtn.setFillStyle(0x1a3328))
+            // [FIX] Unified hover style
+            this.hubBtn.on('pointerover', () => this.hubBtn.setFillStyle(0x2a2a44))
+            this.hubBtn.on('pointerout', () => this.hubBtn.setFillStyle(0x1a1a2e))
             this.hubBtn.on('pointerdown', () => {
                 this.scene.cameras.main.fade(300, 0, 0, 0)
                 this.scene.time.delayedCall(300, () => {
@@ -90,7 +91,8 @@ export default class UI {
 
         // ─── Inventory Button ──────────────────────────
         const invX = getBtnX(btnIndex);
-        this.invBtn = this.scene.add.rectangle(invX, btnY, btnW, 40, 0x2a2a33)
+        // [FIX] Harmonized navigation button to cohesive base and hover
+        this.invBtn = this.scene.add.rectangle(invX, btnY, btnW, 40, 0x1a1a2e)
             .setDepth(50).setScrollFactor(0)
             .setStrokeStyle(1, 0xffffff)
             .setInteractive({ useHandCursor: true })
@@ -100,14 +102,16 @@ export default class UI {
             fill: '#ffffff'
         }).setOrigin(0.5).setDepth(51).setScrollFactor(0)
 
-        this.invBtn.on('pointerover', () => this.invBtn.setFillStyle(0x3a3a44))
-        this.invBtn.on('pointerout', () => this.invBtn.setFillStyle(0x2a2a33))
+        // [FIX] Unified hover style
+        this.invBtn.on('pointerover', () => this.invBtn.setFillStyle(0x2a2a44))
+        this.invBtn.on('pointerout', () => this.invBtn.setFillStyle(0x1a1a2e))
         this.invBtn.on('pointerdown', () => this.toggleInventory())
         btnIndex++;
 
         // ─── Sleep Button ──────────────────────────────
         const sleepX = getBtnX(btnIndex);
-        this.sleepBtn = this.scene.add.rectangle(sleepX, btnY, btnW, 40, 0x1a1a33)
+        // [FIX] Harmonized navigation button to cohesive base and hover
+        this.sleepBtn = this.scene.add.rectangle(sleepX, btnY, btnW, 40, 0x1a1a2e)
             .setDepth(50).setScrollFactor(0)
             .setStrokeStyle(1, 0x4444aa)
             .setInteractive({ useHandCursor: true })
@@ -117,14 +121,16 @@ export default class UI {
             fill: '#ffffff'
         }).setOrigin(0.5).setDepth(51).setScrollFactor(0)
 
-        this.sleepBtn.on('pointerover', () => this.sleepBtn.setFillStyle(0x2a2a55))
-        this.sleepBtn.on('pointerout', () => this.sleepBtn.setFillStyle(0x1a1a33))
+        // [FIX] Unified hover style
+        this.sleepBtn.on('pointerover', () => this.sleepBtn.setFillStyle(0x2a2a44))
+        this.sleepBtn.on('pointerout', () => this.sleepBtn.setFillStyle(0x1a1a2e))
         this.sleepBtn.on('pointerdown', () => this.openSleepMenu())
         btnIndex++;
 
         // ─── Task Button ───────────────────────────────
         const taskX = getBtnX(btnIndex);
-        this.taskBtn = this.scene.add.rectangle(taskX, btnY, btnW, 40, 0x332a1a)
+        // [FIX] Harmonized navigation button to cohesive base and hover
+        this.taskBtn = this.scene.add.rectangle(taskX, btnY, btnW, 40, 0x1a1a2e)
             .setDepth(50).setScrollFactor(0)
             .setStrokeStyle(1, 0xffaa00)
             .setInteractive({ useHandCursor: true })
@@ -134,8 +140,9 @@ export default class UI {
             fill: '#ffffff'
         }).setOrigin(0.5).setDepth(51).setScrollFactor(0)
 
-        this.taskBtn.on('pointerover', () => this.taskBtn.setFillStyle(0x553a2a))
-        this.taskBtn.on('pointerout', () => this.taskBtn.setFillStyle(0x332a1a))
+        // [FIX] Unified hover style
+        this.taskBtn.on('pointerover', () => this.taskBtn.setFillStyle(0x2a2a44))
+        this.taskBtn.on('pointerout', () => this.taskBtn.setFillStyle(0x1a1a2e))
         this.taskBtn.on('pointerdown', () => this.toggleTaskPanel())
 
         // FIX #18: Escape key binding to close panels
@@ -452,13 +459,14 @@ export default class UI {
     showInvTooltip(x, y, item) {
         this.hideInvTooltip() // Prevent duplicates
 
-        // FIX #3: Viewport clamping for tooltips
+        // FIX #3 & // [FIX] Improved Tooltip Positioning and bounding box logic
         const tooltipW = 220, tooltipH = 80;
         const W = this.scene.cameras.main.width;
         const H = this.scene.cameras.main.height;
         let tx = x, ty = y - 70;
 
         if (ty - tooltipH / 2 < 10) ty = y + 60; // Flip below if too high
+        if (ty + tooltipH / 2 > H - 10) ty = H - tooltipH / 2 - 10; // Prevent bottom cutoff
         if (tx - tooltipW / 2 < 10) tx = tooltipW / 2 + 10;
         if (tx + tooltipW / 2 > W - 10) tx = W - tooltipW / 2 - 10;
 
