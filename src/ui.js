@@ -616,9 +616,11 @@ export default class UI {
                 { text: 'Install armor plating', done: GameState.armor.parts.includes('plating') },
                 { text: '🤖 Armor complete', done: GameState.getFlag('armorComplete') },
                 { text: '─── Park Cleaner ───', done: false },
-                { text: `Friendship (${GameState.parkCleanerFriendship || 0}/3)`, done: (GameState.parkCleanerFriendship || 0) >= 3 },
+                { text: `Friendship (${GameState.flags.parkCleanerFriendship || 0}/3)`, done: (GameState.flags.parkCleanerFriendship || 0) >= 3 },
                 { text: 'Learn reason for attack', done: GameState.getFlag('reasonForAttackKnown') },
                 { text: '─── The Betrayal ───', done: false },
+                { text: '📡 Overheard transmission', done: GameState.getFlag('traderCalledCleaner') },
+                { text: '👀 Luvaza\'s discovery', done: GameState.getFlag('luvazaVisitedPark') },
                 { text: '📡 Receive Luvaza\'s call', done: GameState.getFlag('gfCalledComms') },
                 { text: '💔 Rush to the Palace', done: GameState.getFlag('gfDead') }
             ]

@@ -18,17 +18,15 @@ export default class Level3PalaceScene extends Phaser.Scene {
         this.ui = new UI(this)
         this.ui.create()
 
-        // ─── Dark background ───────────────────────────
+        // ─── Dark palace ───────────────────────────────
         this.add.rectangle(W / 2, H / 2, W, H, 0x000000).setDepth(-2)
 
-        // ─── Background ────────────────────────────────
         this.bg = this.add.image(W / 2, H / 2, 'palace-bg')
         this.bg.setOrigin(0.5, 0.5)
         this.bg.setDepth(-1)
         this.bg.setDisplaySize(W, H)
-        this.bg.setAlpha(0.3) // ← dark tint for night feel
+        this.bg.setAlpha(0.2)
 
-        // ─── Dark red overlay for mood ─────────────────
         this.add.rectangle(W / 2, H / 2, W, H, 0x220000, 0.4).setDepth(0)
 
         // ─── Scene Title ───────────────────────────────
@@ -37,19 +35,12 @@ export default class Level3PalaceScene extends Phaser.Scene {
             fill: '#441111'
         }).setOrigin(0.5).setScrollFactor(0).setDepth(20)
 
-        // ─── Luvaza on ground ──────────────────────────
-        this.add.rectangle(W / 2, H / 2 + 50, 50, 30, 0xff69b4, 0.5).setDepth(2)
-        this.add.text(W / 2, H / 2 + 80, 'Luvaza...', {
-            fontSize: '20px',
-            fill: '#ff69b4',
-            fontStyle: 'italic'
-        }).setOrigin(0.5).setDepth(2)
-
         // ─── Dialog ────────────────────────────────────
         this.dialog = new DialogBox(this)
         this.spaceKey = this.input.keyboard.addKey('SPACE')
+        this.cutsceneItems = []
 
-        // ─── Start the betrayal sequence ───────────────
+        // ─── Start ─────────────────────────────────────
         this.startBetrayalSequence()
     }
 
@@ -66,7 +57,6 @@ export default class Level3PalaceScene extends Phaser.Scene {
         const W = this.cameras.main.width
         const H = this.cameras.main.height
 
-        // ─── Running to palace animation ───────────────
         const runOverlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.95)
             .setScrollFactor(0).setDepth(100)
 
@@ -76,7 +66,6 @@ export default class Level3PalaceScene extends Phaser.Scene {
             fontStyle: 'italic'
         }).setOrigin(0.5).setScrollFactor(0).setDepth(101)
 
-        // ─── Dots animation ────────────────────────────
         let dots = 0
         this.time.addEvent({
             delay: 400,
@@ -93,88 +82,106 @@ export default class Level3PalaceScene extends Phaser.Scene {
 
             this.dialog.show([
                 { name: '',    text: 'You burst through the palace gates.' },
-                { name: '',    text: 'The guards step aside. They look... afraid.' },
-                { name: 'You', text: 'LUVAZA!' },
-                { name: '',    text: 'Your voice echoes through empty halls.' },
-                { name: '',    text: 'You run deeper. Past the throne room.' },
-                { name: '',    text: 'Past the gardens. Down the corridor.' },
-                { name: '',    text: 'Until you reach the back chamber.' },
-                { name: '',    text: 'The door is open.' },
-                { name: '',    text: 'You step inside.' },
-                { name: '',    text: '...' },
-                { name: '',    text: 'On the floor...' },
-                { name: '',    text: 'Luvaza.' },
-                { name: '',    text: 'She\'s not moving.' },
-                { name: 'You', text: 'No...' },
-                { name: '',    text: 'You rush to her side.' },
-                { name: '',    text: 'Her eyes are closed.' },
-                { name: '',    text: 'The comms device is shattered beside her.' },
-                { name: 'You', text: 'Luvaza... please... wake up...' },
-                { name: '',    text: '...' },
-                { name: '',    text: 'She doesn\'t respond.' },
-                { name: 'You', text: 'No. NO!' }
+                { name: '',    text: 'The guards look confused. Worried.' },
+                { name: 'You', text: 'WHERE IS LUVAZA?!' },
+                { name: '',    text: 'A guard points toward the throne room.' },
+                { name: '',    text: 'You hear shouting from inside...' },
+                { name: '',    text: 'You run. Faster than you\'ve ever run.' },
+                { name: '',    text: 'You reach the throne room doors.' },
+                { name: '',    text: 'They\'re open.' }
             ], () => {
                 this.showConfrontation()
             })
         })
     }
 
-    // ─── Confrontation with King and Park Cleaner ──────
+    // ─── The Confrontation ─────────────────────────────
     showConfrontation() {
         this.dialog.show([
-            { name: '',             text: 'Behind you... footsteps.' },
-            { name: 'King',         text: 'I told her not to come here tonight.' },
-            { name: 'You',          text: '...you.' },
-            { name: 'King',         text: 'She was my daughter.' },
-            { name: 'King',         text: 'But she heard too much.' },
-            { name: 'You',          text: 'YOU KILLED HER!' },
-            { name: 'King',         text: 'I didn\'t pull the trigger.' },
-            { name: '',             text: 'The Park Cleaner steps out of the shadows.' },
-            { name: 'Park Cleaner', text: 'She would have ruined everything.' },
-            { name: 'You',          text: 'YOU...' },
-            { name: 'You',          text: 'I cleaned the park with you.' },
-            { name: 'You',          text: 'I TRUSTED you.' },
-            { name: 'Park Cleaner', text: 'And I told you the truth.' },
-            { name: 'Park Cleaner', text: 'About the Veridium. About everything.' },
-            { name: 'Park Cleaner', text: 'I told you someone this city trusts completely.' },
-            { name: 'Park Cleaner', text: 'Did you never wonder who that was?' },
-            { name: 'You',          text: '...' },
-            { name: 'King',         text: 'The Veridium under this city...' },
-            { name: 'King',         text: 'It\'s worth more than every life in it.' },
-            { name: 'King',         text: 'I did what was necessary.' },
-            { name: 'You',          text: 'Necessary?!' },
-            { name: 'You',          text: 'You destroyed your own city!' },
-            { name: 'You',          text: 'You killed your own DAUGHTER!' },
-            { name: 'King',         text: 'Sacrifices must be made for power.' },
-            { name: 'Park Cleaner', text: 'Walk away boy. You can\'t fight us both.' },
-            { name: 'You',          text: '...' },
-            { name: 'You',          text: 'You\'re right.' },
-            { name: 'You',          text: 'I can\'t fight you. Not today.' },
-            { name: 'You',          text: 'But I will come back.' },
-            { name: 'You',          text: 'And when I do...' },
-            { name: 'You',          text: 'This armor isn\'t just protection anymore.' },
-            { name: 'King',         text: 'Guards. Let him go.' },
-            { name: 'King',         text: 'He\'s nothing without her.' },
-            { name: '',             text: '...' },
-            { name: '',             text: 'You kneel beside Luvaza one last time.' },
-            { name: 'You',          text: 'I\'m sorry I wasn\'t fast enough.' },
-            { name: 'You',          text: 'I promise...' },
-            { name: 'You',          text: 'They will answer for this.' },
-            { name: '',             text: 'You pick up the shattered comms device.' },
-            { name: '',             text: 'The recording is still there.' },
-            { name: '',             text: '📡 Obtained: Luvaza\'s Recording' },
-            { name: '',             text: 'You walk out of the palace.' },
-            { name: '',             text: 'The doors close behind you.' },
-            { name: '',             text: 'The rain begins to fall.' }
+            { name: '',      text: 'You step inside.' },
+            { name: '',      text: 'The scene freezes you in place.' },
+            { name: '',      text: 'Luvaza is standing in the center of the room.' },
+            { name: '',      text: 'She\'s facing the King. Tears streaming down her face.' },
+            { name: '',      text: 'The Park Cleaner stands beside the King.' },
+            { name: '',      text: 'Guards surround her.' },
+            { name: 'Luvaza', text: 'I HEARD YOU! I heard everything!' },
+            { name: 'Luvaza', text: 'You planned the attack! You and this... this CLEANER!' },
+            { name: 'King',   text: 'Luvaza, please calm down. You don\'t understand—' },
+            { name: 'Luvaza', text: 'DON\'T tell me I don\'t understand!' },
+            { name: 'Luvaza', text: 'You said "eliminate the threat"!' },
+            { name: 'Luvaza', text: 'You were talking about the boy I love!' },
+            { name: 'King',   text: 'No! Luvaza, we were talking about the ENEMY—' },
+            { name: 'Luvaza', text: 'LIAR!' },
+            { name: '',       text: 'Luvaza lunges forward toward the King.' },
+            { name: '',       text: 'The guards react.' },
+            { name: '',       text: '...' },
+            { name: '',       text: 'One of them pushes her back.' },
+            { name: '',       text: 'She stumbles.' },
+            { name: '',       text: 'She falls.' },
+            { name: '',       text: 'Her head hits the marble floor.' },
+            { name: '',       text: '...' },
+            { name: '',       text: 'A terrible silence fills the room.' },
+            { name: 'King',   text: 'LUVAZA!' },
+            { name: '',       text: 'The King rushes to her side.' },
+            { name: '',       text: 'The Park Cleaner\'s face goes white.' },
+            { name: 'You',    text: 'No...' },
+            { name: '',       text: 'You push past the guards.' },
+            { name: '',       text: 'You kneel beside her.' },
+            { name: '',       text: 'She\'s not moving.' },
+            { name: 'You',    text: 'Luvaza... please...' },
+            { name: 'King',   text: 'My daughter... what have I...' },
+            { name: 'Park Cleaner', text: 'She wasn\'t supposed to be here...' },
+            { name: 'Park Cleaner', text: 'She wasn\'t supposed to hear any of that...' },
+            { name: 'You',    text: 'What... what was she talking about?' },
+            { name: 'You',    text: 'What did she hear?!' },
+            { name: 'King',   text: '...' },
+            { name: 'King',   text: 'We were discussing protection of the Veridium.' },
+            { name: 'King',   text: 'The "threat" was the enemy spy in the city.' },
+            { name: 'King',   text: 'Not... not your friend. Not you.' },
+            { name: 'Park Cleaner', text: 'I\'m a royal agent. I was investigating the attack.' },
+            { name: 'Park Cleaner', text: 'I went undercover as a park cleaner.' },
+            { name: 'Park Cleaner', text: 'The King asked me to protect the Veridium.' },
+            { name: 'Park Cleaner', text: 'She... she heard us out of context.' },
+            { name: 'You',    text: '...' },
+            { name: 'You',    text: 'She thought you were the villains.' },
+            { name: 'You',    text: 'She thought she was protecting me.' },
+            { name: 'King',   text: 'She was trying to save you...' },
+            { name: 'King',   text: 'And it killed her.' },
+            { name: '',       text: '...' },
+            { name: '',       text: 'The King breaks down.' },
+            { name: '',       text: 'The Park Cleaner stares at the floor.' },
+            { name: '',       text: 'The guards stand frozen.' },
+            { name: 'You',    text: 'She died because of a misunderstanding.' },
+            { name: 'You',    text: 'Because she loved me too much.' },
+            { name: 'You',    text: 'Because she heard half a conversation.' },
+            { name: 'You',    text: 'And I wasn\'t there to stop her.' },
+            { name: '',       text: '...' },
+            { name: '',       text: 'You pick up the comms device from her hand.' },
+            { name: '',       text: 'The screen still shows your name.' },
+            { name: '',       text: 'Her last call.' },
+            { name: '',       text: '...' },
+            { name: 'You',    text: 'I should have been faster.' },
+            { name: 'You',    text: 'I should have told her to wait.' },
+            { name: 'You',    text: 'I should have...' },
+            { name: '',       text: '...' },
+            { name: 'King',   text: 'The real enemy is still out there.' },
+            { name: 'King',   text: 'The one who actually attacked our city.' },
+            { name: 'King',   text: 'We will find them. Together.' },
+            { name: 'King',   text: 'For her.' },
+            { name: 'You',    text: '...' },
+            { name: 'You',    text: 'For her.' },
+            { name: '',       text: 'You stand up.' },
+            { name: '',       text: 'You walk out of the palace.' },
+            { name: '',       text: 'The rain begins to fall.' }
         ], () => {
             GameState.setFlag('gfDead')
             GameState.setFlag('learnedTruth')
             GameState.setFlag('conspiracyRevealed')
             GameState.addItem({
-                id: 'luvaza_recording',
-                name: 'Luvaza\'s Recording',
+                id: 'luvaza_comms',
+                name: 'Luvaza\'s Comms Device',
                 icon: '📡',
-                description: 'Her final words. Proof of the King\'s betrayal.',
+                description: 'Her comms device. Your name is still on the screen.',
                 quantity: 1
             })
             this.showDeathCutscene()
@@ -203,49 +210,55 @@ export default class Level3PalaceScene extends Phaser.Scene {
             return t
         }
 
-        addText(W / 2, H / 2 - 220, 'In memory of', {
+        addText(W / 2, H / 2 - 250, 'In memory of', {
             fontSize: '22px',
             fill: '#666666',
             fontStyle: 'italic'
         }, 1000)
 
-        addText(W / 2, H / 2 - 160, '💔 Luvaza', {
+        addText(W / 2, H / 2 - 180, '💔 Luvaza', {
             fontSize: '52px',
             fill: '#ff4444',
             fontStyle: 'bold'
         }, 2500)
 
-        addText(W / 2, H / 2 - 80, '"I love y—"', {
+        addText(W / 2, H / 2 - 100, '"I love y—"', {
             fontSize: '28px',
             fill: '#ff8888',
             fontStyle: 'italic'
         }, 4500)
 
-        addText(W / 2, H / 2 - 30, '— Her last words', {
+        addText(W / 2, H / 2 - 50, '— Her last words on the comms', {
             fontSize: '18px',
             fill: '#555555'
         }, 6000)
 
-        addText(W / 2, H / 2 + 60, 'The King betrayed his city.', {
+        addText(W / 2, H / 2 + 30, 'She died trying to protect someone she loved.', {
             fontSize: '20px',
             fill: '#aaaaaa'
         }, 8000)
 
-        addText(W / 2, H / 2 + 95, 'The Park Cleaner took her life.', {
+        addText(W / 2, H / 2 + 65, 'Based on a conversation she only half heard.', {
             fontSize: '20px',
             fill: '#aaaaaa'
         }, 9500)
 
-        addText(W / 2, H / 2 + 130, 'And now... nothing will ever be the same.', {
+        addText(W / 2, H / 2 + 100, 'The cruelest tragedies are the ones that didn\'t need to happen.', {
             fontSize: '20px',
             fill: '#ffffff',
             fontStyle: 'italic'
         }, 11000)
 
+        addText(W / 2, H / 2 + 170, 'The real enemy is still out there.', {
+            fontSize: '22px',
+            fill: '#ff8800'
+        }, 13000)
+
         // ─── Level 4 unlock ────────────────────────────
-        this.time.delayedCall(13000, () => {
-            const levelUp = this.add.text(W / 2, H / 2 + 210, '⚔️ LEVEL 4 UNLOCKED: REVENGE ⚔️', {
-                fontSize: '34px',
+        this.time.delayedCall(15000, () => {
+            const levelUp = this.add.text(W / 2, H / 2 + 230,
+                '⚔️ LEVEL 4 UNLOCKED: FIND THE TRUE ENEMY ⚔️', {
+                fontSize: '30px',
                 fill: '#ff0000',
                 fontStyle: 'bold'
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201).setAlpha(0)
@@ -253,9 +266,9 @@ export default class Level3PalaceScene extends Phaser.Scene {
             this.tweens.add({ targets: levelUp, alpha: 1, duration: 1000 })
         })
 
-        // ─── Continue button ───────────────────────────
-        this.time.delayedCall(15500, () => {
-            const cont = this.add.text(W / 2, H / 2 + 290, '[ Continue... ]', {
+        // ─── Continue ──────────────────────────────────
+        this.time.delayedCall(17000, () => {
+            const cont = this.add.text(W / 2, H / 2 + 310, '[ Continue... ]', {
                 fontSize: '22px',
                 fill: '#333333'
             }).setOrigin(0.5).setScrollFactor(0).setDepth(201)

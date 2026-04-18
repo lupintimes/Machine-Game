@@ -50,20 +50,20 @@ const GameState = {
 
     getTimeIcon() {
         const icons = {
-            'morning':   '🌅',
+            'morning': '🌅',
             'afternoon': '☀️',
-            'evening':   '🌆',
-            'night':     '🌙'
+            'evening': '🌆',
+            'night': '🌙'
         }
         return icons[this.timeOfDay]
     },
 
     getTimeColor() {
         const colors = {
-            'morning':   '#ffdd44',
+            'morning': '#ffdd44',
             'afternoon': '#ffffff',
-            'evening':   '#ff8844',
-            'night':     '#4444aa'
+            'evening': '#ff8844',
+            'night': '#4444aa'
         }
         return colors[this.timeOfDay]
     },
@@ -172,7 +172,10 @@ const GameState = {
         gfDead: false,
 
         // ─── Friendship ────────────────────────────────
-        parkCleanerFriendship: 0
+        parkCleanerFriendship: 0,
+
+        traderCalledCleaner: false,   // trader radio call to park cleaner
+        luvazaVisitedPark: false,     // luvaza sees king + cleaner talking
     },
 
     // ─── Flag Methods ──────────────────────────────────

@@ -14,11 +14,11 @@ export default class WorkshopScene extends Phaser.Scene {
         const W = this.cameras.main.width
         const H = this.cameras.main.height
 
-        // ─── UI ────────────────────────
+        // ─── UI ────────────────────────────────────────
         this.ui = new UI(this)
         this.ui.create()
 
-        // ─── Background ────────────────
+        // ─── Background ────────────────────────────────
         this.bg = this.add.image(0, 0, 'workshop-bg')
         this.bg.setOrigin(0, 0)
         this.bg.setDepth(-1)
@@ -30,27 +30,36 @@ export default class WorkshopScene extends Phaser.Scene {
         this.physics.world.setBounds(0, 0, scaledWidth, H)
         this.cameras.main.setBounds(0, 0, scaledWidth, H)
 
-        // ─── Interactable Stations ─────
+        // ─── Stations ──────────────────────────────────
         this.stations = [
             {
-                rect: this.add.rectangle(820, 800, 700, 600, 0x8b4513).setDepth(1).setAlpha(0.3),
-                label: this.add.text(720, 500, '🔧 Hardware Bench', { fontSize: '22px', fill: '#fff' }).setDepth(2),
+                rect: this.add.rectangle(820, 800, 700, 600, 0x8b4513)
+                    .setDepth(1).setAlpha(0.3),
+                label: this.add.text(720, 500, '🔧 Hardware Bench', {
+                    fontSize: '22px', fill: '#fff'
+                }).setDepth(2),
                 lockLabel: null,
                 name: 'Hardware Bench',
                 cooldown: false,
                 locked: false
             },
             {
-                rect: this.add.rectangle(1930, 800, 700, 600, 0x555577).setDepth(1).setAlpha(0.3),
-                label: this.add.text(1830, 500, '⚡ Electrical Bench', { fontSize: '22px', fill: '#fff' }).setDepth(2),
+                rect: this.add.rectangle(1930, 800, 700, 600, 0x555577)
+                    .setDepth(1).setAlpha(0.3),
+                label: this.add.text(1830, 500, '⚡ Electrical Bench', {
+                    fontSize: '22px', fill: '#fff'
+                }).setDepth(2),
                 lockLabel: null,
                 name: 'Electrical Bench',
                 cooldown: false,
                 locked: !GameState.getFlag('electricalUnlocked')
             },
             {
-                rect: this.add.rectangle(3250, 800, 1200, 600, 0x9b59b6).setDepth(1).setAlpha(0.3),
-                label: this.add.text(3100, 500, '🔮 Magical Bench', { fontSize: '22px', fill: '#fff' }).setDepth(2),
+                rect: this.add.rectangle(3250, 800, 1200, 600, 0x9b59b6)
+                    .setDepth(1).setAlpha(0.3),
+                label: this.add.text(3100, 500, '🔮 Magical Bench', {
+                    fontSize: '22px', fill: '#fff'
+                }).setDepth(2),
                 lockLabel: null,
                 name: 'Magical Bench',
                 cooldown: false,
@@ -58,16 +67,17 @@ export default class WorkshopScene extends Phaser.Scene {
             }
         ]
 
-        // Show lock on electrical if locked
+        // ─── Lock visual on electrical ─────────────────
         if (this.stations[1].locked) {
             this.stations[1].rect.setAlpha(0.15)
-            this.stations[1].lockLabel = this.add.text(1830, 550, '🔒 Need 5 repair skill', {
+            this.stations[1].lockLabel = this.add.text(
+                1830, 550, '🔒 Need 5 repair skill', {
                 fontSize: '18px',
                 fill: '#ff4444'
             }).setDepth(3)
         }
 
-        // ─── Press E hint ──────────────
+        // ─── Interact hint ─────────────────────────────
         this.interactHint = this.add.text(0, 0, 'Press E to interact', {
             fontSize: '20px',
             fill: '#ffff00',
@@ -75,7 +85,7 @@ export default class WorkshopScene extends Phaser.Scene {
             padding: { x: 8, y: 4 }
         }).setDepth(20).setVisible(false)
 
-        // ─── Player ────────────────────
+        // ─── Player ────────────────────────────────────
         this.player = this.physics.add.image(400, 850)
         this.player.setDisplaySize(104, 156)
         this.player.body.setCollideWorldBounds(true)
@@ -83,10 +93,10 @@ export default class WorkshopScene extends Phaser.Scene {
         this.playerGfx.setDepth(10)
         this.playerGfx.setScale(7.25)
 
-        // ─── Camera ────────────────────
+        // ─── Camera ────────────────────────────────────
         this.cameras.main.startFollow(this.player, true, 0.1, 0.1)
 
-        // ─── Controls ──────────────────
+        // ─── Controls ──────────────────────────────────
         this.cursors = this.input.keyboard.createCursorKeys()
         this.spaceKey = this.input.keyboard.addKey('SPACE')
         this.eKey = this.input.keyboard.addKey('E')
@@ -95,15 +105,31 @@ export default class WorkshopScene extends Phaser.Scene {
             right: Phaser.Input.Keyboard.KeyCodes.D
         })
 
-        // ─── Dialog ────────────────────
+        // ─── Dialog ────────────────────────────────────
         this.dialog = new DialogBox(this)
 
-        // ─── Menu state ────────────────
+        // ─── State flags ───────────────────────────────
         this.menuActive = false
         this.menuItems = []
-        this.truthTriggered = false
+        this.nearStation = null
 
-        // ─── Intro dialog (first time) ──
+        // ─── One-time trigger guards ───────────────────
+        this.truthTriggered = false
+        this.electricalJustUnlocked = false
+        this.traderHintShown = false
+
+        // ─── If truth already known skip future checks ─
+        if (GameState.getFlag('learnedTruth')) {
+            this.truthTriggered = true
+        }
+
+        // ─── Scene Title ───────────────────────────────
+        this.add.text(W / 2, 50, '🔧 Workshop', {
+            fontSize: '28px',
+            fill: '#fff'
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(20)
+
+        // ─── Intro dialog ──────────────────────────────
         if (!GameState.getFlag('workshopIntroSeen')) {
             this.dialog.show([
                 { name: 'You', text: 'My workshop... at least this place is still standing.' },
@@ -112,54 +138,12 @@ export default class WorkshopScene extends Phaser.Scene {
                 GameState.setFlag('workshopIntroSeen')
             })
         }
-
-        // ─── Scene Title ───────────────
-        this.add.text(W / 2, 50, '🔧 Workshop', {
-            fontSize: '28px',
-            fill: '#fff'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(20)
-
-        this.nearStation = null
-
-
     }
 
     update() {
         const speed = 600
 
-        this.checkTruthUnlock()
-
-        // ─── DEBUG (remove later) ──────
-        if (this.input.keyboard.checkDown(this.input.keyboard.addKey('T'), 500)) {
-            console.log('=== TRUTH CHECK ===')
-            console.log('research >= 30:', GameState.skills.research >= 30)
-            console.log('researchClue:', GameState.getFlag('researchClueFound'))
-            console.log('luvazaClue:', GameState.getFlag('luvazaClueFound'))
-            console.log('parkClue:', GameState.getFlag('parkClueFound'))
-            console.log('traderClue:', GameState.getFlag('traderClueFound'))
-            console.log('learnedTruth:', GameState.getFlag('learnedTruth'))
-            console.log('truthTriggered:', this.truthTriggered)
-        }
-
-
-        // ─── Check truth unlock every frame ─
-        if (!GameState.getFlag('learnedTruth') &&
-            GameState.skills.research >= 30 &&
-            GameState.getFlag('researchClueFound') &&
-            GameState.getFlag('luvazaClueFound') &&
-            GameState.getFlag('parkClueFound') &&
-            GameState.getFlag('traderClueFound')) {
-
-            if (!this.truthTriggered) {
-                this.truthTriggered = true
-                console.log('🎬 Triggering cutscene now!')
-                this.time.delayedCall(500, () => {
-                    this.triggerTruthCutscene()
-                })
-            }
-        }
-
-
+        // ─── Dialog takes priority ─────────────────────
         if (this.dialog.isActive) {
             if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
                 this.dialog.next()
@@ -167,6 +151,10 @@ export default class WorkshopScene extends Phaser.Scene {
             return
         }
 
+        // ─── Menu blocks movement ──────────────────────
+        if (this.menuActive) return
+
+        // ─── Player movement ───────────────────────────
         this.player.setVelocity(0)
 
         if (this.cursors.left.isDown || this.wasd.left.isDown) {
@@ -178,20 +166,38 @@ export default class WorkshopScene extends Phaser.Scene {
         this.playerGfx.x = this.player.x
         this.playerGfx.y = this.player.y
 
-        // ─── Check if electrical unlocked ─
+        // ─── Electrical bench unlock (one time) ────────
         if (this.stations[1].locked && GameState.getFlag('electricalUnlocked')) {
             this.stations[1].locked = false
             this.stations[1].rect.setAlpha(0.3)
             if (this.stations[1].lockLabel) {
                 this.stations[1].lockLabel.destroy()
+                this.stations[1].lockLabel = null
             }
-            this.dialog.show([
-                { name: 'You', text: '⚡ My repair skills are good enough now!' },
-                { name: 'You', text: 'I can work on the Electrical Bench!' }
-            ])
+            if (!this.electricalJustUnlocked) {
+                this.electricalJustUnlocked = true
+                this.dialog.show([
+                    { name: 'You', text: '⚡ My repair skills are good enough now!' },
+                    { name: 'You', text: 'I can work on the Electrical Bench!' }
+                ])
+                return
+            }
         }
 
-        // ─── Check distance to stations ─
+        // ─── Trader hint (one time) ────────────────────
+        if (GameState.canMeetTrader() && !this.traderHintShown) {
+            this.traderHintShown = true
+            this.dialog.show([
+                { name: 'You', text: 'I know enough now to look for parts.' },
+                { name: 'You', text: 'Maybe the Junkyard trader has what I need.' }
+            ])
+            return
+        }
+
+        // ─── Truth unlock check (called once per frame) ─
+        this.checkTruthUnlock()
+
+        // ─── Station proximity ─────────────────────────
         this.nearStation = null
 
         this.stations.forEach(station => {
@@ -211,7 +217,7 @@ export default class WorkshopScene extends Phaser.Scene {
                 if (!station.locked) station.rect.setAlpha(0.5)
             } else {
                 station.rect.setStrokeStyle(0)
-                if (!station.locked) station.rect.setAlpha(0.3)
+                station.rect.setAlpha(station.locked ? 0.15 : 0.3)
             }
         })
 
@@ -219,72 +225,61 @@ export default class WorkshopScene extends Phaser.Scene {
             this.interactHint.setVisible(false)
         }
 
-        // ─── Press E to interact ────────
+        // ─── Press E ───────────────────────────────────
         if (Phaser.Input.Keyboard.JustDown(this.eKey) && this.nearStation) {
             this.onInteract(this.nearStation)
-        }
-
-        // ─── Trader hint ───────────────
-        if (GameState.canMeetTrader() && !this.shownTraderHint) {
-            this.shownTraderHint = true
-            this.dialog.show([
-                { name: 'You', text: 'I know enough now to look for parts.' },
-                { name: 'You', text: 'Maybe the Junkyard trader has what I need.' }
-            ])
-        }
-
-        // ─── Check truth unlock every frame ─
-        if (!GameState.getFlag('learnedTruth') &&
-            !this.truthTriggered &&
-            GameState.skills.research >= 30 &&
-            GameState.getFlag('researchClueFound') &&
-            GameState.getFlag('luvazaClueFound') &&
-            GameState.getFlag('parkClueFound') &&
-            GameState.getFlag('traderClueFound')) {
-            this.truthTriggered = true
-            this.time.delayedCall(500, () => {
-                this.triggerTruthCutscene()
-            })
         }
 
         this.ui.updateStats()
     }
 
-
+    // ───────────────────────────────────────────────────
     // ─── Truth Unlock Check ────────────────────────────
+    // ✅ Exits immediately if already triggered
+    // ✅ Sets researchClueFound ONCE with guard
+    // ✅ Only fires cutscene once
+    // ───────────────────────────────────────────────────
     checkTruthUnlock() {
+        // ─── Already done - exit immediately ───────────
         if (this.truthTriggered) return
-        if (GameState.getFlag('learnedTruth')) return
-
-        // Auto set research clue if research >= 30
-        if (GameState.skills.research >= 30) {
-            GameState.setFlag('researchClueFound')
+        if (GameState.getFlag('learnedTruth')) {
+            this.truthTriggered = true
+            return
         }
 
-        // Check all 4 clues
+        // ─── Set research clue ONCE when >= 30 ─────────
+        if (GameState.skills.research >= 30 &&
+            !GameState.getFlag('researchClueFound')) {
+            GameState.setFlag('researchClueFound')
+            console.log('🔬 Research clue unlocked!')
+        }
+
+        // ─── Check all 4 clues ─────────────────────────
         const allClues =
             GameState.getFlag('researchClueFound') &&
             GameState.getFlag('luvazaClueFound') &&
             GameState.getFlag('parkClueFound') &&
             GameState.getFlag('traderClueFound')
 
-        if (allClues) {
-            this.truthTriggered = true
-            console.log('🎬 All clues found! Starting cutscene...')
+        if (!allClues) return
 
-            // Set flag
-            GameState.setFlag('learnedTruth')
+        // ─── All clues found - trigger cutscene ────────
+        this.truthTriggered = true
+        console.log('🎬 All clues found! Starting cutscene...')
 
-            // Fade and go to cutscene
-            this.cameras.main.fade(800, 0, 0, 0)
-            this.time.delayedCall(800, () => {
-                this.scene.start('CutsceneScene', {
-                    key: 'truthDiscovered',
-                    returnScene: 'WorkshopScene'
-                })
+        GameState.setFlag('learnedTruth')
+        GameState.tryAdvanceLevel()
+        this.ui.updateStats()
+
+        this.cameras.main.fade(800, 0, 0, 0)
+        this.time.delayedCall(800, () => {
+            this.scene.start('CutsceneScene', {
+                key: 'truthDiscovered',
+                returnScene: 'WorkshopScene'
             })
-        }
+        })
     }
+
     // ─── On Interact ───────────────────────────────────
     onInteract(station) {
         if (station.locked) {
@@ -353,10 +348,12 @@ export default class WorkshopScene extends Phaser.Scene {
             fill: '#aaaaaa'
         }).setOrigin(0.5).setScrollFactor(0).setDepth(52)
 
-        // ─── Energy Calibration ────────
-        this.createBenchButton(W / 2, H / 2 - 70,
+        // ─── Energy Calibration ────────────────────────
+        this.createBenchButton(
+            W / 2, H / 2 - 70,
             '⚡ Energy Calibration',
-            'Earn elixir + research skill', () => {
+            'Earn elixir + research skill',
+            () => {
                 this.closeMagicalMenu()
                 station.cooldown = true
                 this.time.delayedCall(5000, () => { station.cooldown = false })
@@ -365,11 +362,12 @@ export default class WorkshopScene extends Phaser.Scene {
             }
         )
 
-        // ─── Research ─────────────────
+        // ─── Research ─────────────────────────────────
         const researchDone = GameState.skills.research >= 30
         const canResearch = GameState.elixir >= 1 && !researchDone
 
-        this.createBenchButton(W / 2, H / 2 + 40,
+        this.createBenchButton(
+            W / 2, H / 2 + 40,
             researchDone ? '✅ Research Complete' : '🔬 Research Attack Data',
             researchDone
                 ? 'All clues gathered'
@@ -399,7 +397,7 @@ export default class WorkshopScene extends Phaser.Scene {
             !canResearch && !researchDone
         )
 
-        // ─── Back ──────────────────────
+        // ─── Back ──────────────────────────────────────
         this.createBenchButton(W / 2, H / 2 + 150, '🔙 Back', '', () => {
             this.closeMagicalMenu()
         })
@@ -426,7 +424,7 @@ export default class WorkshopScene extends Phaser.Scene {
 
         if (!locked) {
             btn.on('pointerover', () => btn.setFillStyle(0x442266))
-            btn.on('pointerout', () => btn.setFillStyle(0x333355))
+            btn.on('pointerout',  () => btn.setFillStyle(0x333355))
         }
         btn.on('pointerdown', () => { if (!locked) onClick() })
 
@@ -438,9 +436,9 @@ export default class WorkshopScene extends Phaser.Scene {
     closeMagicalMenu() {
         this.menuActive = false
         if (this.menuOverlay) this.menuOverlay.destroy()
-        if (this.menuPanel) this.menuPanel.destroy()
-        if (this.menuTitle) this.menuTitle.destroy()
-        if (this.menuStats) this.menuStats.destroy()
+        if (this.menuPanel)   this.menuPanel.destroy()
+        if (this.menuTitle)   this.menuTitle.destroy()
+        if (this.menuStats)   this.menuStats.destroy()
         this.menuItems.forEach(item => item.destroy())
         this.menuItems = []
     }
@@ -489,23 +487,22 @@ export default class WorkshopScene extends Phaser.Scene {
                 { name: '', text: `🔬 Research Progress: ${research}/30` }
             ])
         } else if (research >= 30) {
-            GameState.setFlag('researchClueFound')
-
+            // ─── Don't call setFlag here ───────────────
+            // checkTruthUnlock() handles it safely next frame
             const luvaza = GameState.getFlag('luvazaClueFound')
-            const park = GameState.getFlag('parkClueFound')
+            const park   = GameState.getFlag('parkClueFound')
             const trader = GameState.getFlag('traderClueFound')
 
             if (luvaza && park && trader) {
                 this.dialog.show([
                     { name: 'You', text: 'Final analysis complete...' },
                     { name: 'You', text: 'I have everything I need now.' },
-                    { name: '', text: '🔬 All clues gathered!' }
+                    { name: '', text: '🔬 All clues gathered! Head back to workshop.' }
                 ])
-                // checkTruthUnlock will handle the cutscene next frame
             } else {
                 const missing = []
                 if (!luvaza) missing.push('💕 Talk more with Luvaza at Town Center')
-                if (!park) missing.push('🌿 Talk more with Park Cleaner at Park')
+                if (!park)   missing.push('🌿 Talk more with Park Cleaner at Park')
                 if (!trader) missing.push('🧑 Talk more with Trader at Junkyard')
 
                 this.dialog.show([
@@ -517,6 +514,4 @@ export default class WorkshopScene extends Phaser.Scene {
             }
         }
     }
-
-
 }
