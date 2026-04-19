@@ -373,7 +373,7 @@ export default class WorkshopScene extends Phaser.Scene {
         this.menuOverlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.7)
             .setScrollFactor(0).setDepth(50)
 
-        this.menuPanel = this.add.rectangle(W / 2, H / 2, 600, 500, 0x1a1a2e)
+        this.menuPanel = this.add.rectangle(W / 2, H / 2, 600, 500, 0x1a1a1a)
             .setStrokeStyle(3, 0x9b59b6).setScrollFactor(0).setDepth(51)
 
         this.menuTitle = this.add.text(W / 2, H / 2 - 210, '🔮 Magical Bench', {
@@ -452,7 +452,8 @@ export default class WorkshopScene extends Phaser.Scene {
     }
 
     createBenchButton(x, y, text, subtitle, onClick, locked = false) {
-        const btn = this.add.rectangle(x, y, 500, 75, locked ? 0x222233 : 0x333355)
+        const btn = this.add.rectangle(x, y, 500, 75, locked ? 0x222222 : 0x2a2a2a)
+
             .setStrokeStyle(2, locked ? 0x444444 : 0x9b59b6)
             .setScrollFactor(0).setDepth(52)
             .setInteractive({ useHandCursor: !locked })
@@ -471,8 +472,8 @@ export default class WorkshopScene extends Phaser.Scene {
         }
 
         if (!locked) {
-            btn.on('pointerover', () => btn.setFillStyle(0x442266))
-            btn.on('pointerout', () => btn.setFillStyle(0x333355))
+            btn.on('pointerover', () => btn.setFillStyle(0x3a3a3a))
+            btn.on('pointerout', () =>btn.setFillStyle(0x2a2a2a))
         }
         btn.on('pointerdown', () => { if (!locked) onClick() })
 

@@ -71,17 +71,24 @@ export default class PreloadScene extends Phaser.Scene {
         // ─── LOAD ALL GAME ASSETS HERE ─────────────────
         // ═══════════════════════════════════════════════
 
+        // ─── UI Icons ──────────────────────────────────
+        this.load.image('lock-icon', 'assets/images/icons/lock.png')
+        this.load.image('inventory-icon', 'assets/images/icons/inventory-icon.png')
+        this.load.image('tasks-icon', 'assets/images/icons/tasks-icon.png')
+        this.load.image('hub-icon', 'assets/images/icons/hub-icon.png')
+        this.load.image('sleep-icon', 'assets/images/icons/sleep-icon.png')
+
         // ─── Hub ───────────────────────────────────────
-        // this.load.image('hub-bg', 'assets/images/hub-bg.png')
+        this.load.image('hub-bg', 'assets/images/hub-bg.png')
 
         // ─── Workshop ──────────────────────────────────
         this.load.image('workshop-bg', 'assets/images/workshop-bg.png')
 
         // ─── Junkyard (time-based) ─────────────────────
         this.load.image('junkyard-morning', 'assets/images/junkyard/junkyard-morning.png')
-        this.load.image('junkyard-noon',    'assets/images/junkyard/junkyard-noon.png')
+        this.load.image('junkyard-noon', 'assets/images/junkyard/junkyard-noon.png')
         this.load.image('junkyard-evening', 'assets/images/junkyard/junkyard-evening.png')
-        this.load.image('junkyard-night',   'assets/images/junkyard/junkyard-night.png')
+        this.load.image('junkyard-night', 'assets/images/junkyard/junkyard-night.png')
 
         // ─── Palace ────────────────────────────────────
         this.load.image('palace-bg', 'assets/images/palace-bg.png')
@@ -123,7 +130,7 @@ export default class PreloadScene extends Phaser.Scene {
         })
 
         startBtn.on('pointerover', () => startBtn.setFill('#ffffff'))
-        startBtn.on('pointerout',  () => startBtn.setFill('#00ff88'))
+        startBtn.on('pointerout', () => startBtn.setFill('#00ff88'))
         startBtn.on('pointerdown', () => {
             this.cameras.main.fade(500, 0, 0, 0)
             this.time.delayedCall(500, () => {

@@ -112,8 +112,8 @@ export default class HubScene extends Phaser.Scene {
         let outlineShadows = null
 
         if (!unlocked) {
-            locImage.setTint(0x000000)
-            locImage.setAlpha(0.975)
+            locImage.setTint(0x0c0c0c)
+            locImage.setAlpha(1)
 
             const offsets = [
                 { x: -3, y: 0 },
@@ -136,10 +136,10 @@ export default class HubScene extends Phaser.Scene {
             })
 
             // ===== FIXED: Added padding to prevent cropping =====
-            lockIcon = this.add.text(x, y, '🔒', {
-                fontSize: '96px',
-                padding: { x: 20, y: 20 }
-            }).setOrigin(0.5).setDepth(6)
+            lockIcon = this.add.image(x, y, 'lock-icon')
+                .setOrigin(0.5)
+                .setDepth(6)
+                .setScale(0.1)
 
             lockIcon.setInteractive({ useHandCursor: true })
 

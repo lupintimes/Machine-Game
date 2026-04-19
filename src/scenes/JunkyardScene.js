@@ -9,9 +9,9 @@ export default class JunkyardScene extends Phaser.Scene {
     preload() {
         // ─── Load all 4 time-of-day backgrounds ───────
         this.load.image('junkyard-morning', 'assets/images/junkyard/junkyard-morning.png')
-        this.load.image('junkyard-noon',    'assets/images/junkyard/junkyard-noon.png')
+        this.load.image('junkyard-noon', 'assets/images/junkyard/junkyard-noon.png')
         this.load.image('junkyard-evening', 'assets/images/junkyard/junkyard-evening.png')
-        this.load.image('junkyard-night',   'assets/images/junkyard/junkyard-night.png')
+        this.load.image('junkyard-night', 'assets/images/junkyard/junkyard-night.png')
     }
 
     create() {
@@ -27,10 +27,10 @@ export default class JunkyardScene extends Phaser.Scene {
 
         // ─── Background (time-based) ───────────────────
         const bgKey = {
-            'morning':   'junkyard-morning',
+            'morning': 'junkyard-morning',
             'afternoon': 'junkyard-noon',
-            'evening':   'junkyard-evening',
-            'night':     'junkyard-night'
+            'evening': 'junkyard-evening',
+            'night': 'junkyard-night'
         }[GameState.timeOfDay] || 'junkyard-morning'
 
         this.bg = this.add.image(0, 0, bgKey)
@@ -99,7 +99,8 @@ export default class JunkyardScene extends Phaser.Scene {
         this.menuOverlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.7)
             .setScrollFactor(0).setDepth(50)
 
-        this.menuPanel = this.add.rectangle(W / 2, H / 2, 500, 450, 0x1a1a2e)
+        this.menuPanel = this.add.rectangle(W / 2, H / 2, 500, 450, 0x1a1a1a)
+
             .setStrokeStyle(3, 0xff8800).setScrollFactor(0).setDepth(51)
 
         this.menuTitle = this.add.text(W / 2, H / 2 - 180, '🧑 Trader', {
@@ -148,7 +149,8 @@ export default class JunkyardScene extends Phaser.Scene {
     }
 
     createMenuButton(x, y, text, onClick, locked = false) {
-        const btn = this.add.rectangle(x, y, 350, 55, locked ? 0x222233 : 0x333355)
+        const btn = this.add.rectangle(x, y, 350, 55, locked ? 0x222222 : 0x2a2a2a)
+
             .setStrokeStyle(2, locked ? 0x444444 : 0xff8800)
             .setScrollFactor(0).setDepth(52)
             .setInteractive({ useHandCursor: !locked })
@@ -159,8 +161,9 @@ export default class JunkyardScene extends Phaser.Scene {
         }).setOrigin(0.5).setScrollFactor(0).setDepth(53)
 
         if (!locked) {
-            btn.on('pointerover', () => btn.setFillStyle(0x444477))
-            btn.on('pointerout',  () => btn.setFillStyle(0x333355))
+            btn.on('pointerover', () => btn.setFillStyle(0x3a3a3a)
+            )
+            btn.on('pointerout', () => btn.setFillStyle(0x2a2a2a))
         }
         btn.on('pointerdown', onClick)
 
@@ -171,8 +174,8 @@ export default class JunkyardScene extends Phaser.Scene {
     closeMenu() {
         this.menuActive = false
         if (this.menuOverlay) this.menuOverlay.destroy()
-        if (this.menuPanel)   this.menuPanel.destroy()
-        if (this.menuTitle)   this.menuTitle.destroy()
+        if (this.menuPanel) this.menuPanel.destroy()
+        if (this.menuTitle) this.menuTitle.destroy()
         this.menuItems.forEach(item => item.destroy())
         this.menuItems = []
     }
@@ -183,40 +186,40 @@ export default class JunkyardScene extends Phaser.Scene {
             this.dialog.show([
                 { name: 'Trader', text: 'Hey kid! The city\'s falling apart.' },
                 { name: 'Trader', text: 'But every broken thing is an opportunity, right?' },
-                { name: 'You',    text: 'I need parts for my armor. Got anything?' },
+                { name: 'You', text: 'I need parts for my armor. Got anything?' },
                 { name: 'Trader', text: 'Check my shop. I might have what you need.' }
             ], () => { this.showTraderMenu() })
 
         } else if (GameState.level >= 2 && !GameState.getFlag('traderClueFound')) {
             this.dialog.show([
                 { name: 'Trader', text: 'You\'ve been busy lately.' },
-                { name: 'You',    text: 'Trying to figure out who attacked the city.' },
+                { name: 'You', text: 'Trying to figure out who attacked the city.' },
                 { name: 'Trader', text: '...' },
                 { name: 'Trader', text: 'Close the door.' },
-                { name: 'You',    text: 'What?' },
+                { name: 'You', text: 'What?' },
                 { name: 'Trader', text: 'Just do it. Walls have ears in this city.' },
-                { name: 'You',    text: '...' },
+                { name: 'You', text: '...' },
                 { name: 'Trader', text: 'Look. I like you kid. You\'re smart.' },
                 { name: 'Trader', text: 'So I\'m going to tell you something.' },
                 { name: 'Trader', text: 'Something I probably shouldn\'t.' },
-                { name: 'You',    text: 'Tell me.' },
+                { name: 'You', text: 'Tell me.' },
                 { name: 'Trader', text: 'Two weeks before the attack...' },
                 { name: 'Trader', text: 'A buyer came to me. Wanted to purchase large quantities of explosives.' },
-                { name: 'You',    text: 'Did you sell?' },
+                { name: 'You', text: 'Did you sell?' },
                 { name: 'Trader', text: 'No. Something felt wrong.' },
                 { name: 'Trader', text: 'But I got a good look at him.' },
-                { name: 'You',    text: 'Who was it?' },
+                { name: 'You', text: 'Who was it?' },
                 { name: 'Trader', text: 'I don\'t know his name.' },
                 { name: 'Trader', text: 'But he carried a royal seal.' },
-                { name: 'You',    text: 'A royal seal...' },
+                { name: 'You', text: 'A royal seal...' },
                 { name: 'Trader', text: 'Exactly.' },
                 { name: 'Trader', text: 'Someone with royal connections planned this attack.' },
-                { name: 'You',    text: 'Why didn\'t you report this?' },
+                { name: 'You', text: 'Why didn\'t you report this?' },
                 { name: 'Trader', text: 'Report to who? The King?' },
                 { name: 'Trader', text: 'What if he already knows?' },
-                { name: 'You',    text: '...' },
+                { name: 'You', text: '...' },
                 { name: 'Trader', text: 'Be careful kid. This goes deeper than you think.' },
-                { name: '',       text: '📌 Clue found! Keep investigating.' }
+                { name: '', text: '📌 Clue found! Keep investigating.' }
             ], () => {
                 GameState.setFlag('traderClueFound')
                 this.showTraderMenu()
@@ -225,7 +228,7 @@ export default class JunkyardScene extends Phaser.Scene {
         } else if (GameState.getFlag('traderClueFound') && !GameState.getFlag('learnedTruth')) {
             this.dialog.show([
                 { name: 'Trader', text: 'You remember what I told you.' },
-                { name: 'You',    text: 'Royal seal. Two weeks before the attack.' },
+                { name: 'You', text: 'Royal seal. Two weeks before the attack.' },
                 { name: 'Trader', text: 'Keep digging. You\'re close.' },
                 { name: 'Trader', text: 'But watch your back.' }
             ], () => { this.showTraderMenu() })
@@ -233,7 +236,7 @@ export default class JunkyardScene extends Phaser.Scene {
         } else if (GameState.getFlag('learnedTruth')) {
             this.dialog.show([
                 { name: 'Trader', text: 'You figured it out didn\'t you.' },
-                { name: 'You',    text: 'Yes.' },
+                { name: 'You', text: 'Yes.' },
                 { name: 'Trader', text: 'Then you know what you\'re up against.' },
                 { name: 'Trader', text: 'Be very careful who you trust.' }
             ], () => { this.showTraderMenu() })
@@ -256,7 +259,7 @@ export default class JunkyardScene extends Phaser.Scene {
         this.shopOverlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.7)
             .setScrollFactor(0).setDepth(50)
 
-        this.shopPanel = this.add.rectangle(W / 2, H / 2, 600, 550, 0x1a1a2e)
+        this.shopPanel = this.add.rectangle(W / 2, H / 2, 600, 550, 0x1a1a1a)
             .setStrokeStyle(3, 0xffaa00).setScrollFactor(0).setDepth(51)
 
         this.shopTitle = this.add.text(W / 2, H / 2 - 240, '🛒 Trader\'s Shop', {
@@ -309,23 +312,23 @@ export default class JunkyardScene extends Phaser.Scene {
 
                     this.dialog.show([
                         { name: 'Trader', text: 'Here\'s your power core. Handle with care.' },
-                        { name: 'You',    text: 'Finally! Now I can make something with this.' },
+                        { name: 'You', text: 'Finally! Now I can make something with this.' },
                         { name: 'Trader', text: 'Oh wait. Take this too.' },
                         { name: 'Trader', text: 'A communication device. Old tech but reliable.' },
-                        { name: 'You',    text: 'What\'s this for?' },
+                        { name: 'You', text: 'What\'s this for?' },
                         { name: 'Trader', text: 'Keep in touch with people you care about.' },
                         { name: 'Trader', text: 'In times like these... communication saves lives.' },
-                        { name: '',       text: '📡 Received: Comms Device' },
+                        { name: '', text: '📡 Received: Comms Device' },
                         { name: 'Trader', text: 'Kid... there\'s something you should see.' },
                         { name: 'Trader', text: 'Someone smart enough to actually use it.' },
-                        { name: 'You',    text: 'What do you mean?' },
+                        { name: 'You', text: 'What do you mean?' },
                         { name: 'Trader', text: 'I found something underground. Years ago.' },
                         { name: 'Trader', text: 'An armor frame. Ancient engineering.' },
-                        { name: 'You',    text: 'What kind of armor?' },
+                        { name: 'You', text: 'What kind of armor?' },
                         { name: 'Trader', text: 'The kind no ordinary human can work with.' },
                         { name: 'Trader', text: 'But you... you understand machines.' },
                         { name: 'Trader', text: 'I think you\'re the one who can finish it.' },
-                        { name: 'You',    text: 'Show me.' }
+                        { name: 'You', text: 'Show me.' }
                     ], () => {
                         GameState.setFlag('secretBaseRevealed')
                         GameState.tryAdvanceLevel()
@@ -428,7 +431,7 @@ export default class JunkyardScene extends Phaser.Scene {
     }
 
     createShopItem(x, y, text, price, onClick) {
-        const btn = this.add.rectangle(x, y, 500, 55, 0x333355)
+        const btn = this.add.rectangle(x, y, 500, 55, 0x2a2a2a)
             .setStrokeStyle(1, 0xffaa00)
             .setScrollFactor(0).setDepth(52)
             .setInteractive({ useHandCursor: true })
@@ -444,7 +447,7 @@ export default class JunkyardScene extends Phaser.Scene {
         }).setOrigin(1, 0.5).setScrollFactor(0).setDepth(53)
 
         btn.on('pointerover', () => btn.setFillStyle(0x444477))
-        btn.on('pointerout',  () => btn.setFillStyle(0x333355))
+        btn.on('pointerout', () => btn.setFillStyle(0x333355))
         btn.on('pointerdown', onClick)
 
         this.shopItems.push(btn, label, priceText)
@@ -453,10 +456,10 @@ export default class JunkyardScene extends Phaser.Scene {
     closeShop() {
         this.menuActive = false
         if (this.shopOverlay) this.shopOverlay.destroy()
-        if (this.shopPanel)   this.shopPanel.destroy()
-        if (this.shopTitle)   this.shopTitle.destroy()
-        if (this.shopMoney)   this.shopMoney.destroy()
-        if (this.shopClose)   this.shopClose.destroy()
+        if (this.shopPanel) this.shopPanel.destroy()
+        if (this.shopTitle) this.shopTitle.destroy()
+        if (this.shopMoney) this.shopMoney.destroy()
+        if (this.shopClose) this.shopClose.destroy()
         this.shopItems.forEach(item => item.destroy())
         this.shopItems = []
     }
@@ -468,7 +471,7 @@ export default class JunkyardScene extends Phaser.Scene {
                 { name: 'Trader', text: 'Come... follow me underground.' },
                 { name: 'Trader', text: 'Watch your step.' },
                 { name: 'Trader', text: 'Not many people know this place exists.' },
-                { name: 'You',    text: 'How deep does this go?' },
+                { name: 'You', text: 'How deep does this go?' },
                 { name: 'Trader', text: 'Deep enough that no one will find us.' }
             ], () => {
                 GameState.setFlag('secretBaseVisited')
@@ -546,7 +549,7 @@ export default class JunkyardScene extends Phaser.Scene {
         this.cutsceneTexts.push(cont)
 
         cont.on('pointerover', () => cont.setStyle({ fill: '#ffffff' }))
-        cont.on('pointerout',  () => cont.setStyle({ fill: '#888888' }))
+        cont.on('pointerout', () => cont.setStyle({ fill: '#888888' }))
         cont.on('pointerdown', () => {
             this.cutsceneTexts.forEach(t => t.destroy())
             this.cutsceneTexts = []

@@ -146,54 +146,66 @@ export default class UI {
 
         // ─── Navigation Buttons (Top Right) ────────────────
         const btnY = 78;
-        const btnW = 150;
+        const btnW = 50;     // ← Smaller for icon-only
         const btnH = 42;
-        const btnGap = 14;
+        const btnGap = 10;
         const topMargin = 24;
         let rightX = W - topMargin - btnW / 2;
 
-        const makeButton = (x, y, label, strokeColor, onClick) => {
-            const bg = this.scene.add.rectangle(x, y, btnW, btnH, 0x1a1a2e)
+        // ═══════════════════════════════════════════════
+        // ─── ICON SCALE CONTROL ────────────────────────
+        // Adjust this to resize all button icons
+        const ICON_SCALE = 0.07
+        // ═══════════════════════════════════════════════
+
+        const makeIconButton = (x, y, iconKey, strokeColor, onClick) => {
+            const bg = this.scene.add.rectangle(x, y, btnW, btnH, 0x1a1a1a)  // ← charcoal
                 .setDepth(50)
                 .setScrollFactor(0)
                 .setStrokeStyle(2, strokeColor)
-                .setInteractive({ useHandCursor: true });
+                .setInteractive({ useHandCursor: true })
 
-            const txt = this.scene.add.text(x, y, label, {
-                fontSize: '18px',
-                fill: '#ffffff',
-                fontStyle: 'bold'
-            }).setOrigin(0.5).setDepth(51).setScrollFactor(0);
+            const icon = this.scene.add.image(x, y, iconKey)
+                .setScale(ICON_SCALE)
+                .setDepth(51)
+                .setScrollFactor(0)
+                .setTint(0xf5f5dc)  // ← beige tint on icon
 
-            bg.on('pointerover', () => bg.setFillStyle(0x2a2a44));
-            bg.on('pointerout', () => bg.setFillStyle(0x1a1a2e));
-            bg.on('pointerdown', onClick);
+            bg.on('pointerover', () => {
+                bg.setFillStyle(0x2a2a2a)  // ← lighter charcoal on hover
+                icon.setScale(ICON_SCALE * 1.15)
+            })
+            bg.on('pointerout', () => {
+                bg.setFillStyle(0x1a1a1a)  // ← back to charcoal
+                icon.setScale(ICON_SCALE)
+            })
+            bg.on('pointerdown', onClick)
 
-            return { bg, txt };
-        };
+            return { bg, icon }
+        }
 
         // Tasks
-        let task = makeButton(rightX, btnY, '📋 Tasks', 0xffaa00, () => this.toggleTaskPanel());
-        this.taskBtn = task.bg;
-        this.taskBtnLabel = task.txt;
-        rightX -= (btnW + btnGap);
+        const task = makeIconButton(rightX, btnY, 'tasks-icon', 0xffffff, () => this.toggleTaskPanel())
+        this.taskBtn = task.bg
+        this.taskIcon = task.icon
+        rightX -= (btnW + btnGap)
 
         // Inventory
-        let inv = makeButton(rightX, btnY, '🎒 Inventory', 0xffffff, () => this.toggleInventory());
-        this.invBtn = inv.bg;
-        this.invBtnLabel = inv.txt;
-        rightX -= (btnW + btnGap);
+        const inv = makeIconButton(rightX, btnY, 'inventory-icon', 0xffffff, () => this.toggleInventory())
+        this.invBtn = inv.bg
+        this.invIcon = inv.icon
+        rightX -= (btnW + btnGap)
 
         // Hub (not in HubScene)
         if (this.scene.scene.key !== 'HubScene') {
-            let hub = makeButton(rightX, btnY, '🗺️ Hub', 0x00ff88, () => {
-                this.scene.cameras.main.fade(300, 0, 0, 0);
+            const hub = makeIconButton(rightX, btnY, 'hub-icon', 0xffffff, () => {
+                this.scene.cameras.main.fade(300, 0, 0, 0)
                 this.scene.time.delayedCall(300, () => {
-                    this.scene.scene.start('HubScene');
-                });
-            });
-            this.hubBtn = hub.bg;
-            this.hubBtnLabel = hub.txt;
+                    this.scene.scene.start('HubScene')
+                })
+            })
+            this.hubBtn = hub.bg
+            this.hubIcon = hub.icon
         }
 
         this._escHandler = () => {
@@ -373,7 +385,7 @@ export default class UI {
             .setScrollFactor(0).setDepth(200).setInteractive()
             .on('pointerdown', () => this.hideInventory())
 
-        this.invPanel = this.scene.add.rectangle(W / 2, H / 2, panelW, panelH, 0x1a1a2e)
+        this.invPanel = this.scene.add.rectangle(W / 2, H / 2, panelW, panelH, 0x1a1a1a)
             .setStrokeStyle(3, 0x00ff88)
             .setScrollFactor(0).setDepth(201).setInteractive()
 
@@ -412,8 +424,8 @@ export default class UI {
                 const index = row * cols + col
                 const item = GameState.inventory[index]
 
-                const slot = this.scene.add.rectangle(x, y, slotSize - 8, slotSize - 8, 0x222233)
-                    .setStrokeStyle(1, 0x444466)
+                const slot = this.scene.add.rectangle(x, y, slotSize - 8, slotSize - 8, 0x222222)
+                    .setStrokeStyle(1, 0x444444)
                     .setScrollFactor(0).setDepth(202)
 
                 let icon = null
@@ -430,15 +442,15 @@ export default class UI {
                     }).setOrigin(1, 1).setScrollFactor(0).setDepth(203)
 
                     slot.on('pointerover', () => {
-                        slot.setFillStyle(0x333355)
+                        slot.setFillStyle(0x333333)
                         this.showInvTooltip(x, y, item)
                     })
                     slot.on('pointerout', () => {
-                        slot.setFillStyle(0x222233)
+                        slot.setFillStyle(0x222222)  // ← charcoal
                         this.hideInvTooltip()
                     })
                 } else {
-                    slot.setFillStyle(0x1a1a2e)
+                    slot.setFillStyle(0x1a1a1a)
                     slot.setAlpha(0.3)
                 }
                 this.invSlots.push({ slot, icon, qty })
@@ -462,7 +474,7 @@ export default class UI {
         if (GameState.inventory.length === 0) {
             this.invEmpty = this.scene.add.text(W / 2, H / 2, 'No items yet!\nComplete tasks to earn items.', {
                 fontSize: '22px',
-                fill: '#555566',
+                fill: '#555555',  // ← charcoal
                 align: 'center'
             }).setOrigin(0.5).setScrollFactor(0).setDepth(202)
         }
@@ -542,13 +554,13 @@ export default class UI {
             .setDepth(60).setScrollFactor(0).setInteractive()
             .on('pointerdown', () => this.hideTaskPanel())
 
-        this.taskPanel = this.scene.add.rectangle(W / 2, H / 2, panelW, panelH, 0x1a1a2e)
+        this.taskPanel = this.scene.add.rectangle(W / 2, H / 2, panelW, panelH, 0x1a1a1a)
             .setStrokeStyle(2, 0xffaa00)
             .setDepth(61).setScrollFactor(0).setInteractive()
 
         this.taskTitle = this.scene.add.text(W / 2, H / 2 - (panelH / 2) + 30, `📋 Level ${GameState.level} Tasks`, {
             fontSize: '24px',
-            fill: '#ffaa00',
+            fill: '#ffffff',
             fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(62).setScrollFactor(0)
 
@@ -650,9 +662,15 @@ export default class UI {
         if (this.crisisBar) this.crisisBar.destroy()
         if (this.crisisLabel) this.crisisLabel.destroy()
 
+        // ─── Destroy buttons ───────────────────────────
         if (this.hubBtn) this.hubBtn.destroy()
         if (this.invBtn) this.invBtn.destroy()
         if (this.taskBtn) this.taskBtn.destroy()
+
+        // ─── Destroy icons (replaced labels) ───────────
+        if (this.hubIcon) this.hubIcon.destroy()
+        if (this.invIcon) this.invIcon.destroy()
+        if (this.taskIcon) this.taskIcon.destroy()
 
         this.hideInventory()
         this.hideTaskPanel()
@@ -661,10 +679,6 @@ export default class UI {
             this.scene.input.keyboard.off('keydown-ESC', this._escHandler)
             this._escHandler = null
         }
-
-        if (this.hubBtnLabel) this.hubBtnLabel.destroy()
-        if (this.invBtnLabel) this.invBtnLabel.destroy()
-        if (this.taskBtnLabel) this.taskBtnLabel.destroy()
 
         if (this.timePillContainer) {
             this.timePillContainer.destroy(true)
