@@ -145,8 +145,8 @@ export default class WorkshopScene extends Phaser.Scene {
         if (this.dialog.isActive) {
             if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
                 if (this.dialog.isActive && !this.dialog.isClosed) {
-                this.dialog.next()
-            }
+                    this.dialog.next()
+                }
             }
             return
         }
@@ -361,61 +361,92 @@ export default class WorkshopScene extends Phaser.Scene {
     // ═══════════════════════════════════════════════════
     // ─── Magical Bench Menu ────────────────────────────
     // ═══════════════════════════════════════════════════
-    onInteract(station) {
-        if (station.locked) {
-            this.dialog.show([
-                { name: 'You', text: '🔒 I need more repair skill to work on this.' }
-            ])
-            return
-        }
+    showMagicalBenchMenu(station) {
+        const W = this.cameras.main.width
+        const H = this.cameras.main.height
 
-        if (station.cooldown) {
-            this.dialog.show([
-                { name: 'You', text: 'I just worked on this. Let me rest a bit.' }
-            ])
-            return
-        }
+        this.menuActive = true
+        this.menuItems = []
 
-        // ─── Hardware Bench ────────────────────────────
-        if (station.name === 'Hardware Bench') {
-            if (!this.canDoWork()) return
-            this.advanceWorkTime()
-            this.scene.pause('WorkshopScene')
-            this.scene.launch('PressureValveGame')
-            station.cooldown = true
-            this.time.delayedCall(5000, () => { station.cooldown = false })
-        }
+        this.menuOverlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.7)
+            .setScrollFactor(0).setDepth(50)
 
-        // ─── Electrical Bench ──────────────────────────
-        if (station.name === 'Electrical Bench') {
-            if (!this.canDoWork()) return
-            this.advanceWorkTime()
-            this.scene.pause('WorkshopScene')
-            this.scene.launch('WireConnectGame')
-            station.cooldown = true
-            this.time.delayedCall(5000, () => { station.cooldown = false })
-        }
+        this.menuPanel = this.add.rectangle(W / 2, H / 2, 600, 500, 0x1a1a2e)
+            .setStrokeStyle(3, 0x9b59b6).setScrollFactor(0).setDepth(51)
 
-        // ─── Magical Bench (NIGHT ONLY) ────────────────
-        if (station.name === 'Magical Bench') {
-            if (GameState.timeOfDay !== 'night') {
-                this.dialog.show([
-                    { name: 'You', text: 'The magical bench needs darkness to work...' },
-                    { name: 'You', text: 'Ancient energy only flows at night.' },
-                    { name: '', text: '🌙 Come back at night to use this bench.' }
-                ])
-                return
-            }
+        this.menuTitle = this.add.text(W / 2, H / 2 - 210, '🔮 Magical Bench', {
+            fontSize: '28px',
+            fill: '#9b59b6',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(52)
 
-            if (GameState.level >= 2) {
-                this.showMagicalBenchMenu(station)
-            } else {
-                this.scene.pause('WorkshopScene')
-                this.scene.launch('EnergyCalibrationGame')
+        this.menuStats = this.add.text(W / 2, H / 2 - 160,
+            `🔬 Research: ${GameState.skills.research}/30   ⚗️ Elixir: ${GameState.elixir}`, {
+            fontSize: '18px',
+            fill: '#aaaaaa'
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(52)
+
+        // ─── Night indicator ───────────────────────────
+        const timeInfo = this.add.text(W / 2, H / 2 - 125,
+            '🌙 Night — Ancient energy is active', {
+            fontSize: '14px',
+            fill: '#9b59b6'
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(52)
+        this.menuItems.push(timeInfo)
+
+        // ─── Energy Calibration ────────────────────────
+        this.createBenchButton(
+            W / 2, H / 2 - 50,
+            '⚡ Energy Calibration',
+            'Earn elixir + research skill',
+            () => {
+                this.closeMagicalMenu()
                 station.cooldown = true
                 this.time.delayedCall(5000, () => { station.cooldown = false })
+                this.scene.pause('WorkshopScene')
+                this.scene.launch('EnergyCalibrationGame')
             }
-        }
+        )
+
+        // ─── Research ──────────────────────────────────
+        const researchDone = GameState.skills.research >= 30
+        const canResearch = GameState.elixir >= 1 && !researchDone
+
+        this.createBenchButton(
+            W / 2, H / 2 + 60,
+            researchDone ? '✅ Research Complete' : '🔬 Research Attack Data',
+            researchDone
+                ? 'All clues gathered'
+                : canResearch
+                    ? `Costs ⚗️1 elixir | Progress: ${GameState.skills.research}/30`
+                    : '❌ Need at least 1 elixir',
+            () => {
+                if (researchDone) {
+                    this.closeMagicalMenu()
+                    this.dialog.show([
+                        { name: 'You', text: 'Research is complete.' },
+                        { name: 'You', text: 'I need to gather all clues from others.' }
+                    ])
+                    return
+                }
+                if (GameState.elixir < 1) {
+                    this.closeMagicalMenu()
+                    this.dialog.show([
+                        { name: 'You', text: 'I need at least 1 elixir to run the analysis.' },
+                        { name: 'You', text: 'Play Energy Calibration to earn elixir.' }
+                    ])
+                    return
+                }
+                this.closeMagicalMenu()
+                this.doResearch()
+            },
+            !canResearch && !researchDone
+        )
+
+        // ─── Back ──────────────────────────────────────
+        this.createBenchButton(W / 2, H / 2 + 170, '🔙 Back', '', () => {
+            this.closeMagicalMenu()
+        })
     }
 
     createBenchButton(x, y, text, subtitle, onClick, locked = false) {
