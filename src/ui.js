@@ -5,13 +5,11 @@ export default class UI {
         this.taskItems = []
         this.invVisible = false
         this.invSlots = []
-        this.sleepItems = []
-        this.sleepVisible = false // FIX #10: Prevent double-opening sleep menu
         this._escHandler = null
         this.hubBtnLabel = null
         this.invBtnLabel = null
-        this.sleepBtnLabel = null
         this.taskBtnLabel = null
+        this.timeSegments = [] // Holds individual animated time containers
     }
 
     create() {
@@ -23,7 +21,6 @@ export default class UI {
             .setDepth(50).setScrollFactor(0)
 
         // ─── Stats Text (left side) ────────────────────
-        // FIX #5: Condensed spacing to prevent overlap with center text
         this.statsText = this.scene.add.text(20, 8, '', {
             fontSize: '16px',
             fill: '#ffffff'
@@ -37,7 +34,6 @@ export default class UI {
         }).setOrigin(0.5, 0).setDepth(51).setScrollFactor(0)
 
         // ─── Level Text (right side) ───────────────────
-        // [FIX] Move levelText to left to make room for time pill
         this.levelText = this.scene.add.text(W - 220, 8, '', {
             fontSize: '18px',
             fill: '#00ff88',
@@ -47,107 +43,73 @@ export default class UI {
         // ─── Time Pill Indicator ───────────────────────
         this.timePillContainer = this.scene.add.container(W - 100, 20).setDepth(51).setScrollFactor(0);
 
-        this.pillGraphics = this.scene.add.graphics();
-        this.timePillContainer.add(this.pillGraphics);
+        // [DYNAMIC] Background fill for the pill
+        this.pillBg = this.scene.add.rectangle(0, 0, 160, 30, 0x000000, 0.4);
+        this.timePillContainer.add(this.pillBg);
 
-        // Morning (0) - x: -80 to -40
-        // Soft warm background
-        this.pillGraphics.fillStyle(0xffe4b5); // Moccasin/dawn
-        this.pillGraphics.beginPath();
-        this.pillGraphics.arc(-65, 0, 15, Phaser.Math.DegToRad(90), Phaser.Math.DegToRad(270), false);
-        this.pillGraphics.lineTo(-40, -15);
-        this.pillGraphics.lineTo(-40, 15);
-        this.pillGraphics.closePath();
-        this.pillGraphics.fillPath();
+        // [DYNAMIC] Glowing Active Slider
+        this.timeSlider = this.scene.add.graphics();
+        this.timeSlider.fillStyle(0xffffff, 0.3);
+        this.timeSlider.fillRoundedRect(-18, -16, 36, 32, 14);
+        this.timeSlider.x = -60 + (GameState.timeIndex || 0) * 40;
+        this.timePillContainer.add(this.timeSlider);
 
-        // Rising sun half-circle at the bottom
-        this.pillGraphics.fillStyle(0xff8c00);
-        this.pillGraphics.fillCircle(-60, 12, 8);
+        // [DYNAMIC] Create Independent Segments for Animation
+        this.timeSegments = [];
 
-        // Light rays
-        this.pillGraphics.fillStyle(0xffd700, 0.4);
-        this.pillGraphics.fillCircle(-60, 12, 12);
+        // Morning (0) - Center at -60
+        const mornGfx = this.scene.add.graphics();
+        mornGfx.fillStyle(0xffe4b5);
+        mornGfx.beginPath();
+        mornGfx.arc(-5, 0, 15, Phaser.Math.DegToRad(90), Phaser.Math.DegToRad(270), false);
+        mornGfx.lineTo(20, -15); mornGfx.lineTo(20, 15); mornGfx.closePath(); mornGfx.fillPath();
+        mornGfx.fillStyle(0xff8c00); mornGfx.fillCircle(0, 12, 8);
+        mornGfx.fillStyle(0xffd700, 0.4); mornGfx.fillCircle(0, 12, 12);
+        mornGfx.fillStyle(0xaaaaaa);
+        mornGfx.beginPath(); mornGfx.arc(0, 14, 8, Phaser.Math.DegToRad(180), Phaser.Math.DegToRad(0), false); mornGfx.fillPath();
+        const mornCont = this.scene.add.container(-60, 0); mornCont.add(mornGfx);
+        this.timePillContainer.add(mornCont); this.timeSegments.push(mornCont);
 
-        // Landscape hill — fully inside the pill
-        this.pillGraphics.fillStyle(0xaaaaaa);
-        this.pillGraphics.beginPath();
-        this.pillGraphics.arc(-60, 14, 8, Phaser.Math.DegToRad(180), Phaser.Math.DegToRad(0), false);
-        this.pillGraphics.fillPath();
+        // Afternoon (1) - Center at -20
+        const aftGfx = this.scene.add.graphics();
+        aftGfx.fillStyle(0x77ccff); aftGfx.fillRect(-20, -15, 40, 30);
+        aftGfx.fillStyle(0xffaa00); aftGfx.fillCircle(0, 2, 8);
+        aftGfx.fillStyle(0xffffff); aftGfx.fillCircle(-5, 8, 6); aftGfx.fillCircle(5, 8, 5); aftGfx.fillCircle(0, 10, 4);
+        const aftCont = this.scene.add.container(-20, 0); aftCont.add(aftGfx);
+        this.timePillContainer.add(aftCont); this.timeSegments.push(aftCont);
 
-        // Afternoon (1) - x: -40 to 0
-        this.pillGraphics.fillStyle(0x77ccff);
-        this.pillGraphics.fillRect(-40, -15, 40, 30);
-        this.pillGraphics.fillStyle(0xffaa00);
-        this.pillGraphics.fillCircle(-20, 2, 8);
-        this.pillGraphics.fillStyle(0xffffff);
-        this.pillGraphics.fillCircle(-25, 8, 6);
-        this.pillGraphics.fillCircle(-15, 8, 5);
-        this.pillGraphics.fillCircle(-20, 10, 4);
+        // Evening (2) - Center at 20
+        const eveGfx = this.scene.add.graphics();
+        eveGfx.fillStyle(0x555566); eveGfx.fillRect(-20, -15, 40, 30);
+        eveGfx.fillStyle(0xdddddd); eveGfx.fillCircle(0, 0, 6);
+        eveGfx.fillStyle(0x555566); eveGfx.fillCircle(3, -2, 5);
+        const eveCont = this.scene.add.container(20, 0); eveCont.add(eveGfx);
+        this.timePillContainer.add(eveCont); this.timeSegments.push(eveCont);
 
-        // Evening (2) - x: 0 to 40
-        this.pillGraphics.fillStyle(0x555566);
-        this.pillGraphics.fillRect(0, -15, 40, 30);
-        this.pillGraphics.fillStyle(0xdddddd);
-        this.pillGraphics.fillCircle(20, 0, 6);
-        this.pillGraphics.fillStyle(0x555566); // match background to cut out crescent
-        this.pillGraphics.fillCircle(23, -2, 5);
+        // Night (3) - Center at 60
+        const nightGfx = this.scene.add.graphics();
+        nightGfx.fillStyle(0x1a1a24);
+        nightGfx.beginPath(); nightGfx.lineTo(-20, -15); nightGfx.lineTo(5, -15);
+        nightGfx.arc(5, 0, 15, Phaser.Math.DegToRad(-90), Phaser.Math.DegToRad(90), false);
+        nightGfx.lineTo(-20, 15); nightGfx.closePath(); nightGfx.fillPath();
+        nightGfx.fillStyle(0xffffff); nightGfx.fillRect(-12, -5, 2, 2); nightGfx.fillRect(3, -8, 1, 1);
+        nightGfx.fillRect(-8, 5, 2, 2); nightGfx.fillRect(8, 2, 1, 1);
+        const nightCont = this.scene.add.container(60, 0); nightCont.add(nightGfx);
+        this.timePillContainer.add(nightCont); this.timeSegments.push(nightCont);
 
-        // Night (3) - x: 40 to 80
-        this.pillGraphics.fillStyle(0x1a1a24);
-        this.pillGraphics.beginPath();
-        this.pillGraphics.lineTo(40, -15);
-        this.pillGraphics.lineTo(65, -15);
-        this.pillGraphics.arc(65, 0, 15, Phaser.Math.DegToRad(-90), Phaser.Math.DegToRad(90), false);
-        this.pillGraphics.lineTo(40, 15);
-        this.pillGraphics.closePath();
-        this.pillGraphics.fillPath();
-        this.pillGraphics.fillStyle(0xffffff);
-        this.pillGraphics.fillRect(48, -5, 2, 2);
-        this.pillGraphics.fillRect(63, -8, 1, 1);
-        this.pillGraphics.fillRect(52, 5, 2, 2);
-        this.pillGraphics.fillRect(68, 2, 1, 1);
+        // [DYNAMIC] Set initial scales and alphas immediately
+        const initIdx = GameState.timeIndex || 0;
+        this.timeSegments.forEach((seg, i) => {
+            seg.setScale(i === initIdx ? 1.15 : 0.85);
+            seg.setAlpha(i === initIdx ? 1 : 0.4);
+        });
 
-        // Dark dimmers overlay for unselected times
-        this.timeDimmer = [];
-        for (let i = 0; i < 4; i++) {
-            let dim;
-            if (i === 0) {
-                dim = this.scene.add.graphics();
-                dim.fillStyle(0x000000, 0.6);
-                dim.beginPath();
-                dim.arc(-65, 0, 15, Phaser.Math.DegToRad(90), Phaser.Math.DegToRad(270), false);
-                dim.lineTo(-40, -15);
-                dim.lineTo(-40, 15);
-                dim.closePath();
-                dim.fillPath();
-            } else if (i === 3) {
-                dim = this.scene.add.graphics();
-                dim.fillStyle(0x000000, 0.6);
-                dim.beginPath();
-                dim.lineTo(40, -15);
-                dim.lineTo(65, -15);
-                dim.arc(65, 0, 15, Phaser.Math.DegToRad(-90), Phaser.Math.DegToRad(90), false);
-                dim.lineTo(40, 15);
-                dim.closePath();
-                dim.fillPath();
-            } else {
-                dim = this.scene.add.rectangle(-40 + (i - 1) * 40 + 20, 0, 40, 30, 0x000000, 0.6);
-            }
-            this.timePillContainer.add(dim);
-            this.timeDimmer.push(dim);
-        }
-
-        // Set initial alpha immediately
-        const tIndex = GameState.timeIndex || 0
-        this.timeDimmer.forEach((dim, i) => {
-            dim.setAlpha(i === tIndex ? 0 : 0.6)
-        })
-
-        // Add hit pads for future interactivity
+        // Add hit pads for interactivity
         const segments = [-60, -20, 20, 60]
         segments.forEach((sx, i) => {
             const hitPad = this.scene.add.rectangle(sx, 0, 40, 30, 0x000000, 0)
                 .setInteractive({ useHandCursor: true })
+            hitPad.on('pointerdown', () => this.changeTime(i))
             this.timePillContainer.add(hitPad)
         })
 
@@ -157,18 +119,17 @@ export default class UI {
         border.strokeRoundedRect(-80, -15, 160, 30, 15);
         this.timePillContainer.add(border);
 
-        // Day tab indicator underneath
-        this.dayPillTab = this.scene.add.rectangle(-60, 25, 45, 20, 0x5a3a9a);
-        this.dayPillText = this.scene.add.text(-60, 25, `Day ${GameState.day}`, { fontSize: '11px', fill: '#ffffff', fontStyle: 'bold' }).setOrigin(0.5);
+        // [DYNAMIC] Day tab indicator underneath (Now includes specific time name)
+        const timeNames = ['Morning', 'Afternoon', 'Evening', 'Night'];
+        const initTimeName = timeNames[initIdx] || 'Morning';
+        this.dayPillTab = this.scene.add.rectangle(-60, 25, 90, 20, 0x5a3a9a);
+        this.dayPillText = this.scene.add.text(-60, 25, `Day ${GameState.day} - ${initTimeName}`, {
+            fontSize: '11px', fill: '#ffffff', fontStyle: 'bold'
+        }).setOrigin(0.5);
         this.timePillContainer.add(this.dayPillTab);
         this.timePillContainer.add(this.dayPillText);
-
-        // Sliding bottom highlight
-        this.timeSlider = this.scene.add.graphics();
-        this.timeSlider.fillStyle(0xffffff, 1);
-        this.timeSlider.fillRect(-15, 11, 30, 4);
-        this.timeSlider.x = -60 + (GameState.timeIndex || 0) * 40;
-        this.timePillContainer.add(this.timeSlider);
+        // Fit background to text width
+        this.dayPillTab.setSize(this.dayPillText.width + 20, 20);
 
         // ─── Crisis Bar ────────────────────────────────
         this.crisisBarBg = this.scene.add.rectangle(W / 2, 50, W - 40, 16, 0x222222)
@@ -177,7 +138,6 @@ export default class UI {
         this.crisisBar = this.scene.add.rectangle(20, 50, 0, 12, 0xff4444)
             .setOrigin(0, 0.5).setDepth(51).setScrollFactor(0)
 
-        // FIX #8: Renamed from CRISIS to TIMELINE for better UX semantics
         this.crisisLabel = this.scene.add.text(W / 2, 50, '', {
             fontSize: '11px',
             fill: '#ffffff',
@@ -185,10 +145,9 @@ export default class UI {
         }).setOrigin(0.5).setDepth(52).setScrollFactor(0)
 
         // ─── Bottom Buttons ─────────────────────────────
-        // FIX #6: Dynamic button spacing to prevent overlap on narrow screens
         const btnY = H - 30
         const btnW = 130
-        const btnCount = this.scene.scene.key !== 'HubScene' ? 4 : 3
+        const btnCount = this.scene.scene.key !== 'HubScene' ? 3 : 2
         const gap = Math.max(10, (W - btnCount * btnW) / (btnCount + 1))
         const getBtnX = (index) => gap + btnW / 2 + index * (btnW + gap)
 
@@ -197,7 +156,6 @@ export default class UI {
         // ─── Hub Button ────────────────────────────────
         if (this.scene.scene.key !== 'HubScene') {
             const hubX = getBtnX(btnIndex);
-            // [FIX] Harmonized navigation button to cohesive base and hover
             this.hubBtn = this.scene.add.rectangle(hubX, btnY, btnW, 40, 0x1a1a2e)
                 .setDepth(50).setScrollFactor(0)
                 .setStrokeStyle(1, 0x00ff88)
@@ -208,7 +166,6 @@ export default class UI {
                 fill: '#ffffff'
             }).setOrigin(0.5).setDepth(51).setScrollFactor(0)
 
-            // [FIX] Unified hover style
             this.hubBtn.on('pointerover', () => this.hubBtn.setFillStyle(0x2a2a44))
             this.hubBtn.on('pointerout', () => this.hubBtn.setFillStyle(0x1a1a2e))
             this.hubBtn.on('pointerdown', () => {
@@ -222,7 +179,6 @@ export default class UI {
 
         // ─── Inventory Button ──────────────────────────
         const invX = getBtnX(btnIndex);
-        // [FIX] Harmonized navigation button to cohesive base and hover
         this.invBtn = this.scene.add.rectangle(invX, btnY, btnW, 40, 0x1a1a2e)
             .setDepth(50).setScrollFactor(0)
             .setStrokeStyle(1, 0xffffff)
@@ -233,34 +189,13 @@ export default class UI {
             fill: '#ffffff'
         }).setOrigin(0.5).setDepth(51).setScrollFactor(0)
 
-        // [FIX] Unified hover style
         this.invBtn.on('pointerover', () => this.invBtn.setFillStyle(0x2a2a44))
         this.invBtn.on('pointerout', () => this.invBtn.setFillStyle(0x1a1a2e))
         this.invBtn.on('pointerdown', () => this.toggleInventory())
         btnIndex++;
 
-        // ─── Sleep Button ──────────────────────────────
-        const sleepX = getBtnX(btnIndex);
-        // [FIX] Harmonized navigation button to cohesive base and hover
-        this.sleepBtn = this.scene.add.rectangle(sleepX, btnY, btnW, 40, 0x1a1a2e)
-            .setDepth(50).setScrollFactor(0)
-            .setStrokeStyle(1, 0x4444aa)
-            .setInteractive({ useHandCursor: true })
-
-        this.sleepBtnLabel = this.scene.add.text(sleepX, btnY, '😴 Sleep', {
-            fontSize: '16px',
-            fill: '#ffffff'
-        }).setOrigin(0.5).setDepth(51).setScrollFactor(0)
-
-        // [FIX] Unified hover style
-        this.sleepBtn.on('pointerover', () => this.sleepBtn.setFillStyle(0x2a2a44))
-        this.sleepBtn.on('pointerout', () => this.sleepBtn.setFillStyle(0x1a1a2e))
-        this.sleepBtn.on('pointerdown', () => this.openSleepMenu())
-        btnIndex++;
-
         // ─── Task Button ───────────────────────────────
         const taskX = getBtnX(btnIndex);
-        // [FIX] Harmonized navigation button to cohesive base and hover
         this.taskBtn = this.scene.add.rectangle(taskX, btnY, btnW, 40, 0x1a1a2e)
             .setDepth(50).setScrollFactor(0)
             .setStrokeStyle(1, 0xffaa00)
@@ -271,18 +206,12 @@ export default class UI {
             fill: '#ffffff'
         }).setOrigin(0.5).setDepth(51).setScrollFactor(0)
 
-        // [FIX] Unified hover style
         this.taskBtn.on('pointerover', () => this.taskBtn.setFillStyle(0x2a2a44))
         this.taskBtn.on('pointerout', () => this.taskBtn.setFillStyle(0x1a1a2e))
         this.taskBtn.on('pointerdown', () => this.toggleTaskPanel())
 
-        // FIX #18: Escape key binding to close panels
         this._escHandler = () => {
-            if (this.sleepVisible) {
-                this.sleepItems.forEach(i => { if (i) i.destroy() })
-                this.sleepItems = []
-                this.sleepVisible = false
-            } else if (this.invVisible) {
+            if (this.invVisible) {
                 this.hideInventory()
             } else if (this.taskVisible) {
                 this.hideTaskPanel()
@@ -293,119 +222,30 @@ export default class UI {
         this.updateStats()
     }
 
-    // ─── Sleep Menu ────────────────────────────────────
-    openSleepMenu() {
-        // FIX #10: Prevent double-opening
-        if (this.sleepVisible) return
-        this.sleepVisible = true
+    // ─── Direct Time Change via UI Pill Indicator ──────
+    changeTime(newIndex) {
+        if (newIndex === GameState.timeIndex) return
 
-        const W = this.scene.cameras.main.width
-        const H = this.scene.cameras.main.height
-
-        // FIX #2: Responsive panel sizes
-        const panelW = Math.min(500, W - 40)
-        const panelH = Math.min(430, H - 60)
-
-        this.sleepItems = []
-
-        // FIX #1 & #7: Overlay is interactive and closes on click-outside
-        this.sleepOverlay = this.scene.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.7)
-            .setScrollFactor(0).setDepth(200).setInteractive()
-
-        this.sleepPanel = this.scene.add.rectangle(W / 2, H / 2, panelW, panelH, 0x0a0a1a)
-            .setStrokeStyle(3, 0x4444aa).setScrollFactor(0).setDepth(201).setInteractive() // Eats clicks so they don't close panel
-
-        const title = this.scene.add.text(W / 2, H / 2 - 180,
-            `${GameState.getTimeIcon()} Day ${GameState.day} - ${GameState.timeOfDay}`, {
-            fontSize: '24px',
-            fill: '#ffffff',
-            fontStyle: 'bold'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(202)
-
-        const daysLeft = this.scene.add.text(W / 2, H / 2 - 140,
-            `⏳ ${GameState.getDaysLeft()} days remaining`, {
-            fontSize: '18px',
-            fill: GameState.getDaysLeft() <= 2 ? '#ff4444' : '#aaaaaa'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(202)
-
-        this.sleepItems.push(this.sleepOverlay, this.sleepPanel, title, daysLeft)
-
-        const closeAll = () => {
-            this.sleepItems.forEach(i => { if (i) i.destroy() })
-            this.sleepItems = []
-            this.sleepVisible = false // FIX #10
-        }
-
-        // Clicking overlay background closes menu
-        this.sleepOverlay.on('pointerdown', closeAll)
-
-        // FIX #12: Fade-in animation
-        this.sleepPanel.setAlpha(0)
-        this.scene.tweens.add({ targets: this.sleepPanel, alpha: 1, duration: 150 })
-
-        const ti = GameState.timeIndex || 0
-        const buttons = []
-
-        if (ti < 1) {
-            buttons.push({
-                text: '☀️ Skip to Afternoon', onClick: () => {
-                    closeAll()
-                    GameState.skipToAfternoon()
-                    this.updateStats()
-                    this.showTimeTransition()
-                }
-            })
-        }
-        if (ti < 2) {
-            buttons.push({
-                text: '🌆 Skip to Evening', onClick: () => {
-                    closeAll()
-                    GameState.skipToEvening()
-                    this.updateStats()
-                    this.showTimeTransition()
-                }
-            })
-        }
-        buttons.push({
-            text: '😴 Sleep until Morning', onClick: () => {
-                closeAll()
-                const gameOver = GameState.skipToMorning()
-                if (gameOver) {
-                    this.scene.scene.start('CutsceneScene', { key: 'gameOver' })
-                } else {
-                    this.updateStats()
-                    this.showTimeTransition()
-                }
+        if (newIndex === 0) {
+            // Advancing to the next morning
+            const gameOver = GameState.skipToMorning()
+            if (gameOver) {
+                this.scene.scene.start('CutsceneScene', { key: 'gameOver' })
+                return
             }
-        })
-        buttons.push({ text: '🔙 Cancel', onClick: closeAll, isCancel: true })
+        } else if (newIndex === 1 && GameState.timeIndex < 1) {
+            GameState.skipToAfternoon()
+        } else if (newIndex === 2 && GameState.timeIndex < 2) {
+            GameState.skipToEvening()
+        } else if (newIndex === 3 && GameState.timeIndex < 3) {
+            GameState.skipToNight()
+        } else {
+            // Cannot go backwards without sleeping to Morning
+            return
+        }
 
-        // Dynamically adjust Y positions based on visible buttons
-        const spacing = 80
-        const startY = H / 2 - 60 + (4 - buttons.length) * 40
-
-        buttons.forEach((btn, index) => {
-            this.createSleepBtn(W / 2, startY + index * spacing, btn.text, btn.onClick, btn.isCancel || false, panelW)
-        })
-    }
-
-    createSleepBtn(x, y, text, onClick, isCancel = false, panelW = 380) {
-        const btnW = Math.min(380, panelW - 40) // 20px padding each side
-        const btn = this.scene.add.rectangle(x, y, btnW, 55, isCancel ? 0x222233 : 0x222244)
-            .setStrokeStyle(2, isCancel ? 0x444444 : 0x4444aa)
-            .setScrollFactor(0).setDepth(202)
-            .setInteractive({ useHandCursor: true })
-
-        const label = this.scene.add.text(x, y, text, {
-            fontSize: '18px',
-            fill: isCancel ? '#aaaaaa' : '#ffffff'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(203)
-
-        btn.on('pointerover', () => btn.setFillStyle(isCancel ? 0x333333 : 0x333366))
-        btn.on('pointerout', () => btn.setFillStyle(isCancel ? 0x222233 : 0x222244))
-        btn.on('pointerdown', onClick)
-
-        this.sleepItems.push(btn, label)
+        this.updateStats()
+        this.showTimeTransition()
     }
 
     // ─── Time Transition ───────────────────────────────
@@ -413,7 +253,6 @@ export default class UI {
         const W = this.scene.cameras.main.width
         const H = this.scene.cameras.main.height
 
-        // FIX #13: Overlay blocks input during transition
         const overlay = this.scene.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.9)
             .setScrollFactor(0).setDepth(300).setInteractive()
 
@@ -456,43 +295,60 @@ export default class UI {
         const W = this.scene.cameras.main.width
         const isNarrow = W < 500
 
-        // FIX #5: Condensed spacing between stats icons
         this.statsText.setText(isNarrow
             ? `⭐${GameState.reputation} 💰${GameState.money} ⚗️${GameState.elixir}`
             : `⭐${GameState.reputation}  💰${GameState.money}  ⚗️${GameState.elixir}  🔧${GameState.skills.repair}  🔬${GameState.skills.research}`
         )
         this.levelText.setText(`Lv.${GameState.level}`)
 
-        // [FIX] Update Day text and animate Time Indicator
         const daysLeft = GameState.getDaysLeft()
         this.dayText.setText(`⏳ ${daysLeft} days remaining`)
         this.dayText.setFill('#ffffff')
 
-        // Animate visual pill indicators
+        // [DYNAMIC] Animate Time Segments & Slider
         const tIndex = GameState.timeIndex || 0;
         const targetX = -60 + tIndex * 40;
+        const timeNames = ['Morning', 'Afternoon', 'Evening', 'Night'];
 
+        // Glowing slider animation
         if (this.timeSlider) {
             this.scene.tweens.add({
                 targets: this.timeSlider,
                 x: targetX,
-                duration: 400,
+                duration: 600,
                 ease: 'Back.easeOut'
             });
         }
 
-        if (this.timeDimmer) {
-            this.timeDimmer.forEach((dim, i) => {
+        // Segment bounce and dim animation
+        if (this.timeSegments && this.timeSegments.length > 0) {
+            this.timeSegments.forEach((seg, i) => {
+                const isActive = i === tIndex;
                 this.scene.tweens.add({
-                    targets: dim,
-                    alpha: i === tIndex ? 0 : 0.6,
-                    duration: 400
+                    targets: seg,
+                    scaleX: isActive ? 1.2 : 0.85,
+                    scaleY: isActive ? 1.2 : 0.85,
+                    alpha: isActive ? 1 : 0.4,
+                    duration: 500,
+                    ease: isActive ? 'Elastic.easeOut' : 'Quad.easeInOut'
                 });
             });
         }
 
-        if (this.dayPillText) {
-            this.dayPillText.setText(`Day ${GameState.day}`);
+        // [DYNAMIC] Update pill tab text to explicitly state the time
+        if (this.dayPillText && this.dayPillTab) {
+            const newTimeName = timeNames[tIndex] || 'Time';
+            this.dayPillText.setText(`Day ${GameState.day} - ${newTimeName}`);
+            this.dayPillTab.setSize(this.dayPillText.width + 20, 20);
+
+            // Bounce tab on update for extra visual feedback
+            this.scene.tweens.add({
+                targets: [this.dayPillTab, this.dayPillText],
+                scaleY: 1.2,
+                duration: 100,
+                yoyo: true,
+                ease: 'Quad.easeInOut'
+            });
         }
 
         const progress = Math.min(1, (GameState.day) / GameState.maxDays)
@@ -507,7 +363,6 @@ export default class UI {
             this.crisisBar.setFillStyle(0xff4444)
         }
 
-        // FIX #8: Label renamed from CRISIS to TIMELINE
         this.crisisLabel.setText(`TIMELINE: Day ${GameState.day} of ${GameState.maxDays}`)
     }
 
@@ -525,18 +380,16 @@ export default class UI {
         const W = this.scene.cameras.main.width
         const H = this.scene.cameras.main.height
 
-        // FIX #2: Responsive panel sizing
         const panelW = Math.min(900, W - 40)
         const panelH = Math.min(650, H - 60)
 
-        // FIX #1 & #7: Overlay interactive + closes on click outside
         this.invOverlay = this.scene.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.7)
             .setScrollFactor(0).setDepth(200).setInteractive()
             .on('pointerdown', () => this.hideInventory())
 
         this.invPanel = this.scene.add.rectangle(W / 2, H / 2, panelW, panelH, 0x1a1a2e)
             .setStrokeStyle(3, 0x00ff88)
-            .setScrollFactor(0).setDepth(201).setInteractive() // Eats clicks
+            .setScrollFactor(0).setDepth(201).setInteractive()
 
         this.invTitle = this.scene.add.text(W / 2, H / 2 - (panelH / 2) + 30, '🎒 Inventory', {
             fontSize: '30px',
@@ -554,13 +407,11 @@ export default class UI {
         this.invClose.on('pointerout', () => this.invClose.setFill('#ff4444'))
         this.invClose.on('pointerdown', () => this.hideInventory())
 
-        // FIX #12: Panel fade-in
         this.invPanel.setAlpha(0)
         this.scene.tweens.add({ targets: this.invPanel, alpha: 1, duration: 150 })
 
         this.invSlots = []
 
-        // FIX #14: Dynamic grid that scales with panel width
         const maxSlotSize = 100
         const cols = Math.min(6, Math.floor((panelW - 40) / maxSlotSize))
         const slotSize = Math.min(maxSlotSize, (panelW - 40) / cols)
@@ -583,13 +434,10 @@ export default class UI {
                 let qty = null
 
                 if (item) {
-                    // FIX #9: Only make filled slots interactive
                     slot.setInteractive({ useHandCursor: true })
-
                     icon = this.scene.add.text(x, y - 10, item.icon, {
                         fontSize: '30px'
                     }).setOrigin(0.5).setScrollFactor(0).setDepth(203)
-
                     qty = this.scene.add.text(x + 35, y + 30, `x${item.quantity}`, {
                         fontSize: '14px',
                         fill: '#ffaa00'
@@ -604,16 +452,13 @@ export default class UI {
                         this.hideInvTooltip()
                     })
                 } else {
-                    // FIX #9: Empty slots have no hover effect or interactivity
                     slot.setFillStyle(0x1a1a2e)
                     slot.setAlpha(0.3)
                 }
-
                 this.invSlots.push({ slot, icon, qty })
             }
         }
 
-        // Inventory Overflow
         if (GameState.inventory.length > cols * rows) {
             this.invOverflow = this.scene.add.text(W / 2, startY + rows * slotSize + 10,
                 `+ ${GameState.inventory.length - cols * rows} more items...`, {
@@ -621,7 +466,7 @@ export default class UI {
             }).setOrigin(0.5).setScrollFactor(0).setDepth(202)
         }
 
-        const armorY = H / 2 + (panelH / 2) - 50 // 50px from panel bottom
+        const armorY = H / 2 + (panelH / 2) - 50
         this.invArmor = this.scene.add.text(W / 2, armorY,
             `🤖 Armor: ${GameState.armor.parts.length}/3 parts  |  Core: ${GameState.armor.hasCore ? '✅' : '❌'}`, {
             fontSize: '18px',
@@ -638,14 +483,13 @@ export default class UI {
     }
 
     showInvTooltip(x, y, item) {
-        // [FIX] Improved Tooltip Positioning and reuse logic
         const tooltipW = 220, tooltipH = 80;
         const W = this.scene.cameras.main.width;
         const H = this.scene.cameras.main.height;
         let tx = x, ty = y - 70;
 
-        if (ty - tooltipH / 2 < 10) ty = y + 60; // Flip below if too high
-        if (ty + tooltipH / 2 > H - 10) ty = H - tooltipH / 2 - 10; // Prevent bottom cutoff
+        if (ty - tooltipH / 2 < 10) ty = y + 60;
+        if (ty + tooltipH / 2 > H - 10) ty = H - tooltipH / 2 - 10;
         if (tx - tooltipW / 2 < 10) tx = tooltipW / 2 + 10;
         if (tx + tooltipW / 2 > W - 10) tx = W - tooltipW / 2 - 10;
 
@@ -701,23 +545,20 @@ export default class UI {
     showTaskPanel() {
         const W = this.scene.cameras.main.width
         const H = this.scene.cameras.main.height
-
         this.taskVisible = true
         const tasks = this.getCurrentTasks()
 
-        // FIX #2 & #15: Responsive panel with dynamic height
         const panelW = Math.min(700, W - 40)
         const contentHeight = tasks.length * 38 + 200
         const panelH = Math.min(contentHeight, H - 60)
 
-        // FIX #1 & #7: Overlay interactive + closes on click-out
         this.taskOverlay = this.scene.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.6)
             .setDepth(60).setScrollFactor(0).setInteractive()
             .on('pointerdown', () => this.hideTaskPanel())
 
         this.taskPanel = this.scene.add.rectangle(W / 2, H / 2, panelW, panelH, 0x1a1a2e)
             .setStrokeStyle(2, 0xffaa00)
-            .setDepth(61).setScrollFactor(0).setInteractive() // Eats clicks
+            .setDepth(61).setScrollFactor(0).setInteractive()
 
         this.taskTitle = this.scene.add.text(W / 2, H / 2 - (panelH / 2) + 30, `📋 Level ${GameState.level} Tasks`, {
             fontSize: '24px',
@@ -725,25 +566,21 @@ export default class UI {
             fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(62).setScrollFactor(0)
 
-        // FIX #12: Fade-in
         this.taskPanel.setAlpha(0)
         this.scene.tweens.add({ targets: this.taskPanel, alpha: 1, duration: 150 })
 
         this.taskItems = []
-
-        // FIX #15: Dynamic spacing for tasks
         const itemSpacing = Math.min(38, (panelH - 180) / Math.max(1, tasks.length))
 
         tasks.forEach((task, i) => {
             const check = task.done ? '✅' : '⬜'
             const color = task.done ? '#00ff88' : task.text.includes('───') ? '#555555' : '#ffffff'
-
-            const textX = W / 2 - (panelW / 2) + 30 // 30px left padding inside panel
+            const textX = W / 2 - (panelW / 2) + 30
             const text = this.scene.add.text(textX, H / 2 - (panelH / 2) + 80 + (i * itemSpacing),
                 `${task.text.includes('───') ? task.text : check + ' ' + task.text}`, {
                 fontSize: '17px',
                 fill: color,
-                wordWrap: { width: panelW - 60 } // Wrap within panel bounds
+                wordWrap: { width: panelW - 60 }
             }).setDepth(62).setScrollFactor(0)
             this.taskItems.push(text)
         })
@@ -818,9 +655,7 @@ export default class UI {
         return `🤖 Armor: ${GameState.armor.parts.length}/3 parts  |  Core: ${GameState.armor.hasCore ? '✅' : '❌'}`
     }
 
-    // FIX #4: Proper cleanup on scene transition
     destroy() {
-        // Top bar
         if (this.bar) this.bar.destroy()
         if (this.statsText) this.statsText.destroy()
         if (this.dayText) this.dayText.destroy()
@@ -829,35 +664,28 @@ export default class UI {
         if (this.crisisBar) this.crisisBar.destroy()
         if (this.crisisLabel) this.crisisLabel.destroy()
 
-        // Buttons
-        if (this.sleepBtn) this.sleepBtn.destroy()
         if (this.hubBtn) this.hubBtn.destroy()
         if (this.invBtn) this.invBtn.destroy()
         if (this.taskBtn) this.taskBtn.destroy()
 
-        // Open panels
         this.hideInventory()
         this.hideTaskPanel()
         this.sleepItems.forEach(i => { if (i) i.destroy() })
         this.sleepItems = []
 
-        // Remove ESC listener
         if (this._escHandler) {
             this.scene.input.keyboard.off('keydown-ESC', this._escHandler)
             this._escHandler = null
         }
 
-        // Destroy button labels
         if (this.hubBtnLabel) this.hubBtnLabel.destroy()
         if (this.invBtnLabel) this.invBtnLabel.destroy()
-        if (this.sleepBtnLabel) this.sleepBtnLabel.destroy()
         if (this.taskBtnLabel) this.taskBtnLabel.destroy()
 
-        // Destroy containers
         if (this.timePillContainer) {
-            this.timePillContainer.destroy(true) // true = destroy all children
+            this.timePillContainer.destroy(true)
             this.timePillContainer = null
         }
-        this.timeDimmer = []
+        this.timeSegments = []
     }
 }

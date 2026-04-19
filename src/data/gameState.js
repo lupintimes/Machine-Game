@@ -40,6 +40,13 @@ const GameState = {
         }
     },
 
+    skipToNight() {
+        if (this.timeIndex < 3) {
+            this.timeIndex = 3
+            this.timeOfDay = 'night'
+        }
+    },
+
     isGameOver() {
         return this.day > this.maxDays
     },
