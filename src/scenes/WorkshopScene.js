@@ -21,8 +21,15 @@ export default class WorkshopScene extends Phaser.Scene {
         // ─── Shutdown cleanup ──────────────────────────
         this.events.on('shutdown', () => { if (this.ui) this.ui.destroy() })
 
-        // ─── Background ────────────────────────────────
-        this.bg = this.add.image(0, 0, 'workshop-bg')
+        // ─── Background (time-based) ───────────────────
+        const bgKey = {
+            'morning': 'workshop-morning',
+            'afternoon': 'workshop-noon',
+            'evening': 'workshop-evening',
+            'night': 'workshop-night'
+        }[GameState.timeOfDay] || 'workshop-morning'
+
+        this.bg = this.add.image(0, 0, bgKey)
         this.bg.setOrigin(0, 0)
         this.bg.setDepth(-1)
 
@@ -114,18 +121,13 @@ export default class WorkshopScene extends Phaser.Scene {
         this.menuItems = []
         this.nearStation = null
         this.truthTriggered = false
-        this.electricalJustUnlocked = false
-        this.traderHintShown = false
+
 
         if (GameState.getFlag('learnedTruth')) {
             this.truthTriggered = true
         }
 
-        // ─── Scene Title ───────────────────────────────
-        this.add.text(W / 2, 50, '🔧 Workshop', {
-            fontSize: '28px',
-            fill: '#fff'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(20)
+
 
         // ─── Intro dialog ──────────────────────────────
         // In create() — replace the intro dialog block:
@@ -176,8 +178,8 @@ export default class WorkshopScene extends Phaser.Scene {
                 this.stations[1].lockLabel.destroy()
                 this.stations[1].lockLabel = null
             }
-            if (!this.electricalJustUnlocked) {
-                this.electricalJustUnlocked = true
+            if (!GameState.getFlag('electricalUnlockShown')) {
+                GameState.setFlag('electricalUnlockShown')
                 this.dialog.show([
                     { name: 'You', text: '⚡ My repair skills are good enough now!' },
                     { name: 'You', text: 'I can work on the Electrical Bench!' }
@@ -187,8 +189,8 @@ export default class WorkshopScene extends Phaser.Scene {
         }
 
         // ─── Trader hint (one time) ────────────────────
-        if (GameState.canMeetTrader() && !this.traderHintShown) {
-            this.traderHintShown = true
+        if (GameState.canMeetTrader() && !GameState.getFlag('traderHintShown')) {
+            GameState.setFlag('traderHintShown')
             this.dialog.show([
                 { name: 'You', text: 'I know enough now to look for parts.' },
                 { name: 'You', text: 'Maybe the Junkyard trader has what I need.' }
@@ -473,7 +475,7 @@ export default class WorkshopScene extends Phaser.Scene {
 
         if (!locked) {
             btn.on('pointerover', () => btn.setFillStyle(0x3a3a3a))
-            btn.on('pointerout', () =>btn.setFillStyle(0x2a2a2a))
+            btn.on('pointerout', () => btn.setFillStyle(0x2a2a2a))
         }
         btn.on('pointerdown', () => { if (!locked) onClick() })
 

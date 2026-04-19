@@ -32,8 +32,9 @@ export default class CutsceneScene extends Phaser.Scene {
             fontStyle: 'italic'
         }).setOrigin(0.5)
 
-        // ─── Title ─────────────────────────────────────
+        // Title:
         this.cutsceneTitle = this.add.text(W / 2, H / 2, '', {
+            fontFamily: "'Orbitron', monospace",
             fontSize: '42px',
             fill: '#ffffff',
             fontStyle: 'bold',
@@ -41,8 +42,9 @@ export default class CutsceneScene extends Phaser.Scene {
             wordWrap: { width: W - 200 }
         }).setOrigin(0.5)
 
-        // ─── Subtitle ──────────────────────────────────
+        // Subtitle:
         this.cutsceneSubtitle = this.add.text(W / 2, H / 2 + 80, '', {
+            fontFamily: "'Share Tech Mono', monospace",
             fontSize: '24px',
             fill: '#aaaaaa',
             align: 'center',
@@ -169,9 +171,9 @@ export default class CutsceneScene extends Phaser.Scene {
             this.cutsceneTitle.setText(item.title || '')
             this.cutsceneSubtitle.setText(item.subtitle || '')
 
-            const fadeIn  = 800  / this.speedMultiplier
-            const hold    = (item.duration || 2500) / this.speedMultiplier
-            const fadeOut = 600  / this.speedMultiplier
+            const fadeIn = 800 / this.speedMultiplier
+            const hold = (item.duration || 2500) / this.speedMultiplier
+            const fadeOut = 600 / this.speedMultiplier
 
             this.tweens.add({
                 targets: [this.cutsceneTitle, this.cutsceneSubtitle],
@@ -198,14 +200,14 @@ export default class CutsceneScene extends Phaser.Scene {
     // ─── Play Cutscene ─────────────────────────────────
     playCutscene(key) {
         switch (key) {
-            case 'gameIntro':       this.gameIntroCutscene();       break
+            case 'gameIntro': this.gameIntroCutscene(); break
             case 'truthDiscovered': this.truthDiscoveredCutscene(); break
-            case 'level2Complete':  this.level2CompleteCutscene();  break
-            case 'level3Intro':     this.level3IntroCutscene();     break
-            case 'eveningCutscene': this.eveningCutscene();         break  // ← NEW
-            case 'gfDeath':         this.gfDeathCutscene();         break
-            case 'gameOver':        this.gameOverCutscene();        break
-            default:                this.defaultCutscene()
+            case 'level2Complete': this.level2CompleteCutscene(); break
+            case 'level3Intro': this.level3IntroCutscene(); break
+            case 'eveningCutscene': this.eveningCutscene(); break  // ← NEW
+            case 'gfDeath': this.gfDeathCutscene(); break
+            case 'gameOver': this.gameOverCutscene(); break
+            default: this.defaultCutscene()
         }
     }
 
@@ -227,7 +229,7 @@ export default class CutsceneScene extends Phaser.Scene {
             this.cutsceneTitle.setAlpha(0)
             this.cutsceneSubtitle.setAlpha(0)
 
-            
+
 
             this.add.rectangle(200, 850, 32, 48, 0x00ff88).setDepth(2).setScale(7.25)
             this.add.text(200, 700, 'You', {
@@ -241,25 +243,25 @@ export default class CutsceneScene extends Phaser.Scene {
 
             this.introDialog = new DialogBox(this)
             this.introDialog.show([
-                { name: 'You',    text: '...' },
-                { name: 'You',    text: 'The city... it\'s worse than I thought.' },
+                { name: 'You', text: '...' },
+                { name: 'You', text: 'The city... it\'s worse than I thought.' },
                 { name: 'Luvaza', text: 'You made it! I was so worried about you.' },
-                { name: 'You',    text: 'Are you okay? Are you hurt?' },
+                { name: 'You', text: 'Are you okay? Are you hurt?' },
                 { name: 'Luvaza', text: 'I\'m fine. But the city...' },
                 { name: 'Luvaza', text: 'Half of it is gone. Just... gone.' },
-                { name: 'You',    text: 'What happened exactly?' },
+                { name: 'You', text: 'What happened exactly?' },
                 { name: 'Luvaza', text: 'It was sudden. Explosions everywhere.' },
                 { name: 'Luvaza', text: 'No warning. No demands. They just attacked.' },
-                { name: 'You',    text: 'Do they know who did it?' },
+                { name: 'You', text: 'Do they know who did it?' },
                 { name: 'Luvaza', text: 'No one knows. My father has been trying to find out.' },
-                { name: 'You',    text: 'Your father... is he okay?' },
+                { name: 'You', text: 'Your father... is he okay?' },
                 { name: 'Luvaza', text: 'He\'s fine. Just... overwhelmed.' },
-                { name: 'You',    text: 'I\'m an engineer. I should be able to help somehow.' },
+                { name: 'You', text: 'I\'m an engineer. I should be able to help somehow.' },
                 { name: 'Luvaza', text: 'Your workshop! Is it still standing?' },
-                { name: 'You',    text: 'I don\'t know. I need to check.' },
-                { name: 'You',    text: 'And that armor project I was working on...' },
+                { name: 'You', text: 'I don\'t know. I need to check.' },
+                { name: 'You', text: 'And that armor project I was working on...' },
                 { name: 'Luvaza', text: 'Be careful out there.' },
-                { name: 'You',    text: 'I will. I\'ll find you later.' }
+                { name: 'You', text: 'I will. I\'ll find you later.' }
             ], () => {
                 GameState.setFlag('introSeen')
 
@@ -408,39 +410,39 @@ export default class CutsceneScene extends Phaser.Scene {
 
         this.eveningDialog = new DialogBox(this)
         this.eveningDialog.show([
-            { name: '',             text: '── Palace Gardens, Night ──' },
-            { name: '',             text: 'Luvaza crept toward the voices.' },
-            { name: '',             text: 'Behind the old fountain.' },
-            { name: '',             text: 'She recognized her father\'s voice.' },
-            { name: '',             text: 'And someone else.' },
-            { name: '',             text: '' },
-            { name: '',             text: '── What she heard ──' },
-            { name: 'King',         text: '...the Veridium extraction must be stopped.' },
+            { name: '', text: '── Palace Gardens, Night ──' },
+            { name: '', text: 'Luvaza crept toward the voices.' },
+            { name: '', text: 'Behind the old fountain.' },
+            { name: '', text: 'She recognized her father\'s voice.' },
+            { name: '', text: 'And someone else.' },
+            { name: '', text: '' },
+            { name: '', text: '── What she heard ──' },
+            { name: 'King', text: '...the Veridium extraction must be stopped.' },
             { name: 'Park Cleaner', text: '...the boy has been investigating...' },
-            { name: 'King',         text: '...we need to act before the enemy does.' },
+            { name: 'King', text: '...we need to act before the enemy does.' },
             { name: 'Park Cleaner', text: '...if the enemy finds him first...' },
-            { name: 'King',         text: '...then we eliminate the threat. Whatever it takes.' },
+            { name: 'King', text: '...then we eliminate the threat. Whatever it takes.' },
             { name: 'Park Cleaner', text: '...understood. I\'ll handle the situation.' },
-            { name: '',             text: '' },
-            { name: '',             text: '── What they ACTUALLY meant ──' },
-            { name: '',             text: 'The King wanted to PROTECT the Veridium from enemies.' },
-            { name: '',             text: '"The boy investigating" = the ENEMY spy in the city.' },
-            { name: '',             text: '"Eliminate the threat" = stop the ENEMY\'s plan.' },
-            { name: '',             text: 'The Park Cleaner was a ROYAL AGENT all along.' },
-            { name: '',             text: '' },
-            { name: '',             text: '── But Luvaza only heard fragments ──' },
-            { name: '',             text: 'She thought "the boy" meant the engineer she loved.' },
-            { name: '',             text: 'She thought "eliminate" meant kill.' },
-            { name: '',             text: 'She thought her father planned the attack.' },
-            { name: '',             text: '' },
-            { name: '',             text: 'She was wrong about everything.' },
-            { name: '',             text: 'But she didn\'t know that.' },
-            { name: '',             text: '' },
-            { name: 'Luvaza',       text: '(whispering) No... father... you can\'t...' },
-            { name: 'Luvaza',       text: '(whispering) I won\'t let you hurt him.' },
-            { name: '',             text: '' },
-            { name: '',             text: 'She didn\'t run.' },
-            { name: '',             text: 'She walked straight into the throne room.' }
+            { name: '', text: '' },
+            { name: '', text: '── What they ACTUALLY meant ──' },
+            { name: '', text: 'The King wanted to PROTECT the Veridium from enemies.' },
+            { name: '', text: '"The boy investigating" = the ENEMY spy in the city.' },
+            { name: '', text: '"Eliminate the threat" = stop the ENEMY\'s plan.' },
+            { name: '', text: 'The Park Cleaner was a ROYAL AGENT all along.' },
+            { name: '', text: '' },
+            { name: '', text: '── But Luvaza only heard fragments ──' },
+            { name: '', text: 'She thought "the boy" meant the engineer she loved.' },
+            { name: '', text: 'She thought "eliminate" meant kill.' },
+            { name: '', text: 'She thought her father planned the attack.' },
+            { name: '', text: '' },
+            { name: '', text: 'She was wrong about everything.' },
+            { name: '', text: 'But she didn\'t know that.' },
+            { name: '', text: '' },
+            { name: 'Luvaza', text: '(whispering) No... father... you can\'t...' },
+            { name: 'Luvaza', text: '(whispering) I won\'t let you hurt him.' },
+            { name: '', text: '' },
+            { name: '', text: 'She didn\'t run.' },
+            { name: '', text: 'She walked straight into the throne room.' }
         ], () => {
             this.showConfrontation()
         })
@@ -449,51 +451,51 @@ export default class CutsceneScene extends Phaser.Scene {
     // ─── The Confrontation ─────────────────────────────
     showConfrontation() {
         this.eveningDialog.show([
-            { name: '',             text: '── Throne Room ──' },
-            { name: '',             text: '' },
-            { name: 'Luvaza',       text: 'FATHER!' },
-            { name: 'King',         text: 'Luvaza?! What are you doing here?' },
-            { name: 'Luvaza',       text: 'I HEARD YOU! In the garden!' },
-            { name: 'Luvaza',       text: 'You\'re going to kill him!' },
-            { name: 'King',         text: 'What? Kill who? Luvaza—' },
-            { name: 'Luvaza',       text: 'The engineer! The boy I love!' },
-            { name: 'Luvaza',       text: 'You said "eliminate the threat"!' },
-            { name: 'King',         text: 'No! That wasn\'t about him! We meant the enemy—' },
-            { name: 'Luvaza',       text: 'LIAR!' },
+            { name: '', text: '── Throne Room ──' },
+            { name: '', text: '' },
+            { name: 'Luvaza', text: 'FATHER!' },
+            { name: 'King', text: 'Luvaza?! What are you doing here?' },
+            { name: 'Luvaza', text: 'I HEARD YOU! In the garden!' },
+            { name: 'Luvaza', text: 'You\'re going to kill him!' },
+            { name: 'King', text: 'What? Kill who? Luvaza—' },
+            { name: 'Luvaza', text: 'The engineer! The boy I love!' },
+            { name: 'Luvaza', text: 'You said "eliminate the threat"!' },
+            { name: 'King', text: 'No! That wasn\'t about him! We meant the enemy—' },
+            { name: 'Luvaza', text: 'LIAR!' },
             { name: 'Park Cleaner', text: 'Princess, please listen—' },
-            { name: 'Luvaza',       text: 'You said you\'d "handle it"!' },
-            { name: 'Luvaza',       text: 'I won\'t let you touch him!' },
-            { name: '',             text: '' },
-            { name: '',             text: 'Luvaza lunged toward the Park Cleaner.' },
-            { name: '',             text: 'The royal guards reacted on instinct.' },
-            { name: '',             text: 'One grabbed her arm.' },
-            { name: '',             text: 'She pulled free—' },
-            { name: '',             text: 'Lost her balance—' },
-            { name: '',             text: 'And fell.' },
-            { name: '',             text: '' },
-            { name: '',             text: 'Her head hit the marble floor.' },
-            { name: '',             text: '' },
-            { name: '',             text: 'The sound echoed through the room.' },
-            { name: '',             text: '' },
-            { name: '',             text: '...' },
-            { name: '',             text: '' },
-            { name: '',             text: 'Silence.' },
-            { name: '',             text: '' },
-            { name: 'King',         text: 'LUVAZA!' },
-            { name: '',             text: 'The King rushed to her side.' },
-            { name: '',             text: 'The Park Cleaner stood frozen.' },
-            { name: '',             text: 'The guards stared at their hands.' },
-            { name: '',             text: '' },
-            { name: '',             text: 'She wasn\'t moving.' },
-            { name: '',             text: '' },
-            { name: 'King',         text: 'No... my little girl... no...' },
+            { name: 'Luvaza', text: 'You said you\'d "handle it"!' },
+            { name: 'Luvaza', text: 'I won\'t let you touch him!' },
+            { name: '', text: '' },
+            { name: '', text: 'Luvaza lunged toward the Park Cleaner.' },
+            { name: '', text: 'The royal guards reacted on instinct.' },
+            { name: '', text: 'One grabbed her arm.' },
+            { name: '', text: 'She pulled free—' },
+            { name: '', text: 'Lost her balance—' },
+            { name: '', text: 'And fell.' },
+            { name: '', text: '' },
+            { name: '', text: 'Her head hit the marble floor.' },
+            { name: '', text: '' },
+            { name: '', text: 'The sound echoed through the room.' },
+            { name: '', text: '' },
+            { name: '', text: '...' },
+            { name: '', text: '' },
+            { name: '', text: 'Silence.' },
+            { name: '', text: '' },
+            { name: 'King', text: 'LUVAZA!' },
+            { name: '', text: 'The King rushed to her side.' },
+            { name: '', text: 'The Park Cleaner stood frozen.' },
+            { name: '', text: 'The guards stared at their hands.' },
+            { name: '', text: '' },
+            { name: '', text: 'She wasn\'t moving.' },
+            { name: '', text: '' },
+            { name: 'King', text: 'No... my little girl... no...' },
             { name: 'Park Cleaner', text: '...she wasn\'t supposed to be here...' },
-            { name: '',             text: '' },
-            { name: '',             text: 'The comms device in her pocket lit up.' },
-            { name: '',             text: 'One automatic emergency signal.' },
-            { name: '',             text: 'Sent to the only contact saved.' },
-            { name: '',             text: '' },
-            { name: '',             text: 'Your name on the screen.' }
+            { name: '', text: '' },
+            { name: '', text: 'The comms device in her pocket lit up.' },
+            { name: '', text: 'One automatic emergency signal.' },
+            { name: '', text: 'Sent to the only contact saved.' },
+            { name: '', text: '' },
+            { name: '', text: 'Your name on the screen.' }
         ], () => {
             GameState.setFlag('gfDead')
             GameState.setFlag('luvazaVisitedPark')
@@ -505,29 +507,29 @@ export default class CutsceneScene extends Phaser.Scene {
     // ─── Comms Alert ───────────────────────────────────
     showCommsAlert() {
         this.eveningDialog.show([
-            { name: '',    text: '── Your Workshop ──' },
-            { name: '',    text: '' },
-            { name: '',    text: 'You were resting after the armor test...' },
-            { name: '',    text: '' },
-            { name: '',    text: '📡 *BUZZ BUZZ BUZZ*' },
-            { name: '',    text: '' },
-            { name: '',    text: 'The comms channel crackles.' },
-            { name: '',    text: 'No voice.' },
-            { name: '',    text: 'Just static.' },
-            { name: '',    text: 'And a location ping.' },
-            { name: '',    text: '' },
-            { name: '',    text: '📡 LOCATION: ROYAL PALACE' },
-            { name: '',    text: '📡 SIGNAL: LUVAZA\'S DEVICE' },
-            { name: '',    text: '📡 STATUS: EMERGENCY' },
-            { name: '',    text: '' },
+            { name: '', text: '── Your Workshop ──' },
+            { name: '', text: '' },
+            { name: '', text: 'You were resting after the armor test...' },
+            { name: '', text: '' },
+            { name: '', text: '📡 *BUZZ BUZZ BUZZ*' },
+            { name: '', text: '' },
+            { name: '', text: 'The comms channel crackles.' },
+            { name: '', text: 'No voice.' },
+            { name: '', text: 'Just static.' },
+            { name: '', text: 'And a location ping.' },
+            { name: '', text: '' },
+            { name: '', text: '📡 LOCATION: ROYAL PALACE' },
+            { name: '', text: '📡 SIGNAL: LUVAZA\'S DEVICE' },
+            { name: '', text: '📡 STATUS: EMERGENCY' },
+            { name: '', text: '' },
             { name: 'You', text: '...' },
             { name: 'You', text: 'Luvaza.' },
             { name: 'You', text: 'Something happened.' },
             { name: 'You', text: 'Something bad.' },
-            { name: '',    text: '' },
+            { name: '', text: '' },
             { name: 'You', text: 'I have to get to the palace. NOW.' },
-            { name: '',    text: '' },
-            { name: '',    text: '⚠️ RUSH TO THE PALACE' }
+            { name: '', text: '' },
+            { name: '', text: '⚠️ RUSH TO THE PALACE' }
         ], () => {
             GameState.setFlag('gfCalledComms')
             GameState.setFlag('conspiracyRevealed')
@@ -595,7 +597,7 @@ export default class CutsceneScene extends Phaser.Scene {
         goBtn.setInteractive({ useHandCursor: true })
 
         goBtn.on('pointerover', () => goBtn.setStyle({ fill: '#ffffff' }))
-        goBtn.on('pointerout',  () => goBtn.setStyle({ fill: '#ff0000' }))
+        goBtn.on('pointerout', () => goBtn.setStyle({ fill: '#ff0000' }))
         goBtn.on('pointerdown', () => {
             rushItems.forEach(item => {
                 if (item && item.active) item.destroy()
@@ -615,14 +617,14 @@ export default class CutsceneScene extends Phaser.Scene {
         this.cameras.main.fadeIn(2000, 0, 0, 0)
 
         this.showSequence([
-            { title: '',                         subtitle: '',                                                                    duration: 1000 },
-            { title: 'She\'s gone.',              subtitle: '',                                                                    duration: 3000 },
-            { title: 'Luvaza...',                 subtitle: 'She tried to save the one she loved.',                               duration: 3500 },
-            { title: 'Based on words she only half heard.', subtitle: 'A conversation she didn\'t fully understand.',             duration: 4000 },
-            { title: 'No one planned her death.', subtitle: 'No one wanted it.',                                                  duration: 3500 },
-            { title: 'The cruelest tragedies...',  subtitle: '...are the ones that didn\'t need to happen.',                      duration: 3500 },
-            { title: 'The real enemy is still out there.', subtitle: 'Whoever truly attacked this city\nis still planning.',      duration: 4000 },
-            { title: '⚔️ LEVEL 4 UNLOCKED',       subtitle: 'Find the True Enemy.',                                              duration: 4000 }
+            { title: '', subtitle: '', duration: 1000 },
+            { title: 'She\'s gone.', subtitle: '', duration: 3000 },
+            { title: 'Luvaza...', subtitle: 'She tried to save the one she loved.', duration: 3500 },
+            { title: 'Based on words she only half heard.', subtitle: 'A conversation she didn\'t fully understand.', duration: 4000 },
+            { title: 'No one planned her death.', subtitle: 'No one wanted it.', duration: 3500 },
+            { title: 'The cruelest tragedies...', subtitle: '...are the ones that didn\'t need to happen.', duration: 3500 },
+            { title: 'The real enemy is still out there.', subtitle: 'Whoever truly attacked this city\nis still planning.', duration: 4000 },
+            { title: '⚔️ LEVEL 4 UNLOCKED', subtitle: 'Find the True Enemy.', duration: 4000 }
         ], () => {
             if (this.isSkipping) return
             GameState.tryAdvanceLevel()

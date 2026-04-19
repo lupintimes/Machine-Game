@@ -144,6 +144,8 @@ const GameState = {
         junkyardIntroSeen: false,
         electricalUnlocked: false,
         metTrader: false,
+        traderHintShown: false, 
+        electricalUnlockShown: false,  
         boughtCore: false,
         secretBaseRevealed: false,
         secretBaseVisited: false,
