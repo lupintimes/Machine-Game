@@ -20,21 +20,24 @@ export default class UI {
         this.bar = this.scene.add.rectangle(W / 2, 20, W, 40, 0x000000, 0.8)
             .setDepth(50).setScrollFactor(0)
 
-        // ─── Stats Text (left side) ────────────────────
+        // Stats text:
         this.statsText = this.scene.add.text(20, 8, '', {
+            fontFamily: "'Share Tech Mono', monospace",
             fontSize: '16px',
             fill: '#ffffff'
         }).setDepth(51).setScrollFactor(0)
 
-        // ─── Day/Time (center) ─────────────────────────
+        // Day text:
         this.dayText = this.scene.add.text(W / 2, 8, '', {
+            fontFamily: "'Share Tech Mono', monospace",
             fontSize: '16px',
             fill: '#ffdd44',
             fontStyle: 'bold'
         }).setOrigin(0.5, 0).setDepth(51).setScrollFactor(0)
 
-        // ─── Level Text (right side) ───────────────────
+        // Level text:
         this.levelText = this.scene.add.text(W - 220, 8, '', {
+            fontFamily: "'Orbitron', monospace",
             fontSize: '18px',
             fill: '#00ff88',
             fontStyle: 'bold'
@@ -144,70 +147,43 @@ export default class UI {
             fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(52).setScrollFactor(0)
 
-        // ─── Navigation Buttons (Top Right) ────────────────
-        const btnY = 78;
-        const btnW = 50;     // ← Smaller for icon-only
-        const btnH = 42;
-        const btnGap = 10;
-        const topMargin = 24;
-        let rightX = W - topMargin - btnW / 2;
+        // ─── Navigation Icons (Top Right) ──────────────
+        const btnY = 78
+        const btnGap = 14
+        const topMargin = 30
+        let rightX = W - topMargin
 
-        // ═══════════════════════════════════════════════
-        // ─── ICON SCALE CONTROL ────────────────────────
-        // Adjust this to resize all button icons
-        const ICON_SCALE = 0.07
-        // ═══════════════════════════════════════════════
-
-        const makeIconButton = (x, y, iconKey, strokeColor, onClick) => {
-            const bg = this.scene.add.rectangle(x, y, btnW, btnH, 0x1a1a1a)  // ← charcoal
-                .setDepth(50)
-                .setScrollFactor(0)
-                .setStrokeStyle(2, strokeColor)
-                .setInteractive({ useHandCursor: true })
-
+        const makeIcon = (x, y, iconKey, onClick) => {
             const icon = this.scene.add.image(x, y, iconKey)
-                .setScale(ICON_SCALE)
+                .setScale(0.15)
                 .setDepth(51)
                 .setScrollFactor(0)
-                .setTint(0xf5f5dc)  // ← beige tint on icon
+                .setInteractive({ useHandCursor: true })
 
-            bg.on('pointerover', () => {
-                bg.setFillStyle(0x2a2a2a)  // ← lighter charcoal on hover
-                icon.setScale(ICON_SCALE * 1.15)
-            })
-            bg.on('pointerout', () => {
-                bg.setFillStyle(0x1a1a1a)  // ← back to charcoal
-                icon.setScale(ICON_SCALE)
-            })
-            bg.on('pointerdown', onClick)
+            icon.on('pointerdown', onClick)
 
-            return { bg, icon }
+            return icon
         }
 
         // Tasks
-        const task = makeIconButton(rightX, btnY, 'tasks-icon', 0xffffff, () => this.toggleTaskPanel())
-        this.taskBtn = task.bg
-        this.taskIcon = task.icon
-        rightX -= (btnW + btnGap)
+        this.taskIcon = makeIcon(rightX, btnY, 'tasks-icon', () => this.toggleTaskPanel())
+        rightX -= (this.taskIcon.displayWidth + btnGap)
 
         // Inventory
-        const inv = makeIconButton(rightX, btnY, 'inventory-icon', 0xffffff, () => this.toggleInventory())
-        this.invBtn = inv.bg
-        this.invIcon = inv.icon
-        rightX -= (btnW + btnGap)
+        this.invIcon = makeIcon(rightX, btnY, 'inventory-icon', () => this.toggleInventory())
+        rightX -= (this.invIcon.displayWidth + btnGap)
 
         // Hub (not in HubScene)
         if (this.scene.scene.key !== 'HubScene') {
-            const hub = makeIconButton(rightX, btnY, 'hub-icon', 0xffffff, () => {
+            this.hubIcon = makeIcon(rightX, btnY, 'hub-icon', () => {
                 this.scene.cameras.main.fade(300, 0, 0, 0)
                 this.scene.time.delayedCall(300, () => {
                     this.scene.scene.start('HubScene')
                 })
             })
-            this.hubBtn = hub.bg
-            this.hubIcon = hub.icon
         }
 
+        // ─── ESC handler ───────────────────────────────
         this._escHandler = () => {
             if (this.invVisible) {
                 this.hideInventory()
@@ -662,12 +638,7 @@ export default class UI {
         if (this.crisisBar) this.crisisBar.destroy()
         if (this.crisisLabel) this.crisisLabel.destroy()
 
-        // ─── Destroy buttons ───────────────────────────
-        if (this.hubBtn) this.hubBtn.destroy()
-        if (this.invBtn) this.invBtn.destroy()
-        if (this.taskBtn) this.taskBtn.destroy()
-
-        // ─── Destroy icons (replaced labels) ───────────
+        // ─── Destroy icons ─────────────────────────────
         if (this.hubIcon) this.hubIcon.destroy()
         if (this.invIcon) this.invIcon.destroy()
         if (this.taskIcon) this.taskIcon.destroy()

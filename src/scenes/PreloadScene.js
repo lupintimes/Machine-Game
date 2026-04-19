@@ -12,7 +12,7 @@ export default class PreloadScene extends Phaser.Scene {
 
         // ─── Title ─────────────────────────────────────
         this.add.text(W / 2, H / 2 - 100, '🤖 MACHINE GAME', {
-            fontFamily: 'Courier, monospace',
+            fontFamily: "'Orbitron', monospace",
             fontSize: '48px',
             fill: '#00ff88',
             fontStyle: 'bold'
@@ -20,32 +20,33 @@ export default class PreloadScene extends Phaser.Scene {
 
         // ─── Loading text ──────────────────────────────
         this.loadingText = this.add.text(W / 2, H / 2 + 20, 'Loading...', {
-            fontFamily: 'Courier, monospace',
+            fontFamily: "'Share Tech Mono', monospace",
             fontSize: '24px',
             fill: '#ffffff'
         }).setOrigin(0.5)
 
-        // ─── Progress bar background ───────────────────
+        // ─── Progress bar ──────────────────────────────
+        // ⚠️ Define barY BEFORE using it
         const barW = 600
         const barH = 30
         const barX = W / 2 - barW / 2
-        const barY = H / 2 + 70
+        const barY = H / 2 + 70   // ← MUST be defined here
 
         this.add.rectangle(W / 2, barY + barH / 2, barW + 4, barH + 4, 0x333333)
         this.progressBar = this.add.rectangle(
             barX + 2, barY + 2, 0, barH, 0x00ff88
         ).setOrigin(0, 0)
 
-        // ─── Percentage text ───────────────────────────
+        // ─── Percentage text (uses barY - now defined) ─
         this.percentText = this.add.text(W / 2, barY + barH + 20, '0%', {
-            fontFamily: 'Courier, monospace',
+            fontFamily: "'Share Tech Mono', monospace",
             fontSize: '18px',
             fill: '#888888'
         }).setOrigin(0.5)
 
         // ─── File name text ────────────────────────────
         this.fileText = this.add.text(W / 2, barY + barH + 50, '', {
-            fontFamily: 'Courier, monospace',
+            fontFamily: "'Share Tech Mono', monospace",
             fontSize: '14px',
             fill: '#555555'
         }).setOrigin(0.5)
@@ -68,15 +69,36 @@ export default class PreloadScene extends Phaser.Scene {
         })
 
         // ═══════════════════════════════════════════════
-        // ─── LOAD ALL GAME ASSETS HERE ─────────────────
+        // ─── LOAD ALL GAME ASSETS ──────────────────────
         // ═══════════════════════════════════════════════
+
+        // ─── Workshop ──────────────────────────────────
+        this.load.image('workshop-morning', 'assets/images/workshop/workshop-morning.png')
+        this.load.image('workshop-noon', 'assets/images/workshop/workshop-noon.png')
+        this.load.image('workshop-evening', 'assets/images/workshop/workshop-evening.png')
+        this.load.image('workshop-night', 'assets/images/workshop/workshop-night.png')
+        
+        // ─── Junkyard ──────────────────────────────────
+        this.load.image('junkyard-morning', 'assets/images/junkyard/junkyard-morning.png')
+        this.load.image('junkyard-noon', 'assets/images/junkyard/junkyard-noon.png')
+        this.load.image('junkyard-evening', 'assets/images/junkyard/junkyard-evening.png')
+        this.load.image('junkyard-night', 'assets/images/junkyard/junkyard-night.png')
+
+        // ─── Palace ────────────────────────────────────
+        this.load.image('palace-bg', 'assets/images/palace-bg.png')
+
+        // ─── Town Center ───────────────────────────────
+        this.load.image('towncenter-bg', 'assets/images/towncenter-bg.png')
+
+        // ─── Park ──────────────────────────────────────
+        this.load.image('park-bg', 'assets/images/park-bg.png')
 
         // ─── UI Icons ──────────────────────────────────
         this.load.image('lock-icon', 'assets/images/icons/lock.png')
-        this.load.image('inventory-icon', 'assets/images/icons/inventory-icon.png')
-        this.load.image('tasks-icon', 'assets/images/icons/tasks-icon.png')
-        this.load.image('hub-icon', 'assets/images/icons/hub-icon.png')
-        this.load.image('sleep-icon', 'assets/images/icons/sleep-icon.png')
+        this.load.image('inventory-icon', 'assets/images/icons/inventory.png')
+        this.load.image('tasks-icon', 'assets/images/icons/tasks.png')
+        this.load.image('hub-icon', 'assets/images/icons/hub.png')
+
 
         // ─── Hub ───────────────────────────────────────
         this.load.image('hub-bg', 'assets/images/hub-bg.png')

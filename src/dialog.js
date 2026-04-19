@@ -62,7 +62,7 @@ export default class DialogBox {
     const BOX_HEIGHT = 200;
     const FADE_WIDTH = 200;
     const OPACITY = 0.85;
-    const FONT_FAMILY = 'Courier, monospace';
+    const FONT_FAMILY = "'Share Tech Mono', monospace";
 
     const boxY = H - BOX_HEIGHT / 2 - OFFSET;
     const boxX = W / 2;
