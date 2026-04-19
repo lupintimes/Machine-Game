@@ -128,13 +128,15 @@ export default class WorkshopScene extends Phaser.Scene {
         }).setOrigin(0.5).setScrollFactor(0).setDepth(20)
 
         // ─── Intro dialog ──────────────────────────────
+        // In create() — replace the intro dialog block:
         if (!GameState.getFlag('workshopIntroSeen')) {
+            // ─── Set flag IMMEDIATELY, not in callback ─────
+            GameState.setFlag('workshopIntroSeen')
+
             this.dialog.show([
                 { name: 'You', text: 'My workshop... at least this place is still standing.' },
-                { name: 'You', text: 'The armor is half done. I need a power core.' }
-            ], () => {
-                GameState.setFlag('workshopIntroSeen')
-            })
+                { name: 'You', text: 'I should start working soon.' }
+            ])
         }
     }
 
