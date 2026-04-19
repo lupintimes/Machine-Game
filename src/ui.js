@@ -670,8 +670,6 @@ export default class UI {
 
         this.hideInventory()
         this.hideTaskPanel()
-        this.sleepItems.forEach(i => { if (i) i.destroy() })
-        this.sleepItems = []
 
         if (this._escHandler) {
             this.scene.input.keyboard.off('keydown-ESC', this._escHandler)
