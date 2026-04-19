@@ -12,6 +12,7 @@ export default class DialogBox {
         this.dialogQueue = lines
         this.currentIndex = 0
         this.isActive = true
+        this.isClosed = false
         this.onComplete = onComplete
         this.history = [...this.history, ...lines]
         this.createBox()
@@ -25,11 +26,11 @@ export default class DialogBox {
         // ═══════════════════════════════════════════════
         // ─── MASTER CONTROLS ───────────────────────────
         // ═══════════════════════════════════════════════
-        const OFFSET    = 50     // Move entire box up (0 = bottom)
+        const OFFSET = 50     // Move entire box up (0 = bottom)
         const BOX_WIDTH = 1920    // Total dialog width
         const BOX_HEIGHT = 200    // Total dialog height
         const FADE_WIDTH = 200    // Gradient fade on each side
-        const OPACITY   = 0.85   // Center opacity
+        const OPACITY = 0.85   // Center opacity
         const FONT_FAMILY = 'Courier, monospace'
         // ═══════════════════════════════════════════════
 
@@ -136,7 +137,7 @@ export default class DialogBox {
             .setInteractive({ useHandCursor: true })
 
         this.backBtn.on('pointerover', () => this.backBtn.setFill('#ffffff'))
-        this.backBtn.on('pointerout',  () => this.backBtn.setFill('#888888'))
+        this.backBtn.on('pointerout', () => this.backBtn.setFill('#888888'))
         this.backBtn.on('pointerdown', () => this.prev())
 
         // ─── Next Button ───────────────────────────────
@@ -145,7 +146,7 @@ export default class DialogBox {
             .setInteractive({ useHandCursor: true })
 
         this.nextBtn.on('pointerover', () => this.nextBtn.setFill('#ffffff'))
-        this.nextBtn.on('pointerout',  () => this.nextBtn.setFill('#888888'))
+        this.nextBtn.on('pointerout', () => this.nextBtn.setFill('#888888'))
         this.nextBtn.on('pointerdown', () => this.next())
 
         // ─── Skip Button ───────────────────────────────
@@ -154,16 +155,16 @@ export default class DialogBox {
             .setInteractive({ useHandCursor: true })
 
         this.skipBtn.on('pointerover', () => this.skipBtn.setFill('#ff4444'))
-        this.skipBtn.on('pointerout',  () => this.skipBtn.setFill('#888888'))
+        this.skipBtn.on('pointerout', () => this.skipBtn.setFill('#888888'))
         this.skipBtn.on('pointerdown', () => this.skip())
 
         // ─── History Button ────────────────────────────
-        this.historyBtn = this.scene.add.text(contentRight, btnY-30, '📜 Log', btnStyle)
+        this.historyBtn = this.scene.add.text(contentRight, btnY - 30, '📜 Log', btnStyle)
             .setOrigin(1, 0).setDepth(102).setScrollFactor(0)
             .setInteractive({ useHandCursor: true })
 
         this.historyBtn.on('pointerover', () => this.historyBtn.setFill('#ffaa00'))
-        this.historyBtn.on('pointerout',  () => this.historyBtn.setFill('#888888'))
+        this.historyBtn.on('pointerout', () => this.historyBtn.setFill('#888888'))
         this.historyBtn.on('pointerdown', () => this.showHistory())
 
         // ─── Space Hint ────────────────────────────────
@@ -191,14 +192,20 @@ export default class DialogBox {
     }
 
     showLine() {
+        // ─── GUARD: exit if already closed ────────────
+        if (this.isClosed) return
+        if (!this.nameText) return
+        if (!this.dialogText) return
+        if (!this.pageText) return
+        if (!this.backBtn) return
         const line = this.dialogQueue[this.currentIndex]
 
         // ─── Name color based on character ─────────────
         const nameColors = {
-            'You':          '#00ff88',
-            'Luvaza':       '#ff69b4',
-            'King':         '#ffdd00',
-            'Trader':       '#ff8800',
+            'You': '#00ff88',
+            'Luvaza': '#ff69b4',
+            'King': '#ffdd00',
+            'Trader': '#ff8800',
             'Park Cleaner': '#44ff44',
             'Luvaza (recording)': '#ff69b4'
         }
@@ -216,6 +223,9 @@ export default class DialogBox {
     }
 
     next() {
+        if (this.isClosed) return false
+        if (!this.isActive) return false
+
         this.currentIndex++
         if (this.currentIndex >= this.dialogQueue.length) {
             this.close()
@@ -316,10 +326,10 @@ export default class DialogBox {
         const recentHistory = this.history.slice(startIndex)
 
         const nameColors = {
-            'You':          '#00ff88',
-            'Luvaza':       '#ff69b4',
-            'King':         '#ffdd00',
-            'Trader':       '#ff8800',
+            'You': '#00ff88',
+            'Luvaza': '#ff69b4',
+            'King': '#ffdd00',
+            'Trader': '#ff8800',
             'Park Cleaner': '#44ff44',
             'Luvaza (recording)': '#ff69b4'
         }
@@ -367,7 +377,7 @@ export default class DialogBox {
             .setInteractive({ useHandCursor: true })
 
         this.histClose.on('pointerover', () => this.histClose.setFill('#ffffff'))
-        this.histClose.on('pointerout',  () => this.histClose.setFill('#888888'))
+        this.histClose.on('pointerout', () => this.histClose.setFill('#888888'))
         this.histClose.on('pointerdown', () => this.hideHistory())
 
         // ─── Click overlay to close ────────────────────
@@ -376,12 +386,12 @@ export default class DialogBox {
 
     hideHistory() {
         this.historyVisible = false
-        if (this.histOverlay)    this.histOverlay.destroy()
-        if (this.histGraphics)   this.histGraphics.destroy()
-        if (this.histTopLine)    this.histTopLine.destroy()
+        if (this.histOverlay) this.histOverlay.destroy()
+        if (this.histGraphics) this.histGraphics.destroy()
+        if (this.histTopLine) this.histTopLine.destroy()
         if (this.histBottomLine) this.histBottomLine.destroy()
-        if (this.histTitle)      this.histTitle.destroy()
-        if (this.histClose)      this.histClose.destroy()
+        if (this.histTitle) this.histTitle.destroy()
+        if (this.histClose) this.histClose.destroy()
         if (this.histItems) {
             this.histItems.forEach(i => i.destroy())
             this.histItems = []
@@ -390,6 +400,7 @@ export default class DialogBox {
 
     close() {
         this.isActive = false
+        this.isClosed = true  
 
         // ─── Exit animation ────────────────────────────
         const allElements = [
@@ -412,16 +423,16 @@ export default class DialogBox {
 
     destroyElements() {
         if (this.boxGraphics) this.boxGraphics.destroy()
-        if (this.topLine)     this.topLine.destroy()
-        if (this.bottomLine)  this.bottomLine.destroy()
-        if (this.nameText)    this.nameText.destroy()
-        if (this.dialogText)  this.dialogText.destroy()
-        if (this.hintText)    this.hintText.destroy()
-        if (this.backBtn)     this.backBtn.destroy()
-        if (this.nextBtn)     this.nextBtn.destroy()
-        if (this.skipBtn)     this.skipBtn.destroy()
-        if (this.historyBtn)  this.historyBtn.destroy()
-        if (this.pageText)    this.pageText.destroy()
+        if (this.topLine) this.topLine.destroy()
+        if (this.bottomLine) this.bottomLine.destroy()
+        if (this.nameText) this.nameText.destroy()
+        if (this.dialogText) this.dialogText.destroy()
+        if (this.hintText) this.hintText.destroy()
+        if (this.backBtn) this.backBtn.destroy()
+        if (this.nextBtn) this.nextBtn.destroy()
+        if (this.skipBtn) this.skipBtn.destroy()
+        if (this.historyBtn) this.historyBtn.destroy()
+        if (this.pageText) this.pageText.destroy()
 
         this.boxGraphics = null
         this.topLine = null
