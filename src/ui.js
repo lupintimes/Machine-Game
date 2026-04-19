@@ -144,71 +144,57 @@ export default class UI {
             fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(52).setScrollFactor(0)
 
-        // ─── Bottom Buttons ─────────────────────────────
-        const btnY = H - 30
-        const btnW = 130
-        const btnCount = this.scene.scene.key !== 'HubScene' ? 3 : 2
-        const gap = Math.max(10, (W - btnCount * btnW) / (btnCount + 1))
-        const getBtnX = (index) => gap + btnW / 2 + index * (btnW + gap)
+        // ─── Navigation Buttons (Top Right) ────────────────
+        const btnY = 78;
+        const btnW = 150;
+        const btnH = 42;
+        const btnGap = 14;
+        const topMargin = 24;
+        let rightX = W - topMargin - btnW / 2;
 
-        let btnIndex = 0;
+        const makeButton = (x, y, label, strokeColor, onClick) => {
+            const bg = this.scene.add.rectangle(x, y, btnW, btnH, 0x1a1a2e)
+                .setDepth(50)
+                .setScrollFactor(0)
+                .setStrokeStyle(2, strokeColor)
+                .setInteractive({ useHandCursor: true });
 
-        // ─── Hub Button ────────────────────────────────
+            const txt = this.scene.add.text(x, y, label, {
+                fontSize: '18px',
+                fill: '#ffffff',
+                fontStyle: 'bold'
+            }).setOrigin(0.5).setDepth(51).setScrollFactor(0);
+
+            bg.on('pointerover', () => bg.setFillStyle(0x2a2a44));
+            bg.on('pointerout', () => bg.setFillStyle(0x1a1a2e));
+            bg.on('pointerdown', onClick);
+
+            return { bg, txt };
+        };
+
+        // Tasks
+        let task = makeButton(rightX, btnY, '📋 Tasks', 0xffaa00, () => this.toggleTaskPanel());
+        this.taskBtn = task.bg;
+        this.taskBtnLabel = task.txt;
+        rightX -= (btnW + btnGap);
+
+        // Inventory
+        let inv = makeButton(rightX, btnY, '🎒 Inventory', 0xffffff, () => this.toggleInventory());
+        this.invBtn = inv.bg;
+        this.invBtnLabel = inv.txt;
+        rightX -= (btnW + btnGap);
+
+        // Hub (not in HubScene)
         if (this.scene.scene.key !== 'HubScene') {
-            const hubX = getBtnX(btnIndex);
-            this.hubBtn = this.scene.add.rectangle(hubX, btnY, btnW, 40, 0x1a1a2e)
-                .setDepth(50).setScrollFactor(0)
-                .setStrokeStyle(1, 0x00ff88)
-                .setInteractive({ useHandCursor: true })
-
-            this.hubBtnLabel = this.scene.add.text(hubX, btnY, '🗺️ Hub', {
-                fontSize: '16px',
-                fill: '#ffffff'
-            }).setOrigin(0.5).setDepth(51).setScrollFactor(0)
-
-            this.hubBtn.on('pointerover', () => this.hubBtn.setFillStyle(0x2a2a44))
-            this.hubBtn.on('pointerout', () => this.hubBtn.setFillStyle(0x1a1a2e))
-            this.hubBtn.on('pointerdown', () => {
-                this.scene.cameras.main.fade(300, 0, 0, 0)
+            let hub = makeButton(rightX, btnY, '🗺️ Hub', 0x00ff88, () => {
+                this.scene.cameras.main.fade(300, 0, 0, 0);
                 this.scene.time.delayedCall(300, () => {
-                    this.scene.scene.start('HubScene')
-                })
-            })
-            btnIndex++;
+                    this.scene.scene.start('HubScene');
+                });
+            });
+            this.hubBtn = hub.bg;
+            this.hubBtnLabel = hub.txt;
         }
-
-        // ─── Inventory Button ──────────────────────────
-        const invX = getBtnX(btnIndex);
-        this.invBtn = this.scene.add.rectangle(invX, btnY, btnW, 40, 0x1a1a2e)
-            .setDepth(50).setScrollFactor(0)
-            .setStrokeStyle(1, 0xffffff)
-            .setInteractive({ useHandCursor: true })
-
-        this.invBtnLabel = this.scene.add.text(invX, btnY, '🎒 Inventory', {
-            fontSize: '16px',
-            fill: '#ffffff'
-        }).setOrigin(0.5).setDepth(51).setScrollFactor(0)
-
-        this.invBtn.on('pointerover', () => this.invBtn.setFillStyle(0x2a2a44))
-        this.invBtn.on('pointerout', () => this.invBtn.setFillStyle(0x1a1a2e))
-        this.invBtn.on('pointerdown', () => this.toggleInventory())
-        btnIndex++;
-
-        // ─── Task Button ───────────────────────────────
-        const taskX = getBtnX(btnIndex);
-        this.taskBtn = this.scene.add.rectangle(taskX, btnY, btnW, 40, 0x1a1a2e)
-            .setDepth(50).setScrollFactor(0)
-            .setStrokeStyle(1, 0xffaa00)
-            .setInteractive({ useHandCursor: true })
-
-        this.taskBtnLabel = this.scene.add.text(taskX, btnY, '📋 Tasks', {
-            fontSize: '16px',
-            fill: '#ffffff'
-        }).setOrigin(0.5).setDepth(51).setScrollFactor(0)
-
-        this.taskBtn.on('pointerover', () => this.taskBtn.setFillStyle(0x2a2a44))
-        this.taskBtn.on('pointerout', () => this.taskBtn.setFillStyle(0x1a1a2e))
-        this.taskBtn.on('pointerdown', () => this.toggleTaskPanel())
 
         this._escHandler = () => {
             if (this.invVisible) {
