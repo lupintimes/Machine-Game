@@ -103,10 +103,8 @@ export default class WorkshopScene extends Phaser.Scene {
         this.cursors = this.input.keyboard.createCursorKeys()
         this.spaceKey = this.input.keyboard.addKey('SPACE')
         this.eKey = this.input.keyboard.addKey('E')
-        this.wasd = this.input.keyboard.addKeys({
-            left: Phaser.Input.Keyboard.KeyCodes.A,
-            right: Phaser.Input.Keyboard.KeyCodes.D
-        })
+        this.keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A)
+        this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D)
 
         // ─── Dialog ────────────────────────────────────
         this.dialog = new DialogBox(this)
@@ -146,7 +144,9 @@ export default class WorkshopScene extends Phaser.Scene {
         // ─── Dialog takes priority ─────────────────────
         if (this.dialog.isActive) {
             if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
+                if (this.dialog.isActive && !this.dialog.isClosed) {
                 this.dialog.next()
+            }
             }
             return
         }
@@ -157,9 +157,9 @@ export default class WorkshopScene extends Phaser.Scene {
         // ─── Player movement ───────────────────────────
         this.player.setVelocity(0)
 
-        if (this.cursors.left.isDown || this.wasd.left.isDown) {
+        if (this.cursors.left.isDown || this.keyA.isDown) {
             this.player.setVelocityX(-speed)
-        } else if (this.cursors.right.isDown || this.wasd.right.isDown) {
+        } else if (this.cursors.right.isDown || this.keyD.isDown) {
             this.player.setVelocityX(speed)
         }
 
