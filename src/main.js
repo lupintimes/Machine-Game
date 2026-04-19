@@ -1,4 +1,5 @@
 import GameState from './data/gameState.js'
+import PreloadScene from './scenes/PreloadScene.js' 
 import HubScene from './scenes/HubScene.js'
 import WorkshopScene from './scenes/WorkshopScene.js'
 import JunkyardScene from './scenes/JunkyardScene.js'
@@ -32,6 +33,7 @@ const config = {
         autoCenter: Phaser.Scale.CENTER_BOTH
     },
     scene: [
+        PreloadScene,
         HubScene,
         WorkshopScene,
         JunkyardScene,
