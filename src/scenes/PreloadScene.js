@@ -122,7 +122,7 @@ export default class PreloadScene extends Phaser.Scene {
         this.load.image('park-bg', 'assets/images/park-bg.png')
 
         // ─── Secret Base ───────────────────────────────
-        // this.load.image('secretbase-bg', 'assets/images/secretbase-bg.png')
+        this.load.image('secretbase-bg', 'assets/images/secretbase-bg.png')
 
         // ─── Add any other assets here ─────────────────
         // this.load.image('player', 'assets/images/player.png')

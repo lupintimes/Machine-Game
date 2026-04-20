@@ -7,7 +7,7 @@ export default class SecretBaseScene extends Phaser.Scene {
     }
 
     preload() {
-        // this.load.image('secretbase-bg', 'assets/images/secretbase-bg.png')
+        this.load.image('secretbase-bg', 'assets/images/secretbase-bg.png')
     }
 
     create() {
@@ -19,35 +19,10 @@ export default class SecretBaseScene extends Phaser.Scene {
         this.ui.create()
 
         // ─── Background ────────────────────────────────
-        this.add.rectangle(W / 2, H / 2, W, H, 0x0a0a12).setDepth(-2)
-
-        // ─── Concrete walls ────────────────────────────
-        this.add.rectangle(W / 2, 40, W, 80, 0x1a1a22).setDepth(-1)
-        this.add.rectangle(W / 2, H - 40, W, 80, 0x1a1a22).setDepth(-1)
-
-        // ─── Wall pipes left ───────────────────────────
-        for (let i = 0; i < 8; i++) {
-            this.add.rectangle(30, 100 + (i * 120), 8, 80, 0x555566).setDepth(0)
-        }
-
-        // ─── Wall pipes right ──────────────────────────
-        for (let i = 0; i < 8; i++) {
-            this.add.rectangle(W - 30, 100 + (i * 120), 8, 80, 0x555566).setDepth(0)
-        }
-
-        // ─── Ceiling lights ────────────────────────────
-        for (let i = 0; i < 5; i++) {
-            const lx = 200 + (i * 380)
-            this.add.rectangle(lx, 85, 60, 6, 0xffaa00, 0.3).setDepth(0)
-            this.add.circle(lx, 130, 80, 0xffaa00, 0.03).setDepth(0)
-        }
-
-        // ─── Floor grating ─────────────────────────────
-        for (let i = 0; i < 20; i++) {
-            const fx = 50 + (i * 100)
-            this.add.rectangle(fx, H - 80, 80, 2, 0x333344).setDepth(0)
-        }
-
+        this.add.image(W / 2, H / 2, 'secretbase-bg')
+            .setDisplaySize(W, H)
+            .setDepth(-10)
+        
         // ─── Armor Stand ───────────────────────────────
         this.armorStand = this.add.rectangle(W / 2, H / 2 - 50, 200, 300, 0x222233)
             .setStrokeStyle(2, 0x444466).setDepth(1)
@@ -69,34 +44,7 @@ export default class SecretBaseScene extends Phaser.Scene {
 
         this.updateArmorStatus()
 
-        // ─── Workbench ─────────────────────────────────
-        this.workbench = this.add.rectangle(300, H / 2, 200, 150, 0x3d2b1f)
-            .setStrokeStyle(2, 0x5a3d2b).setDepth(1)
-        this.add.text(300, H / 2 - 50, '🔧', { fontSize: '40px' })
-            .setOrigin(0.5).setDepth(2)
-        this.add.text(300, H / 2 + 20, 'Workbench', {
-            fontSize: '16px', fill: '#ffffff'
-        }).setOrigin(0.5).setDepth(2)
-
-        // ─── Parts Shelf ───────────────────────────────
-        this.partsShelf = this.add.rectangle(W - 300, H / 2, 200, 150, 0x2b2b3d)
-            .setStrokeStyle(2, 0x3d3d5a).setDepth(1)
-        this.add.text(W - 300, H / 2 - 50, '📦', { fontSize: '40px' })
-            .setOrigin(0.5).setDepth(2)
-        this.add.text(W - 300, H / 2 + 20, 'Parts Storage', {
-            fontSize: '16px', fill: '#ffffff'
-        }).setOrigin(0.5).setDepth(2)
-
-        // ─── Dust Particles ────────────────────────────
-        this.createDustParticles(W, H)
-
-        // ─── Scene Title ───────────────────────────────
-        this.add.text(W / 2, 30, '🔐 Secret Underground Base', {
-            fontSize: '28px',
-            fill: '#ff8800',
-            fontStyle: 'bold'
-        }).setOrigin(0.5).setDepth(20)
-
+        
         // ─── Dialog ────────────────────────────────────
         this.dialog = new DialogBox(this)
         this.spaceKey = this.input.keyboard.addKey('SPACE')
