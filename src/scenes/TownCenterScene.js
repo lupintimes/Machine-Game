@@ -1,4 +1,3 @@
-
 import DialogBox from '../dialog.js'
 import UI from '../ui.js'
 
@@ -10,15 +9,17 @@ export default class TownCenterScene extends Phaser.Scene {
     preload() {
         this.load.image('town-ruined', 'assets/images/towncenter/town_ruined.png')
 
-        // Normal buttons
+        // Broken buttons
         this.load.image('btn-hospital', 'assets/images/towncenter/hospital_button.png')
         this.load.image('btn-water', 'assets/images/towncenter/water_button.png')
         this.load.image('btn-power', 'assets/images/towncenter/power_button.png')
+        this.load.image('btn-town', 'assets/images/towncenter/town_button.png')
 
-        // Fixed versions (after repair)
+        // Fixed buttons
         this.load.image('btn-hospital-fixed', 'assets/images/towncenter/fixed_hospital.png')
         this.load.image('btn-water-fixed', 'assets/images/towncenter/fixed_water.png')
         this.load.image('btn-power-fixed', 'assets/images/towncenter/fixed_power.png')
+        this.load.image('btn-town-fixed', 'assets/images/towncenter/fixed_town.png')
     }
 
     create() {
@@ -28,19 +29,22 @@ export default class TownCenterScene extends Phaser.Scene {
         this.ui = new UI(this)
         this.ui.create()
 
-        // Background
         this.add.image(W / 2, H / 2, 'town-ruined')
             .setDisplaySize(W, H)
             .setDepth(0)
 
         this.dialog = new DialogBox(this)
         this.spaceKey = this.input.keyboard.addKey('SPACE')
-
+        this.menuActive = false
+        this.menuItems = []
         this.buildings = []
 
         if (!GameState.rebuiltBuildings) GameState.rebuiltBuildings = []
 
-        // Buildings (BUTTON ONLY SYSTEM)
+        // ═══════════════════════════════════════════════
+        // ─── BUILDINGS — EDIT POSITIONS HERE ───────────
+        // ═══════════════════════════════════════════════
+
         this.createBuilding({
             id: 'hospital',
             btnKey: 'btn-hospital',
@@ -58,7 +62,7 @@ export default class TownCenterScene extends Phaser.Scene {
             btnKey: 'btn-water',
             fixedKey: 'btn-water-fixed',
             btnX: 1084.50,
-            btnY: 842,
+            btnY: 844,
             label: 'Water Station',
             repairCost: 200,
             repairSkill: 15,
@@ -70,12 +74,26 @@ export default class TownCenterScene extends Phaser.Scene {
             btnKey: 'btn-power',
             fixedKey: 'btn-power-fixed',
             btnX: 1710.50,
-            btnY: 532.50,
+            btnY: 540,
             label: 'Power Station',
             repairCost: 250,
             repairSkill: 20,
             repaired: GameState.rebuiltBuildings.includes('power')
         })
+
+        this.createBuilding({
+            id: 'town',
+            btnKey: 'btn-town',
+            fixedKey: 'btn-town-fixed',
+            btnX: 965,          // ← adjust position
+            btnY: 417,          // ← adjust position
+            label: 'Town Hall',
+            repairCost: 300,
+            repairSkill: 25,
+            repaired: GameState.rebuiltBuildings.includes('town')
+        })
+
+        // ═══════════════════════════════════════════════
 
         this.createLuvaza({
             x: W * 0.35,
@@ -104,9 +122,9 @@ export default class TownCenterScene extends Phaser.Scene {
         }
     }
 
-    // ─────────────────────────────────────────────
-    // CREATE BUILDING (BUTTON-ONLY SYSTEM)
-    // ─────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════
+    // ─── CREATE BUILDING ───────────────────────────────
+    // ═══════════════════════════════════════════════════
 
     createBuilding(config) {
         const {
@@ -147,23 +165,15 @@ export default class TownCenterScene extends Phaser.Scene {
             })
         }
 
-        const buildingData = {
-            id,
-            btnImage,
-            btnKey,
-            fixedKey,
-            label,
-            repairCost,
-            repairSkill,
-            repaired
-        }
-
-        this.buildings.push(buildingData)
+        this.buildings.push({
+            id, btnImage, btnKey, fixedKey,
+            label, repairCost, repairSkill, repaired
+        })
     }
 
-    // ─────────────────────────────────────────────
-    // REPAIR BUILDING
-    // ─────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════
+    // ─── REPAIR BUILDING ───────────────────────────────
+    // ═══════════════════════════════════════════════════
 
     repairBuilding(buildingId) {
         if (!GameState.rebuiltBuildings) GameState.rebuiltBuildings = []
@@ -194,36 +204,31 @@ export default class TownCenterScene extends Phaser.Scene {
             return
         }
 
-        // Spend + update
         GameState.spendMoney(building.repairCost)
         GameState.rebuiltBuildings.push(buildingId)
         GameState.addReputation(20)
         GameState.addSkill('repair', 5)
 
         building.repaired = true
-
-        // Swap texture → FIXED VERSION
         building.btnImage.setTexture(building.fixedKey)
-
-        // Disable interaction
         building.btnImage.disableInteractive()
         building.btnImage.setAlpha(1)
 
         this.hideTooltip()
-
-        // Visual feedback
         this.cameras.main.flash(300, 0, 255, 100)
-
         this.ui.updateStats()
 
-        const allBuilt = ['hospital', 'water', 'power']
+        const allBuilt = ['hospital', 'water', 'power', 'town']
             .every(id => GameState.rebuiltBuildings.includes(id))
 
         if (allBuilt) {
             GameState.setFlag('rebuiltBuildings')
             this.dialog.show([
                 { name: 'You', text: '⭐ All buildings repaired!' },
-                { name: 'Luvaza', text: 'You did it! The town is operational!' },
+                { name: 'Luvaza', text: 'You did it! The whole town center is operational!' },
+                { name: 'Luvaza', text: 'Even the Town Hall is back!' },
+                { name: 'Luvaza', text: 'My father will be so pleased.' },
+                { name: 'You', text: 'It\'s what needed to be done.' },
                 { name: '', text: '+20 reputation earned!' }
             ])
         } else {
@@ -234,9 +239,9 @@ export default class TownCenterScene extends Phaser.Scene {
         }
     }
 
-    // ─────────────────────────────────────────────
-    // TOOLTIP
-    // ─────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════
+    // ─── TOOLTIP ───────────────────────────────────────
+    // ═══════════════════════════════════════════════════
 
     showTooltip(x, y, message) {
         this.hideTooltip()
@@ -244,17 +249,16 @@ export default class TownCenterScene extends Phaser.Scene {
         const container = this.add.container(x, y).setDepth(200)
 
         const text = this.add.text(0, 0, message, {
+            fontFamily: 'Courier, monospace',
             fontSize: '16px',
-            fill: '#fff',
+            fill: '#ffffff',
             padding: { x: 12, y: 6 }
         }).setOrigin(0.5)
 
-        const bg = this.add.rectangle(
-            0, 0,
-            text.width + 24,
-            text.height + 12,
+        const bg = this.add.rectangle(0, 0,
+            text.width + 24, text.height + 12,
             0x000000, 0.9
-        )
+        ).setStrokeStyle(1, 0xffffff, 0.3)
 
         container.add([bg, text])
         this.tooltip = container
@@ -267,36 +271,64 @@ export default class TownCenterScene extends Phaser.Scene {
         }
     }
 
-    // ─────────────────────────────────────────────
-    // LUVAZA + BACK BUTTON (unchanged)
-    // ─────────────────────────────────────────────
+    // ═══════════════════════════════════════════════════
+    // ─── LUVAZA ────────────────────────────────────────
+    // ═══════════════════════════════════════════════════
 
     createLuvaza({ x, y, labelOffsetY }) {
-        this.luvazaSprite = this.add.rectangle(x, y, 40, 70, 0xff69b4).setDepth(5)
+        this.luvazaSprite = this.add.rectangle(x, y, 40, 70, 0xff69b4)
+            .setDepth(5)
 
         this.luvazaLabel = this.add.text(x, y + labelOffsetY, '💕 Luvaza', {
             fontSize: '20px', fill: '#ff69b4'
         }).setOrigin(0.5).setDepth(6)
 
         const zone = this.add.rectangle(x, y, 100, 120, 0x000000, 0)
+            .setDepth(7)
             .setInteractive({ useHandCursor: true })
 
-        zone.on('pointerdown', () => this.talkToLuvaza())
+        zone.on('pointerover', () => {
+            this.luvazaSprite.setStrokeStyle(3, 0xffff00)
+            this.showTooltip(x, y + labelOffsetY - 30, '💕 Talk to Luvaza')
+        })
+        zone.on('pointerout', () => {
+            this.luvazaSprite.setStrokeStyle(0)
+            this.hideTooltip()
+        })
+        zone.on('pointerdown', () => {
+            this.hideTooltip()
+            this.talkToLuvaza()
+        })
     }
+
+    // ═══════════════════════════════════════════════════
+    // ─── BACK BUTTON ───────────────────────────────────
+    // ═══════════════════════════════════════════════════
 
     createBackButton() {
         const W = this.cameras.main.width
 
         const backBtn = this.add.text(W - 30, 80, '🔙', {
             fontSize: '32px'
-        }).setOrigin(1, 0)
+        }).setOrigin(1, 0).setDepth(50).setScrollFactor(0)
             .setInteractive({ useHandCursor: true })
 
+        backBtn.on('pointerover', () => {
+            this.showTooltip(W - 60, 120, 'Back to Hub')
+        })
+        backBtn.on('pointerout', () => {
+            this.hideTooltip()
+        })
         backBtn.on('pointerdown', () => {
-            this.scene.start('HubScene')
+            this.hideTooltip()
+            this.cameras.main.fade(300, 0, 0, 0)
+            this.time.delayedCall(300, () => this.scene.start('HubScene'))
         })
     }
 
+    // ═══════════════════════════════════════════════════
+    // ─── TALK TO LUVAZA ────────────────────────────────
+    // ═══════════════════════════════════════════════════
 
     talkToLuvaza() {
         if (!GameState.getFlag('metLuvaza')) {
@@ -309,8 +341,8 @@ export default class TownCenterScene extends Phaser.Scene {
                 { name: 'Luvaza', text: 'Yes. I\'m Luvaza. And you are?' },
                 { name: 'You', text: 'An engineer. I want to help rebuild.' },
                 { name: 'Luvaza', text: 'Really? That\'s amazing!' },
-                { name: 'Luvaza', text: 'Three buildings need urgent repair.' },
-                { name: 'Luvaza', text: 'The Medical Center, the Water Station and the Power Station.' },
+                { name: 'Luvaza', text: 'Four buildings need urgent repair.' },
+                { name: 'Luvaza', text: 'The Medical Center, Water Station, Power Station, and Town Hall.' },
                 { name: 'Luvaza', text: 'My father asked me to oversee it.' },
                 { name: 'You', text: 'I\'ll get to work.' },
                 { name: 'Luvaza', text: 'Thank you. The city needs more people like you.' }
@@ -376,7 +408,6 @@ export default class TownCenterScene extends Phaser.Scene {
         btn.on('pointerdown', onClick)
 
         this.menuItems.push(btn, label)
-        return btn
     }
 
     closeMenu() {
@@ -423,7 +454,7 @@ export default class TownCenterScene extends Phaser.Scene {
                 { name: 'Luvaza', text: 'Start with the Medical Center. People are getting hurt.' }
             ], () => { this.showLuvazaMenu() })
 
-        } else if (rebuilt.length < 3) {
+        } else if (rebuilt.length < 4) {
             this.dialog.show([
                 { name: 'Luvaza', text: `${rebuilt.length} building${rebuilt.length > 1 ? 's' : ''} repaired! You\'re doing great.` },
                 { name: 'Luvaza', text: 'Keep going. Every repair matters.' },
@@ -479,6 +510,7 @@ export default class TownCenterScene extends Phaser.Scene {
             { name: '🏥', text: `Medical Center: ${rebuilt.includes('hospital') ? '✅ Repaired' : '❌ Needs repair (💰150, 🔧10)'}` },
             { name: '💧', text: `Water Station: ${rebuilt.includes('water') ? '✅ Repaired' : '❌ Needs repair (💰200, 🔧15)'}` },
             { name: '⚡', text: `Power Station: ${rebuilt.includes('power') ? '✅ Repaired' : '❌ Needs repair (💰250, 🔧20)'}` },
+            { name: '🏛️', text: `Town Hall: ${rebuilt.includes('town') ? '✅ Repaired' : '❌ Needs repair (💰300, 🔧25)'}` },
             { name: 'Luvaza', text: 'Click on each building to repair it!' }
         ], () => { this.showLuvazaMenu() })
     }
