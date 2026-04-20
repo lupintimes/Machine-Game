@@ -10,6 +10,7 @@ import ParkScene from './scenes/ParkScene.js'
 import WireConnectGame from './scenes/minigames/WireConnectGame.js'
 import PressureValveGame from './scenes/minigames/PressureValveGame.js'
 import CutsceneScene from './scenes/CutsceneScene.js'
+import EnemyScene from './scenes/EnemyScene.js'
 import EnergyCalibrationGame from './scenes/minigames/EnergyCalibrationGame.js'
 import Level3PalaceScene from './scenes/Level3PalaceScene.js'
 
@@ -43,6 +44,7 @@ const config = {
         ParkScene,
         CutsceneScene,
         Level3PalaceScene,
+        EnemyScene,
         WireConnectGame,
         PressureValveGame,
         EnergyCalibrationGame,
