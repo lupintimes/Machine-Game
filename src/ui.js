@@ -611,12 +611,23 @@ export default class UI {
         }
         if (GameState.level === 3) {
             return [
-                { text: 'Install servo motors', done: GameState.armor.parts.includes('servo') },
-                { text: 'Install armor plating', done: GameState.armor.parts.includes('plating') },
-                { text: '🤖 Armor complete', done: GameState.getFlag('armorComplete') },
+                // ─── Armor ─────────────────────────────────
+                { text: '─── Armor ───', done: false },
+                { text: '⚡ Core installed', done: GameState.getFlag('coreInstalled') },
+                { text: '🦾 Hands & legs assembled', done: GameState.getFlag('armorLimbsInstalled') },
+                { text: '🤖 Head unit repaired', done: GameState.getFlag('armorHeadFixed') },
+                { text: '🛡️ Trader reveals finished armor', done: GameState.getFlag('armorRevealSeen') },
+                { text: '✅ Armor complete & tested', done: GameState.getFlag('armorTested') },
+
+                // ─── Park Cleaner ───────────────────────────
                 { text: '─── Park Cleaner ───', done: false },
-                { text: `Friendship (${GameState.flags.parkCleanerFriendship || 0}/3)`, done: (GameState.flags.parkCleanerFriendship || 0) >= 3 },
+                {
+                    text: `Friendship (${GameState.flags.parkCleanerFriendship || 0}/3)`,
+                    done: (GameState.flags.parkCleanerFriendship || 0) >= 3
+                },
                 { text: 'Learn reason for attack', done: GameState.getFlag('reasonForAttackKnown') },
+
+                // ─── The Tragedy ────────────────────────────
                 { text: '─── The Tragedy ───', done: false },
                 { text: '📡 Trader: Armor ready', done: GameState.getFlag('traderCalledArmor') },
                 { text: '💔 That evening...', done: GameState.getFlag('gfDead') }
@@ -626,8 +637,30 @@ export default class UI {
     }
 
     getArmorStatus() {
-        return `🤖 Armor: ${GameState.armor.parts.length}/3 parts  |  Core: ${GameState.armor.hasCore ? '✅' : '❌'}`
+    const coreInstalled = GameState.getFlag('coreInstalled')
+    const limbsDone = GameState.getFlag('armorLimbsInstalled')
+    const headDone = GameState.getFlag('armorHeadFixed')
+    const traderDone = GameState.getFlag('armorRevealSeen')
+
+    // ─── Count completed parts ─────────────────────
+    const doneParts = [coreInstalled, limbsDone, headDone, traderDone].filter(Boolean).length
+
+    let status = `🤖 Armor: ${doneParts}/4 steps`
+
+    if (traderDone) {
+        status += '  |  ✅ COMPLETE'
+    } else if (headDone) {
+        status += '  |  🔧 Trader finishing...'
+    } else if (limbsDone) {
+        status += '  |  Next: Fix head unit'
+    } else if (coreInstalled) {
+        status += '  |  Next: Assemble limbs'
+    } else {
+        status += '  |  Next: Install core'
     }
+
+    return status
+}
 
     destroy() {
         if (this.bar) this.bar.destroy()

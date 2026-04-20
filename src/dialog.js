@@ -160,7 +160,7 @@ export default class DialogBox {
     this.nextBtn = this.scene.add.text(boxX, btnY, 'Next ▶', btnStyle)
       .setOrigin(0.5, 0).setDepth(102).setScrollFactor(0)
       .setInteractive({ useHandCursor: true });
-    this.nextBtn.on('pointerover', () => this.nextBtn.setFill('#ffffff'));
+    this.nextBtn.on('pointerover', () => this.nextBtn.setFill('#555555'));
     this.nextBtn.on('pointerout', () => this.nextBtn.setFill('#888888'));
     this.nextBtn.on('pointerdown', () => {
       if (!this.isClosed) this.next();  // ← FIXED: Guard

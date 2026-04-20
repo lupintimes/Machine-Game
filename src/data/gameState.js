@@ -82,7 +82,7 @@ const GameState = {
     elixir: 100,
 
     skills: {
-        repair: 10,
+        repair: 100,
         research: 10,
         combat: 0
     },
@@ -144,12 +144,22 @@ const GameState = {
         junkyardIntroSeen: false,
         electricalUnlocked: false,
         metTrader: false,
-        traderHintShown: false, 
-        electricalUnlockShown: false,  
+        traderHintShown: false,
+        electricalUnlockShown: false,
         boughtCore: false,
         secretBaseRevealed: false,
         secretBaseVisited: false,
         secretBaseIntroSeen: false,
+
+        // ─── Armor Assembly ────────────────────────────
+        coreInstalled: false,
+        armorLimbsInstalled: false,
+        armorHeadFixed: false,
+        playerPartsDone: false,
+        traderFinishing: false,
+        armorRevealSeen: false,       // ← ADD THIS
+        armorComplete: false,
+        armorPlatingInstalled: false,
 
         // ─── Level 2 ───────────────────────────────────
         metKing: false,
@@ -169,9 +179,6 @@ const GameState = {
         // ─── Level 3 ───────────────────────────────────
         conspiracyRevealed: false,
         enemyTerritoryUnlocked: false,
-        armorServoInstalled: false,
-        armorPlatingInstalled: false,
-        armorComplete: false,
         parkCleanerRevealed: false,
         reasonForAttackKnown: false,
 
@@ -183,10 +190,9 @@ const GameState = {
         // ─── Friendship ────────────────────────────────
         parkCleanerFriendship: 0,
 
-
-        traderCalledCleaner: false,   // trader radio call to park cleaner
-        luvazaVisitedPark: false,     // luvaza sees king + cleaner talking
-
+        // ─── Trader Calls ──────────────────────────────
+        traderCalledCleaner: false,
+        luvazaVisitedPark: false,
         traderCalledArmor: false,
         armorTested: false,
     },
@@ -195,8 +201,6 @@ const GameState = {
     setFlag(flag, value = true) {
         this.flags[flag] = value
         console.log(`🚩 Flag set: ${flag} =`, value)
-
-        // ─── Auto-check level advance on every flag set ─
         this.tryAdvanceLevel()
     },
 
@@ -241,6 +245,7 @@ const GameState = {
     addArmorPart(part) {
         if (!this.armor.parts.includes(part)) {
             this.armor.parts.push(part)
+            console.log(`🛡️ Armor part added: ${part}`, this.armor.parts)
         }
     },
 
@@ -251,6 +256,7 @@ const GameState = {
 
     // ─── Level Completion Checks ───────────────────────
     isLevel1Complete() {
+        // ─── Level 1 done when core is bought ──────────
         return this.flags.boughtCore === true
     },
 
@@ -295,6 +301,19 @@ const GameState = {
         }
 
         return advanced
+    },
+
+    // ─── Armor Status Helper ───────────────────────────
+    getArmorStatus() {
+        return {
+            coreInstalled: this.flags.coreInstalled,
+            limbsInstalled: this.flags.armorLimbsInstalled,
+            headFixed: this.flags.armorHeadFixed,
+            playerDone: this.flags.playerPartsDone,
+            traderWorking: this.flags.traderFinishing,
+            complete: this.flags.armorComplete,
+            parts: this.armor.parts
+        }
     },
 
     canMeetTrader() {

@@ -7,23 +7,22 @@ export default class SecretBaseScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('secretbase-bg', 'assets/images/secretbase-bg.png')
-        this.load.image('armor-still', 'assets/images/armor-still.png')
+        this.load.image('armor-nocore', 'assets/images/secretbase/armor_nocore.png')
+        this.load.image('armor-core', 'assets/images/secretbase/armor_core.png')
+        this.load.image('armor-nohead', 'assets/images/secretbase/armor_nohead.png')
+        this.load.image('armor-head', 'assets/images/secretbase/armor_head.png')
+        this.load.image('armor-ready', 'assets/images/secretbase/armor_ready.png')
     }
 
     create() {
         const W = this.cameras.main.width
         const H = this.cameras.main.height
 
-        // ─── Background ────────────────────────────────
-        this.add.image(W / 2, H / 2, 'secretbase-bg')
+        // ─── Background based on armor progress ────────
+        const bgKey = this.getArmorBackground()
+        this.bg = this.add.image(W / 2, H / 2, bgKey)
             .setDisplaySize(W, H)
             .setDepth(-10)
-
-        // ─── Armor Stand ───────────────────────────────
-        this.armorStand = this.add.image(W / 2, H / 2 -85, 'armor-still')
-            .setScale(0.275)
-            .setDepth(0)
 
         // ─── UI ────────────────────────────────────────
         this.ui = new UI(this)
@@ -38,9 +37,9 @@ export default class SecretBaseScene extends Phaser.Scene {
         this.menuItems = []
         this.testItems = []
         this.cutsceneItems = []
+        this.minigameItems = []
 
-        // ─── Delay then show intro ──────────────────────
-        // FIX: use arrow function inline, not this.startIntro
+        // ─── Delay then show intro ─────────────────────
         this.time.delayedCall(100, () => {
             if (!GameState.getFlag('secretBaseIntroSeen')) {
                 this.dialog.show([
@@ -54,12 +53,31 @@ export default class SecretBaseScene extends Phaser.Scene {
                     { name: 'Trader', text: 'But you bought that core. You understand machines.' },
                     { name: 'You', text: 'You think I can make it work?' },
                     { name: 'Trader', text: 'I don\'t think. I know.' },
-                    { name: 'Trader', text: 'The city needs protection. This armor is the answer.' },
-                    { name: '', text: 'You can now assemble armor parts here.' }
+                    { name: 'Trader', text: 'First things first — install that power core.' },
+                    { name: 'Trader', text: 'Drag it into the chest cavity and connect the wires.' },
+                    { name: '', text: 'Install the power core to begin.' }
                 ], () => {
                     GameState.setFlag('secretBaseIntroSeen')
-                    this.showBaseMenu()
+                    if (!GameState.getFlag('coreInstalled')) {
+                        this.startCoreInstallation()
+                    } else {
+                        this.showBaseMenu()
+                    }
                 })
+            } else if (!GameState.getFlag('coreInstalled') && GameState.getFlag('boughtCore')) {
+                this.dialog.show([
+                    { name: 'Trader', text: 'The armor still needs its core.' },
+                    { name: 'Trader', text: 'You\'ve got it with you. Let\'s get it installed.' }
+                ], () => {
+                    this.startCoreInstallation()
+                })
+
+                // ─── CHANGED: Only reveal after trader CALLED about it ─
+            } else if (GameState.getFlag('traderCalledArmor') &&
+                GameState.getFlag('traderFinishing') &&
+                !GameState.getFlag('armorRevealSeen')) {
+                this.showTraderFinishedDialog()
+
             } else {
                 this.showBaseMenu()
             }
@@ -67,14 +85,551 @@ export default class SecretBaseScene extends Phaser.Scene {
     }
 
     update() {
-        if (this.dialog.isActive) {
+        if (this.dialog && this.dialog.isActive) {
             if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
                 this.dialog.next()
             }
         }
     }
 
+    // ═══════════════════════════════════════════════════
+    // ─── GET ARMOR BACKGROUND ──────────────────────────
+    // ═══════════════════════════════════════════════════
+
+    getArmorBackground() {
+    if (GameState.getFlag('armorRevealSeen')) {
+        return 'armor-ready'
+    }
+    if (GameState.getFlag('armorHeadFixed')) {
+        return 'armor-head'
+    }
+    if (GameState.getFlag('armorLimbsInstalled')) {
+        return 'armor-nohead'
+    }
+    if (GameState.getFlag('coreInstalled')) {
+        return 'armor-core'
+    }
+    return 'armor-nocore'
+}
+
+    // ═══════════════════════════════════════════════════
+    // ─── Background Swap with Animation ────────────────
+    // ═══════════════════════════════════════════════════
+
+    updateBackground() {
+        const newTexture = this.getArmorBackground()
+
+        if (this.bg.texture.key !== newTexture) {
+            this.tweens.add({
+                targets: this.bg,
+                alpha: 0,
+                duration: 400,
+                onComplete: () => {
+                    this.bg.setTexture(newTexture)
+                    this.tweens.add({
+                        targets: this.bg,
+                        alpha: 1,
+                        duration: 600
+                    })
+                }
+            })
+        }
+    }
+
+    // ═══════════════════════════════════════════════════
+    // ─── CORE INSTALLATION MINI-GAME ───────────────────
+    // ═══════════════════════════════════════════════════
+
+    startCoreInstallation() {
+        const W = this.cameras.main.width
+        const H = this.cameras.main.height
+
+        this.minigameItems = []
+        this.menuActive = true
+
+        const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.85)
+            .setDepth(60)
+        this.minigameItems.push(overlay)
+
+        const title = this.add.text(W / 2, 60, '⚡ CORE INSTALLATION', {
+            fontSize: '36px',
+            fill: '#00ff88',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setDepth(61)
+        this.minigameItems.push(title)
+
+        const subtitle = this.add.text(W / 2, 105, 'Drag the power core into the armor chest cavity', {
+            fontSize: '18px',
+            fill: '#aaaaaa'
+        }).setOrigin(0.5).setDepth(61)
+        this.minigameItems.push(subtitle)
+
+        const cavityX = W / 2
+        const cavityY = H / 2 - 20
+
+        const cavityOuter = this.add.rectangle(cavityX, cavityY, 160, 160, 0x111133)
+            .setStrokeStyle(3, 0x334455)
+            .setDepth(61)
+        this.minigameItems.push(cavityOuter)
+
+        const cavityLabel = this.add.text(cavityX, cavityY - 100, '▼ CHEST CAVITY ▼', {
+            fontSize: '14px',
+            fill: '#445566'
+        }).setOrigin(0.5).setDepth(61)
+        this.minigameItems.push(cavityLabel)
+
+        const dropZone = this.add.rectangle(cavityX, cavityY, 120, 120, 0x003322, 0.3)
+            .setStrokeStyle(2, 0x00ff88)
+            .setDepth(62)
+        this.minigameItems.push(dropZone)
+
+        this.tweens.add({
+            targets: dropZone,
+            alpha: 0.1,
+            duration: 800,
+            yoyo: true,
+            repeat: -1
+        })
+
+        const coreStartX = W / 2 - 300
+        const coreStartY = H / 2 + 200
+
+        const coreBg = this.add.rectangle(coreStartX, coreStartY, 100, 100, 0x112244)
+            .setStrokeStyle(2, 0x00aaff)
+            .setDepth(63)
+        this.minigameItems.push(coreBg)
+
+        const coreGlow = this.add.circle(coreStartX, coreStartY, 35, 0x0088ff, 0.6)
+            .setDepth(64)
+        this.minigameItems.push(coreGlow)
+
+        const coreInner = this.add.circle(coreStartX, coreStartY, 20, 0x00ccff, 0.9)
+            .setDepth(65)
+        this.minigameItems.push(coreInner)
+
+        const coreLabel = this.add.text(coreStartX, coreStartY + 70, '⚡ POWER CORE', {
+            fontSize: '14px',
+            fill: '#00aaff',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setDepth(63)
+        this.minigameItems.push(coreLabel)
+
+        this.tweens.add({
+            targets: coreGlow,
+            scaleX: 1.3,
+            scaleY: 1.3,
+            alpha: 0.3,
+            duration: 1000,
+            yoyo: true,
+            repeat: -1
+        })
+
+        const coreGroup = [coreBg, coreGlow, coreInner]
+        coreBg.setInteractive({ useHandCursor: true, draggable: true })
+
+        let dragOffsetX = 0
+        let dragOffsetY = 0
+
+        coreBg.on('dragstart', (pointer) => {
+            dragOffsetX = coreBg.x - pointer.x
+            dragOffsetY = coreBg.y - pointer.y
+            coreLabel.setVisible(false)
+        })
+
+        coreBg.on('drag', (pointer) => {
+            const newX = pointer.x + dragOffsetX
+            const newY = pointer.y + dragOffsetY
+
+            coreBg.setPosition(newX, newY)
+            coreGlow.setPosition(newX, newY)
+            coreInner.setPosition(newX, newY)
+
+            const dist = Phaser.Math.Distance.Between(newX, newY, cavityX, cavityY)
+            if (dist < 80) {
+                dropZone.setStrokeStyle(3, 0x00ff88)
+                dropZone.setFillStyle(0x004433, 0.5)
+            } else {
+                dropZone.setStrokeStyle(2, 0x00ff88)
+                dropZone.setFillStyle(0x003322, 0.3)
+            }
+        })
+
+        coreBg.on('dragend', () => {
+            const dist = Phaser.Math.Distance.Between(coreBg.x, coreBg.y, cavityX, cavityY)
+
+            if (dist < 80) {
+                coreGroup.forEach(obj => obj.setPosition(cavityX, cavityY))
+                coreBg.disableInteractive()
+                dropZone.setVisible(false)
+
+                const flash = this.add.rectangle(W / 2, H / 2, W, H, 0x00ff88, 0.3)
+                    .setDepth(70)
+                this.minigameItems.push(flash)
+
+                this.tweens.add({
+                    targets: flash,
+                    alpha: 0,
+                    duration: 500,
+                    onComplete: () => {
+                        this.time.delayedCall(500, () => {
+                            this.startWiringPhase(cavityX, cavityY)
+                        })
+                    }
+                })
+
+                const placedText = this.add.text(W / 2, H - 100, '✅ Core placed! Now connect the wires...', {
+                    fontSize: '20px',
+                    fill: '#00ff88',
+                    fontStyle: 'bold'
+                }).setOrigin(0.5).setDepth(65)
+                this.minigameItems.push(placedText)
+
+            } else {
+                this.tweens.add({
+                    targets: coreGroup,
+                    x: coreStartX,
+                    y: coreStartY,
+                    duration: 300,
+                    ease: 'Back.out'
+                })
+                coreLabel.setVisible(true)
+            }
+        })
+
+        const hint = this.add.text(W / 2, H - 40, 'Click and drag the core to the chest cavity', {
+            fontSize: '16px',
+            fill: '#555555'
+        }).setOrigin(0.5).setDepth(61)
+        this.minigameItems.push(hint)
+    }
+
+    // ═══════════════════════════════════════════════════
+    // ─── WIRE CONNECTION PHASE ─────────────────────────
+    // ═══════════════════════════════════════════════════
+
+    startWiringPhase(coreX, coreY) {
+        const W = this.cameras.main.width
+        const H = this.cameras.main.height
+
+        const oldHints = this.minigameItems.filter(item =>
+            item.type === 'Text' && item.y > H - 120
+        )
+        oldHints.forEach(h => h.destroy())
+
+        const wireTitle = this.add.text(W / 2, 105, 'Connect wires in the correct order: RED → BLUE → GREEN → YELLOW', {
+            fontSize: '16px',
+            fill: '#ffaa00'
+        }).setOrigin(0.5).setDepth(66)
+        this.minigameItems.push(wireTitle)
+
+        const wires = [
+            { color: 0xff4444, name: 'RED', angle: -45, order: 0 },
+            { color: 0x4488ff, name: 'BLUE', angle: 45, order: 1 },
+            { color: 0x44ff44, name: 'GREEN', angle: 135, order: 2 },
+            { color: 0xffff44, name: 'YELLOW', angle: 225, order: 3 }
+        ]
+
+        this.currentWireIndex = 0
+        this.connectedWires = 0
+
+        const shuffled = Phaser.Utils.Array.Shuffle([...wires])
+
+        shuffled.forEach((wire, i) => {
+            const radius = 140
+            const rad = Phaser.Math.DegToRad(wire.angle)
+            const wx = coreX + Math.cos(rad) * radius
+            const wy = coreY + Math.sin(rad) * radius
+
+            const disconnectedLine = this.add.line(
+                0, 0,
+                coreX + Math.cos(rad) * 60, coreY + Math.sin(rad) * 60,
+                wx, wy,
+                wire.color, 0.3
+            ).setLineWidth(3).setDepth(63)
+            this.minigameItems.push(disconnectedLine)
+
+            const wireBtn = this.add.circle(wx, wy, 25, wire.color, 0.4)
+                .setStrokeStyle(3, wire.color)
+                .setDepth(67)
+                .setInteractive({ useHandCursor: true })
+            this.minigameItems.push(wireBtn)
+
+            const wireLabel = this.add.text(wx, wy + 35, wire.name, {
+                fontSize: '12px',
+                fill: '#' + wire.color.toString(16).padStart(6, '0'),
+                fontStyle: 'bold'
+            }).setOrigin(0.5).setDepth(67)
+            this.minigameItems.push(wireLabel)
+
+            const wireStatus = this.add.text(wx, wy - 35, '⬜', {
+                fontSize: '16px'
+            }).setOrigin(0.5).setDepth(67)
+            this.minigameItems.push(wireStatus)
+
+            this.tweens.add({
+                targets: wireBtn,
+                scaleX: 1.15,
+                scaleY: 1.15,
+                duration: 600,
+                yoyo: true,
+                repeat: -1,
+                delay: i * 200
+            })
+
+            wireBtn.on('pointerover', () => wireBtn.setAlpha(0.8))
+            wireBtn.on('pointerout', () => wireBtn.setAlpha(1))
+
+            wireBtn.on('pointerdown', () => {
+                if (wire.order === this.currentWireIndex) {
+                    wireBtn.setFillStyle(wire.color, 1)
+                    wireBtn.disableInteractive()
+                    wireStatus.setText('✅')
+
+                    const connectedLine = this.add.line(
+                        0, 0,
+                        coreX + Math.cos(rad) * 60, coreY + Math.sin(rad) * 60,
+                        wx, wy,
+                        wire.color, 1
+                    ).setLineWidth(4).setDepth(64)
+                    this.minigameItems.push(connectedLine)
+
+                    disconnectedLine.setAlpha(0)
+
+                    const wireFlash = this.add.circle(wx, wy, 40, wire.color, 0.5)
+                        .setDepth(66)
+                    this.minigameItems.push(wireFlash)
+                    this.tweens.add({
+                        targets: wireFlash,
+                        alpha: 0,
+                        scaleX: 2,
+                        scaleY: 2,
+                        duration: 400
+                    })
+
+                    this.currentWireIndex++
+                    this.connectedWires++
+
+                    if (this.progressText) this.progressText.destroy()
+                    this.progressText = this.add.text(W / 2, H - 80,
+                        `Wires connected: ${this.connectedWires}/4`, {
+                        fontSize: '18px',
+                        fill: '#00ff88'
+                    }).setOrigin(0.5).setDepth(67)
+                    this.minigameItems.push(this.progressText)
+
+                    if (this.connectedWires >= 4) {
+                        this.time.delayedCall(800, () => {
+                            this.coreInstallationComplete()
+                        })
+                    }
+
+                } else {
+                    const expectedName = wires[this.currentWireIndex].name
+
+                    wireBtn.setFillStyle(0xff0000, 0.8)
+                    this.time.delayedCall(300, () => {
+                        wireBtn.setFillStyle(wire.color, 0.4)
+                    })
+
+                    this.tweens.add({
+                        targets: wireBtn,
+                        x: wireBtn.x - 5,
+                        duration: 50,
+                        yoyo: true,
+                        repeat: 3
+                    })
+
+                    if (this.errorText) this.errorText.destroy()
+                    this.errorText = this.add.text(W / 2, H - 40,
+                        `❌ Wrong! Connect ${expectedName} wire next.`, {
+                        fontSize: '16px',
+                        fill: '#ff4444'
+                    }).setOrigin(0.5).setDepth(67)
+                    this.minigameItems.push(this.errorText)
+
+                    this.time.delayedCall(2000, () => {
+                        if (this.errorText) this.errorText.setAlpha(0)
+                    })
+                }
+            })
+        })
+    }
+
+    // ═══════════════════════════════════════════════════
+    // ─── CORE INSTALLATION COMPLETE ────────────────────
+    // ═══════════════════════════════════════════════════
+
+    coreInstallationComplete() {
+        const W = this.cameras.main.width
+        const H = this.cameras.main.height
+
+        this.minigameItems.forEach(item => item.destroy())
+        this.minigameItems = []
+
+        const bigFlash = this.add.rectangle(W / 2, H / 2, W, H, 0x00ff88, 0.6)
+            .setDepth(70)
+
+        this.tweens.add({
+            targets: bigFlash,
+            alpha: 0,
+            duration: 1000,
+            onComplete: () => bigFlash.destroy()
+        })
+
+        // ─── Set flags ─────────────────────────────────
+        GameState.setFlag('coreInstalled')
+        GameState.armor.hasCore = true
+        if (!GameState.armor.parts.includes('core')) {
+            GameState.addArmorPart('core')
+        }
+        this.ui.updateStats()
+
+        // ─── Swap background to armor-core ─────────────
+        this.time.delayedCall(500, () => {
+            this.updateBackground()
+        })
+
+        this.time.delayedCall(1500, () => {
+            this.showCoreSuccessCutscene()
+        })
+    }
+
+    // ═══════════════════════════════════════════════════
+    // ─── CORE SUCCESS CUTSCENE ─────────────────────────
+    // ═══════════════════════════════════════════════════
+
+    showCoreSuccessCutscene() {
+        const W = this.cameras.main.width
+        const H = this.cameras.main.height
+
+        this.cutsceneItems = []
+
+        const overlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.9)
+            .setScrollFactor(0).setDepth(100)
+        this.cutsceneItems.push(overlay)
+
+        const addText = (x, y, text, style, delay) => {
+            const t = this.add.text(x, y, text, style)
+                .setOrigin(0.5).setScrollFactor(0).setDepth(101)
+                .setAlpha(0)
+            this.cutsceneItems.push(t)
+            this.time.delayedCall(delay, () => {
+                this.tweens.add({ targets: t, alpha: 1, duration: 800 })
+            })
+            return t
+        }
+
+        addText(W / 2, H / 2 - 160, '⚡ CORE INSTALLED', {
+            fontSize: '44px',
+            fill: '#00ff88',
+            fontStyle: 'bold'
+        }, 300)
+
+        addText(W / 2, H / 2 - 80, '🔴 RED ✅  🔵 BLUE ✅  🟢 GREEN ✅  🟡 YELLOW ✅', {
+            fontSize: '20px',
+            fill: '#ffffff'
+        }, 1200)
+
+        addText(W / 2, H / 2 - 20, 'All wires connected. Power flowing.', {
+            fontSize: '22px',
+            fill: '#aaaaaa'
+        }, 2200)
+
+        addText(W / 2, H / 2 + 40, 'The armor hums with energy...', {
+            fontSize: '20px',
+            fill: '#00aaff',
+            fontStyle: 'italic'
+        }, 3200)
+
+        this.time.delayedCall(4500, () => {
+            const cont = this.add.text(W / 2, H / 2 + 150, '[ Continue ]', {
+                fontSize: '22px',
+                fill: '#555555'
+            }).setOrigin(0.5).setScrollFactor(0).setDepth(101)
+                .setAlpha(0)
+                .setInteractive({ useHandCursor: true })
+
+            this.cutsceneItems.push(cont)
+            this.tweens.add({ targets: cont, alpha: 1, duration: 600 })
+
+            cont.on('pointerover', () => cont.setStyle({ fill: '#ffffff' }))
+            cont.on('pointerout', () => cont.setStyle({ fill: '#555555' }))
+            cont.on('pointerdown', () => {
+                this.cutsceneItems.forEach(item => item.destroy())
+                this.cutsceneItems = []
+                this.showPostCoreDialog()
+            })
+        })
+    }
+
+    showPostCoreDialog() {
+        this.dialog.show([
+            { name: 'Trader', text: '...Did you feel that?' },
+            { name: 'You', text: 'The whole room shook.' },
+            { name: 'Trader', text: 'That\'s the core syncing with the frame.' },
+            { name: 'Trader', text: 'No one has done that in centuries.' },
+            { name: 'You', text: 'The wiring was tricky, but it clicked.' },
+            { name: 'Trader', text: 'You\'re a natural, kid.' },
+            { name: 'Trader', text: 'The core is powering the frame now.' },
+            { name: 'Trader', text: 'But the armor still needs hands, legs, and a head.' },
+            { name: 'You', text: 'What do I need?' },
+            { name: 'Trader', text: 'Money and repair skill. Both.' },
+            { name: 'Trader', text: 'Use the assembly bench when you\'re ready.' },
+            { name: '', text: '⚡ Power core installed! Armor frame is now active.' },
+            { name: '', text: 'You can now assemble hands & legs, and fix the head.' }
+        ], () => {
+            this.menuActive = false
+            this.showBaseMenu()
+        })
+    }
+
+    // ═══════════════════════════════════════════════════
+    // ─── TRADER FINISHED PLATING (Level 3) ─────────────
+    // ═══════════════════════════════════════════════════
+
+    showTraderFinishedDialog() {
+        this.dialog.show([
+            { name: 'Trader', text: 'You\'re back. Good timing.' },
+            { name: 'Trader', text: 'I just finished the last weld.' },
+            { name: '', text: '🔧 *Trader pulls off welding mask*' },
+            { name: '', text: '🔧 *wipes sweat from forehead*' },
+            { name: 'Trader', text: 'Come look at this.' },
+            { name: '', text: '🛡️ *A heavy tarp is pulled away*' },
+            { name: '', text: '🛡️ *The armor stands complete*' },
+            { name: '', text: '🛡️ *Plating gleams under the workshop lights*' },
+            { name: 'You', text: '...' },
+            { name: 'You', text: 'It\'s... beautiful.' },
+            { name: 'Trader', text: 'Every plate hand-welded.' },
+            { name: 'Trader', text: 'Reinforced at every joint.' },
+            { name: 'Trader', text: 'Lightweight but tougher than anything out there.' },
+            { name: 'You', text: 'You did all this while I was gone?' },
+            { name: 'Trader', text: 'Didn\'t sleep much.' },
+            { name: 'Trader', text: 'But it was worth it.' },
+            { name: 'You', text: 'I built the core, the hands, the legs, the head...' },
+            { name: 'Trader', text: 'And I gave it its skin.' },
+            { name: 'You', text: 'We make a good team.' },
+            { name: 'Trader', text: 'Don\'t get sentimental on me, kid.' },
+            { name: 'Trader', text: '...but yeah. We do.' },
+            { name: '', text: '🤖 ARMOR COMPLETE!' },
+            { name: '', text: 'The Trader finished the final plating.' }
+        ], () => {
+            GameState.setFlag('armorComplete')
+            GameState.setFlag('armorRevealSeen')
+            GameState.addArmorPart('plating')
+            GameState.setFlag('armorPlatingInstalled')
+            GameState.tryAdvanceLevel()
+            this.ui.updateStats()
+            this.updateBackground()
+
+            this.time.delayedCall(800, () => {
+                this.showArmorCompleteCutscene()
+            })
+        })
+    }
+
+    // ═══════════════════════════════════════════════════
     // ─── Dust Particles ────────────────────────────────
+    // ═══════════════════════════════════════════════════
     createDustParticles(W, H) {
         this.dustParticles = []
         for (let i = 0; i < 30; i++) {
@@ -106,27 +661,11 @@ export default class SecretBaseScene extends Phaser.Scene {
         }
     }
 
-    // ─── Update Armor Display ──────────────────────────
+    // ═══════════════════════════════════════════════════
+    // ─── Update Armor Status ───────────────────────────
+    // ═══════════════════════════════════════════════════
     updateArmorStatus() {
-        const parts = GameState.armor.parts
-        const hasCore = GameState.armor.hasCore ||
-            parts.includes('core') ||
-            GameState.getFlag('boughtCore')
-
-        let status = `Core: ${hasCore ? '✅' : '❌'}`
-        status += `  |  Servo: ${parts.includes('servo') ? '✅' : '❌'}`
-        status += `  |  Plating: ${parts.includes('plating') ? '✅' : '❌'}`
-        status += `\n${parts.length}/3 parts installed`
-
-        this.armorStatus.setText(status)
-
-        if (parts.length >= 3) {
-            this.armorStand.setStrokeStyle(3, 0x00ff88)
-            this.armorLabel.setFill('#00ff88')
-            this.armorLabel.setText('ARMOR COMPLETE!')
-        } else if (parts.length >= 1) {
-            this.armorStand.setStrokeStyle(2, 0xffaa00)
-        }
+        this.updateBackground()
     }
 
     // ═══════════════════════════════════════════════════
@@ -148,12 +687,19 @@ export default class SecretBaseScene extends Phaser.Scene {
         }).setOrigin(0.5).setDepth(51)
         this.menuItems.push(this.menuTitle)
 
-        // ─── Assemble Armor ────────────────────────────
-        const canAssemble = this.getAvailableParts().length > 0
-        this.createMenuButton(W / 2 - 400, H - 150, '🔧 Assemble Armor', () => {
-            this.closeBaseMenu()
-            this.showAssemblyMenu()
-        }, !canAssemble)
+        // ─── Install Core (if not done) ────────────────
+        if (!GameState.getFlag('coreInstalled') && GameState.getFlag('boughtCore')) {
+            this.createMenuButton(W / 2 - 400, H - 150, '⚡ Install Core', () => {
+                this.closeBaseMenu()
+                this.startCoreInstallation()
+            })
+        } else {
+            const canAssemble = this.getAvailableParts().length > 0
+            this.createMenuButton(W / 2 - 400, H - 150, '🔧 Assemble Parts', () => {
+                this.closeBaseMenu()
+                this.showAssemblyMenu()
+            }, !canAssemble)
+        }
 
         // ─── Inspect Armor ─────────────────────────────
         this.createMenuButton(W / 2 - 100, H - 150, '🔍 Inspect Armor', () => {
@@ -162,16 +708,13 @@ export default class SecretBaseScene extends Phaser.Scene {
         })
 
         // ─── Test Armor OR Talk to Trader ──────────────
-        if (GameState.getFlag('traderCalledArmor') &&
-            GameState.getFlag('armorComplete') &&
+        if (GameState.getFlag('armorComplete') &&
             !GameState.getFlag('armorTested')) {
-            // ─── Show Test Armor button ─────────────────
             this.createMenuButton(W / 2 + 200, H - 150, '🤖 Test Armor', () => {
                 this.closeBaseMenu()
                 this.testArmor()
             })
         } else {
-            // ─── Show Talk to Trader button ─────────────
             this.createMenuButton(W / 2 + 200, H - 150, '💬 Talk to Trader', () => {
                 this.closeBaseMenu()
                 this.talkToTrader()
@@ -232,7 +775,6 @@ export default class SecretBaseScene extends Phaser.Scene {
             ], () => {
                 this.cameras.main.fade(800, 0, 0, 0)
                 this.time.delayedCall(800, () => {
-                    // ─── Goes to CutsceneScene with eveningCutscene key ─
                     this.scene.start('CutsceneScene', {
                         key: 'eveningCutscene',
                         returnScene: 'HubScene'
@@ -247,37 +789,39 @@ export default class SecretBaseScene extends Phaser.Scene {
             })
         }
     }
+
     // ═══════════════════════════════════════════════════
     // ─── Assembly Menu ─────────────────────────────────
     // ═══════════════════════════════════════════════════
     getAvailableParts() {
         const available = []
+        const coreInstalled = GameState.getFlag('coreInstalled')
 
-        const hasCore = GameState.armor.hasCore ||
-            GameState.armor.parts.includes('core') ||
-            GameState.getFlag('boughtCore')
-
-        if (hasCore && !GameState.armor.parts.includes('servo')) {
+        // ─── Hands & Legs ──────────────────────────────
+        if (coreInstalled && !GameState.armor.parts.includes('limbs')) {
             available.push({
-                id: 'servo',
-                name: 'Servo Motors',
-                icon: '⚙️',
-                description: 'Precision motors for armor movement.',
+                id: 'limbs',
+                name: 'Hands & Legs',
+                icon: '🦾',
+                description: 'Mechanical hands and leg actuators for full mobility.',
                 cost: 300,
                 repairNeeded: 15
             })
         }
-        if (GameState.armor.parts.includes('servo') &&
-            !GameState.armor.parts.includes('plating')) {
+
+        // ─── Head Unit ─────────────────────────────────
+        if (GameState.armor.parts.includes('limbs') &&
+            !GameState.armor.parts.includes('head')) {
             available.push({
-                id: 'plating',
-                name: 'Armor Plating',
-                icon: '🛡️',
-                description: 'Heavy duty plating for protection.',
+                id: 'head',
+                name: 'Head Unit',
+                icon: '🤖',
+                description: 'Repair and attach the damaged head module.',
                 cost: 400,
                 repairNeeded: 20
             })
         }
+
         return available
     }
 
@@ -301,20 +845,31 @@ export default class SecretBaseScene extends Phaser.Scene {
             fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(52)
 
-        this.add.text(W / 2, H / 2 - 160,
+        const infoText = this.add.text(W / 2, H / 2 - 160,
             `💰 Money: ${GameState.money}  |  🔧 Repair: ${GameState.skills.repair}`, {
             fontSize: '18px',
             fill: '#ffffff'
         }).setOrigin(0.5).setDepth(52)
+        this.menuItems.push(this.menuPanel, this.menuTitle, infoText)
 
         if (available.length === 0) {
-            const msg = GameState.armor.parts.length >= 3
-                ? '✅ Armor is fully assembled!'
-                : '🔒 No parts available yet. Progress further in the story.'
-            this.add.text(W / 2, H / 2, msg, {
-                fontSize: '22px',
-                fill: '#888888'
+            let msg = ''
+            if (GameState.getFlag('traderFinishing')) {
+                msg = '🔧 Trader is working on the final plating. Come back in Level 3.'
+            } else if (GameState.getFlag('playerPartsDone')) {
+                msg = '✅ Your parts are done! Talk to the Trader.'
+            } else if (!GameState.getFlag('coreInstalled')) {
+                msg = '⚡ Install the power core first!'
+            } else {
+                msg = '🔒 No parts available yet.'
+            }
+            const emptyText = this.add.text(W / 2, H / 2, msg, {
+                fontSize: '20px',
+                fill: '#888888',
+                wordWrap: { width: 600 },
+                align: 'center'
             }).setOrigin(0.5).setDepth(52)
+            this.menuItems.push(emptyText)
         }
 
         available.forEach((part, i) => {
@@ -328,23 +883,23 @@ export default class SecretBaseScene extends Phaser.Scene {
                 .setDepth(52)
                 .setInteractive({ useHandCursor: canBuild })
 
-            this.add.text(W / 2 - 260, y - 20, `${part.icon} ${part.name}`, {
+            const nameText = this.add.text(W / 2 - 260, y - 20, `${part.icon} ${part.name}`, {
                 fontSize: '22px',
                 fill: canBuild ? '#ffffff' : '#666666',
                 fontStyle: 'bold'
             }).setOrigin(0, 0.5).setDepth(53)
 
-            this.add.text(W / 2 - 260, y + 15, part.description, {
+            const descText = this.add.text(W / 2 - 260, y + 15, part.description, {
                 fontSize: '14px',
                 fill: '#aaaaaa'
             }).setOrigin(0, 0.5).setDepth(53)
 
-            this.add.text(W / 2 + 260, y - 15, `💰 ${part.cost}`, {
+            const costText = this.add.text(W / 2 + 260, y - 15, `💰 ${part.cost}`, {
                 fontSize: '16px',
                 fill: canBuild ? '#ffaa00' : '#555555'
             }).setOrigin(1, 0.5).setDepth(53)
 
-            this.add.text(W / 2 + 260, y + 15, `🔧 ${part.repairNeeded} repair`, {
+            const reqText = this.add.text(W / 2 + 260, y + 15, `🔧 ${part.repairNeeded} repair`, {
                 fontSize: '14px',
                 fill: GameState.skills.repair >= part.repairNeeded ? '#00ff88' : '#ff4444'
             }).setOrigin(1, 0.5).setDepth(53)
@@ -355,7 +910,7 @@ export default class SecretBaseScene extends Phaser.Scene {
                 box.on('pointerdown', () => { this.buildPart(part) })
             }
 
-            this.menuItems.push(box)
+            this.menuItems.push(box, nameText, descText, costText, reqText)
         })
 
         const close = this.add.text(W / 2, H / 2 + 220, '[ Back ]', {
@@ -384,37 +939,64 @@ export default class SecretBaseScene extends Phaser.Scene {
             quantity: 1
         })
 
-        if (part.id === 'servo') GameState.setFlag('armorServoInstalled')
-        if (part.id === 'plating') GameState.setFlag('armorPlatingInstalled')
+        if (part.id === 'limbs') GameState.setFlag('armorLimbsInstalled')
+        if (part.id === 'head') GameState.setFlag('armorHeadFixed')
 
         this.closeBaseMenu()
         this.updateArmorStatus()
         this.ui.updateStats()
 
-        if (GameState.armor.parts.length >= 3) {
-            GameState.setFlag('armorComplete')
-            GameState.tryAdvanceLevel()
+        if (part.id === 'limbs') {
+            // ─── Hands & Legs installed ────────────────
+            this.dialog.show([
+                { name: 'You', text: 'Alright... hands first.' },
+                { name: '', text: '⚙️ *attaching mechanical fingers*' },
+                { name: '', text: '⚙️ *calibrating grip sensors*' },
+                { name: 'You', text: 'Now the legs...' },
+                { name: '', text: '⚙️ *leg actuators locking in*' },
+                { name: '', text: '⚙️ *hydraulic lines connecting*' },
+                { name: 'You', text: 'The hands flex perfectly. Legs feel solid.' },
+                { name: 'Trader', text: 'Good hands, good legs. That\'s the foundation.' },
+                { name: 'Trader', text: 'Now you need to fix the head unit.' },
+                { name: 'Trader', text: 'It took some damage over the years.' },
+                { name: 'You', text: 'I\'ll get it done.' }
+            ], () => {
+                this.showBaseMenu()
+            })
+
+        } else if (part.id === 'head') {
+            // ─── Head fixed — all player parts done ────
+            GameState.setFlag('playerPartsDone')
             this.ui.updateStats()
 
             this.dialog.show([
-                { name: 'You', text: 'The last piece is in place...' },
-                { name: 'You', text: 'The armor... it\'s complete!' },
-                { name: 'Trader', text: 'I knew you could do it, kid.' },
-                { name: 'Trader', text: 'Look at it. Ancient engineering, brought back to life.' },
-                { name: 'You', text: 'It feels... right. Like it was made for me.' },
-                { name: 'Trader', text: 'No weapons. Pure protection.' },
-                { name: 'Trader', text: 'Now you\'re ready for what\'s coming.' },
-                { name: '', text: '🤖 ROBOTIC ARMOR COMPLETED!' }
+                { name: 'You', text: 'The head unit is cracked... let me see.' },
+                { name: '', text: '🔧 *removing damaged visor*' },
+                { name: '', text: '🔧 *rewiring optical sensors*' },
+                { name: '', text: '🔧 *sealing the casing*' },
+                { name: 'You', text: 'There. Visor is clear, sensors are live.' },
+                { name: 'Trader', text: '...' },
+                { name: 'Trader', text: 'Kid, you actually did it.' },
+                { name: 'You', text: 'It\'s done? The armor is complete?' },
+                { name: 'Trader', text: 'Almost.' },
+                { name: 'Trader', text: 'You\'ve done the hard parts — core, limbs, head.' },
+                { name: 'Trader', text: 'But there\'s still the final touch.' },
+                { name: 'You', text: 'What final touch?' },
+                { name: 'Trader', text: 'The armor plating. The outer shell.' },
+                { name: 'Trader', text: 'It needs to be welded, sealed, and reinforced.' },
+                { name: 'Trader', text: 'That\'s precision metalwork. My specialty.' },
+                { name: 'You', text: 'You\'re going to finish it?' },
+                { name: 'Trader', text: 'I\'ll take care of the final touch.' },
+                { name: 'Trader', text: 'You built the brain and the body.' },
+                { name: 'Trader', text: 'Let me give it its skin.' },
+                { name: 'Trader', text: 'Come back later. I\'ll have it ready.' },
+                { name: 'You', text: 'Thanks... I couldn\'t have done any of this without you.' },
+                { name: 'Trader', text: 'You did the impossible part, kid.' },
+                { name: 'Trader', text: 'I\'m just finishing what you started.' },
+                { name: '', text: '🔧 The Trader will complete the armor plating.' },
+                { name: '', text: 'Return in Level 3 to see the finished armor.' }
             ], () => {
-                this.showArmorCompleteCutscene()
-            })
-
-        } else {
-            this.dialog.show([
-                { name: 'You', text: `${part.icon} ${part.name} installed!` },
-                { name: 'You', text: 'The armor is getting stronger.' },
-                { name: 'Trader', text: 'Good work. Keep going.' }
-            ], () => {
+                GameState.setFlag('traderFinishing')
                 this.showBaseMenu()
             })
         }
@@ -450,32 +1032,36 @@ export default class SecretBaseScene extends Phaser.Scene {
             fontStyle: 'bold'
         }, 500)
 
-        addText(W / 2, H / 2 - 140, '✅ Power Core   ✅ Servo Motors   ✅ Armor Plating', {
-            fontSize: '22px',
+        addText(W / 2, H / 2 - 140, '✅ Power Core   ✅ Hands & Legs   ✅ Head Unit', {
+            fontSize: '20px',
             fill: '#ffffff'
         }, 1500)
 
-        addText(W / 2, H / 2 - 60, 'No weapons. No destruction.', {
+        addText(W / 2, H / 2 - 100, '✅ Armor Plating — finished by the Trader', {
+            fontSize: '18px',
+            fill: '#ffaa00'
+        }, 2200)
+
+        addText(W / 2, H / 2 - 30, 'Built by you. Finished by a friend.', {
             fontSize: '24px',
             fill: '#aaaaaa'
-        }, 2500)
+        }, 3200)
 
-        addText(W / 2, H / 2 - 20, 'Just pure protection for those who need it most.', {
+        addText(W / 2, H / 2 + 20, 'No weapons. Just pure protection.', {
             fontSize: '22px',
             fill: '#888888',
             fontStyle: 'italic'
-        }, 3500)
+        }, 4200)
 
-        addText(W / 2, H / 2 + 80,
+        addText(W / 2, H / 2 + 100,
             '"The strongest armor is built not for war,\nbut for those we love."', {
             fontSize: '20px',
             fill: '#ff8800',
             fontStyle: 'italic',
             align: 'center'
-        }, 5000)
+        }, 5500)
 
-        // ─── Continue ──────────────────────────────────
-        this.time.delayedCall(7000, () => {
+        this.time.delayedCall(7500, () => {
             const cont = this.add.text(W / 2, H / 2 + 220, '[ Click to continue ]', {
                 fontSize: '22px',
                 fill: '#555555'
@@ -504,18 +1090,19 @@ export default class SecretBaseScene extends Phaser.Scene {
             { name: 'Trader', text: 'Alright kid. Step into the frame.' },
             { name: 'You', text: 'Here goes nothing...' },
             { name: '', text: '⚙️ *mechanical whirring*' },
-            { name: '', text: '⚙️ *servos engaging*' },
-            { name: '', text: '⚙️ *plating locking into place*' },
+            { name: '', text: '🦾 *hands clenching, fingers flexing*' },
+            { name: '', text: '🦿 *legs locking, hydraulics engaging*' },
+            { name: '', text: '🤖 *head visor powering on*' },
+            { name: '', text: '🛡️ *plating sealing around body*' },
             { name: 'Trader', text: 'How does it feel?' },
             { name: 'You', text: '...light. Like it weighs nothing.' },
-            { name: 'Trader', text: 'That\'s the servos. They carry the weight for you.' },
-            { name: 'Trader', text: 'Try moving your arms.' }
+            { name: 'Trader', text: 'That\'s my welding. Lightweight but tough.' },
+            { name: 'Trader', text: 'Try moving around.' }
         ], () => {
             this.showTestPhase1()
         })
     }
 
-    // ─── Test Phase ────────────────────────────────────
     showTestPhase1() {
         const W = this.cameras.main.width
         const H = this.cameras.main.height
@@ -526,7 +1113,7 @@ export default class SecretBaseScene extends Phaser.Scene {
             .setScrollFactor(0).setDepth(60)
         this.testItems.push(overlay)
 
-        const title = this.add.text(W / 2, 100, '🤖 ARMOR TEST: MOVEMENT', {
+        const title = this.add.text(W / 2, 100, '🤖 ARMOR TEST: FULL SYSTEMS', {
             fontSize: '32px',
             fill: '#00ff88',
             fontStyle: 'bold'
@@ -540,25 +1127,26 @@ export default class SecretBaseScene extends Phaser.Scene {
         this.testItems.push(instruction)
 
         this.testsCompleted = 0
-        this.totalTests = 4
+        this.totalTests = 5
 
         const tests = [
-            { label: '💪 Arm Movement', response: '*Arms extend smoothly. Full range of motion.*' },
-            { label: '🦵 Leg Movement', response: '*Legs respond perfectly. Walking feels natural.*' },
-            { label: '🔄 Torso Rotation', response: '*Upper body rotates freely. No resistance.*' },
-            { label: '🛡️ Plating Lock', response: '*All plating segments locked tight. No gaps.*' }
+            { label: '🦾 Hand Grip', response: '*Fingers clench and release. Perfect grip strength.*' },
+            { label: '🦿 Leg Movement', response: '*Legs respond perfectly. Walking feels natural.*' },
+            { label: '🤖 Head Visor', response: '*Visor displays HUD. Optical sensors online.*' },
+            { label: '🛡️ Plating Seal', response: '*All plating segments sealed tight. No gaps.*' },
+            { label: '⚡ Core Sync', response: '*Power core stable. All systems drawing power evenly.*' }
         ]
 
         tests.forEach((test, i) => {
-            const y = 280 + (i * 90)
+            const y = 260 + (i * 80)
 
-            const btn = this.add.rectangle(W / 2, y, 500, 70, 0x222244)
+            const btn = this.add.rectangle(W / 2, y, 500, 65, 0x222244)
                 .setStrokeStyle(2, 0x00ff88)
                 .setScrollFactor(0).setDepth(61)
                 .setInteractive({ useHandCursor: true })
 
             const label = this.add.text(W / 2 - 200, y, `⬜ ${test.label}`, {
-                fontSize: '22px',
+                fontSize: '20px',
                 fill: '#ffffff'
             }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(62)
 
@@ -582,8 +1170,8 @@ export default class SecretBaseScene extends Phaser.Scene {
 
                 this.testsCompleted++
 
-                const responseText = this.add.text(W / 2, y + 25, test.response, {
-                    fontSize: '14px',
+                const responseText = this.add.text(W / 2, y + 22, test.response, {
+                    fontSize: '12px',
                     fill: '#44ff44',
                     fontStyle: 'italic'
                 }).setOrigin(0.5).setScrollFactor(0).setDepth(62)
@@ -600,7 +1188,6 @@ export default class SecretBaseScene extends Phaser.Scene {
         })
     }
 
-    // ─── Test Results ──────────────────────────────────
     showTestComplete() {
         const W = this.cameras.main.width
         const H = this.cameras.main.height
@@ -622,36 +1209,40 @@ export default class SecretBaseScene extends Phaser.Scene {
             return t
         }
 
-        addText(W / 2, H / 2 - 200, '🤖 TEST RESULTS', {
+        addText(W / 2, H / 2 - 220, '🤖 TEST RESULTS', {
             fontSize: '40px', fill: '#00ff88', fontStyle: 'bold'
         }, 300)
 
-        addText(W / 2, H / 2 - 120, '✅ Arm Movement — PASS', {
+        addText(W / 2, H / 2 - 140, '✅ Hand Grip — PASS', {
             fontSize: '20px', fill: '#00ff88'
         }, 800)
 
-        addText(W / 2, H / 2 - 80, '✅ Leg Movement — PASS', {
+        addText(W / 2, H / 2 - 100, '✅ Leg Movement — PASS', {
             fontSize: '20px', fill: '#00ff88'
         }, 1200)
 
-        addText(W / 2, H / 2 - 40, '✅ Torso Rotation — PASS', {
+        addText(W / 2, H / 2 - 60, '✅ Head Visor — PASS', {
             fontSize: '20px', fill: '#00ff88'
         }, 1600)
 
-        addText(W / 2, H / 2, '✅ Plating Lock — PASS', {
+        addText(W / 2, H / 2 - 20, '✅ Plating Seal — PASS', {
             fontSize: '20px', fill: '#00ff88'
         }, 2000)
 
-        addText(W / 2, H / 2 + 60, 'ALL SYSTEMS OPERATIONAL', {
+        addText(W / 2, H / 2 + 20, '✅ Core Sync — PASS', {
+            fontSize: '20px', fill: '#00ff88'
+        }, 2400)
+
+        addText(W / 2, H / 2 + 80, 'ALL SYSTEMS OPERATIONAL', {
             fontSize: '28px', fill: '#ffffff', fontStyle: 'bold'
-        }, 3000)
+        }, 3200)
 
-        addText(W / 2, H / 2 + 110, '"Not a weapon. Protection."', {
+        addText(W / 2, H / 2 + 130, '"Not a weapon. Protection."', {
             fontSize: '20px', fill: '#ff8800', fontStyle: 'italic'
-        }, 4000)
+        }, 4200)
 
-        this.time.delayedCall(5000, () => {
-            const cont = this.add.text(W / 2, H / 2 + 200, '[ Continue ]', {
+        this.time.delayedCall(5500, () => {
+            const cont = this.add.text(W / 2, H / 2 + 220, '[ Continue ]', {
                 fontSize: '22px',
                 fill: '#555555'
             }).setOrigin(0.5).setScrollFactor(0).setDepth(61)
@@ -671,16 +1262,20 @@ export default class SecretBaseScene extends Phaser.Scene {
         })
     }
 
-    // ─── Post Test Dialog ──────────────────────────────
     showPostTestDialog() {
         this.dialog.show([
             { name: 'Trader', text: 'All tests passed. 100% operational.' },
             { name: 'Trader', text: 'The armor is yours now kid.' },
             { name: 'You', text: 'It feels... incredible.' },
-            { name: 'You', text: 'Like I can do anything.' },
-            { name: 'Trader', text: 'You CAN do a lot.' },
+            { name: 'You', text: 'The hands move like they\'re my own.' },
+            { name: 'You', text: 'The visor shows me everything.' },
+            { name: 'Trader', text: 'You built the core, the limbs, the head.' },
+            { name: 'Trader', text: 'I just wrapped it in metal.' },
+            { name: 'You', text: 'We built it together.' },
+            { name: 'Trader', text: '...' },
+            { name: 'Trader', text: 'Yeah. We did.' },
             { name: 'Trader', text: 'But remember what it\'s for.' },
-            { name: 'You', text: 'Protection.' },
+            { name: 'You', text: 'Protection. Not destruction.' },
             { name: 'Trader', text: 'Exactly.' },
             { name: 'Trader', text: 'Now go home. Get some rest.' },
             { name: 'Trader', text: 'You\'ve earned it.' },
@@ -701,20 +1296,54 @@ export default class SecretBaseScene extends Phaser.Scene {
     // ═══════════════════════════════════════════════════
     inspectArmor() {
         const parts = GameState.armor.parts
-        const hasCore = GameState.armor.hasCore ||
-            parts.includes('core') ||
-            GameState.getFlag('boughtCore')
+        const coreInstalled = GameState.getFlag('coreInstalled')
+        const traderFinishing = GameState.getFlag('traderFinishing')
+        const armorComplete = GameState.getFlag('armorComplete')
 
         const lines = [
             { name: '', text: '─── ARMOR STATUS ───' },
-            { name: 'Core', text: hasCore ? '✅ Installed - Powers the entire suit' : '❌ Missing - Need to buy from Trader' },
-            { name: 'Servo', text: parts.includes('servo') ? '✅ Installed - Enables movement' : '❌ Missing - Assemble at workbench' },
-            { name: 'Plating', text: parts.includes('plating') ? '✅ Installed - Full protection' : '❌ Missing - Assemble at workbench' },
-            { name: '', text: `Progress: ${parts.length}/3 parts` }
+            {
+                name: '⚡ Core',
+                text: coreInstalled
+                    ? '✅ Installed & wired — Powers the suit'
+                    : '❌ Not installed'
+            },
+            {
+                name: '🦾 Limbs',
+                text: parts.includes('limbs')
+                    ? '✅ Hands & legs attached — Full mobility'
+                    : '❌ Missing — Assemble at workbench'
+            },
+            {
+                name: '🤖 Head',
+                text: parts.includes('head')
+                    ? '✅ Visor repaired — Sensors online'
+                    : '❌ Damaged — Fix at workbench'
+            },
+            {
+                name: '🛡️ Plating',
+                text: armorComplete
+                    ? '✅ Welded & sealed by Trader'
+                    : traderFinishing
+                        ? '🔧 Trader is working on it... (Level 3)'
+                        : '❌ Not started — Trader will handle this'
+            }
         ]
 
-        if (parts.length >= 3) {
-            lines.push({ name: '⭐', text: 'The armor is COMPLETE and ready!' })
+        // ─── Progress summary ──────────────────────────
+        const playerParts = [coreInstalled, parts.includes('limbs'), parts.includes('head')]
+            .filter(Boolean).length
+        lines.push({
+            name: '',
+            text: `Your work: ${playerParts}/3 parts  |  Trader: ${armorComplete ? '1/1' : '0/1'}`
+        })
+
+        if (armorComplete) {
+            lines.push({ name: '⭐', text: 'The armor is COMPLETE and battle-ready!' })
+        } else if (traderFinishing) {
+            lines.push({ name: '🔧', text: 'Trader is finishing the plating. Return in Level 3.' })
+        } else if (playerParts === 3) {
+            lines.push({ name: '💬', text: 'Talk to the Trader about the final touch.' })
         }
 
         this.dialog.show(lines, () => { this.showBaseMenu() })
@@ -725,37 +1354,66 @@ export default class SecretBaseScene extends Phaser.Scene {
     // ═══════════════════════════════════════════════════
     talkToTrader() {
         const parts = GameState.armor.parts
+        const coreInstalled = GameState.getFlag('coreInstalled')
+        const traderFinishing = GameState.getFlag('traderFinishing')
+        const traderCalled = GameState.getFlag('traderCalledArmor')
+        const armorComplete = GameState.getFlag('armorComplete')
 
-        if (parts.length === 0) {
+        if (!coreInstalled) {
             this.dialog.show([
-                { name: 'Trader', text: 'You\'ve got the core installed already.' },
-                { name: 'Trader', text: 'Next you need servo motors for movement.' },
-                { name: 'Trader', text: 'It\'ll cost you, but it\'s worth it.' },
-                { name: 'You', text: 'I\'ll get to work.' }
+                { name: 'Trader', text: 'You still need to install the core.' },
+                { name: 'Trader', text: 'Drag it into the chest and wire it up.' },
+                { name: 'Trader', text: 'Red, Blue, Green, Yellow. In that order.' },
+                { name: 'You', text: 'Got it. I\'ll handle it.' }
             ], () => { this.showBaseMenu() })
 
-        } else if (parts.length === 1) {
+        } else if (!parts.includes('limbs')) {
             this.dialog.show([
-                { name: 'Trader', text: 'Servos are in. Nice work.' },
-                { name: 'Trader', text: 'Last thing you need is the plating.' },
-                { name: 'Trader', text: 'Heavy stuff. But it\'ll keep you alive.' },
-                { name: 'You', text: 'Almost there...' }
+                { name: 'Trader', text: 'Core is humming. Good work on the wiring.' },
+                { name: 'Trader', text: 'Next up — hands and legs.' },
+                { name: 'Trader', text: 'Without them, it\'s just a glowing statue.' },
+                { name: 'You', text: 'I\'ll get them built.' }
             ], () => { this.showBaseMenu() })
 
-        } else if (parts.length >= 2 && parts.length < 3) {
+        } else if (!parts.includes('head')) {
             this.dialog.show([
-                { name: 'Trader', text: 'One more part to go.' },
-                { name: 'Trader', text: 'You\'re close, kid. Real close.' },
-                { name: 'You', text: 'I can feel it coming together.' }
+                { name: 'Trader', text: 'Limbs are solid. Good craftsmanship.' },
+                { name: 'Trader', text: 'Now the head unit. It\'s damaged.' },
+                { name: 'Trader', text: 'The visor is cracked, sensors are fried.' },
+                { name: 'Trader', text: 'You\'ll need to repair it carefully.' },
+                { name: 'You', text: 'I can handle it.' }
             ], () => { this.showBaseMenu() })
 
-        } else {
+            // ─── CHANGED: Trader called AND finishing → reveal ─
+        } else if (traderCalled && traderFinishing && !GameState.getFlag('armorRevealSeen')) {
+            this.showTraderFinishedDialog()
+
+            // ─── Trader finishing but hasn't called yet ────────
+        } else if (traderFinishing && !traderCalled) {
+            this.dialog.show([
+                { name: 'Trader', text: 'I\'m still working on the plating.' },
+                { name: 'Trader', text: 'This kind of welding takes time.' },
+                { name: 'Trader', text: 'Every plate has to be perfect.' },
+                { name: 'You', text: 'How much longer?' },
+                { name: 'Trader', text: 'I\'ll call you when it\'s ready.' },
+                { name: 'Trader', text: 'Trust me, kid. It\'ll be worth the wait.' }
+            ], () => { this.showBaseMenu() })
+
+        } else if (armorComplete && !GameState.getFlag('armorTested')) {
             this.dialog.show([
                 { name: 'Trader', text: 'The armor is complete.' },
-                { name: 'Trader', text: 'You did something no one else could.' },
+                { name: 'Trader', text: 'But we should test it before you go out there.' },
+                { name: 'Trader', text: 'Step into the frame when you\'re ready.' },
+                { name: 'You', text: 'Let\'s do this.' }
+            ], () => { this.showBaseMenu() })
+
+        } else if (armorComplete) {
+            this.dialog.show([
+                { name: 'Trader', text: 'The armor is tested and ready.' },
+                { name: 'Trader', text: 'You built the impossible, kid.' },
                 { name: 'Trader', text: 'The city needs you now more than ever.' },
-                { name: 'You', text: 'I\'m ready.' },
-                { name: 'Trader', text: 'Good. Because what\'s coming won\'t wait.' }
+                { name: 'You', text: 'I won\'t let them down.' },
+                { name: 'Trader', text: 'I know you won\'t.' }
             ], () => { this.showBaseMenu() })
         }
     }
