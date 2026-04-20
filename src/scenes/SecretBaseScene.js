@@ -8,43 +8,27 @@ export default class SecretBaseScene extends Phaser.Scene {
 
     preload() {
         this.load.image('secretbase-bg', 'assets/images/secretbase-bg.png')
+        this.load.image('armor-still', 'assets/images/armor-still.png')
     }
 
     create() {
         const W = this.cameras.main.width
         const H = this.cameras.main.height
 
-        // ─── UI ────────────────────────────────────────
-        this.ui = new UI(this)
-        this.ui.create()
-
         // ─── Background ────────────────────────────────
         this.add.image(W / 2, H / 2, 'secretbase-bg')
             .setDisplaySize(W, H)
             .setDepth(-10)
-        
+
         // ─── Armor Stand ───────────────────────────────
-        this.armorStand = this.add.rectangle(W / 2, H / 2 - 50, 200, 300, 0x222233)
-            .setStrokeStyle(2, 0x444466).setDepth(1)
+        this.armorStand = this.add.image(W / 2, H / 2 -85, 'armor-still')
+            .setScale(0.275)
+            .setDepth(0)
 
-        this.armorIcon = this.add.text(W / 2, H / 2 - 100, '🤖', {
-            fontSize: '80px'
-        }).setOrigin(0.5).setDepth(2)
+        // ─── UI ────────────────────────────────────────
+        this.ui = new UI(this)
+        this.ui.create()
 
-        this.armorLabel = this.add.text(W / 2, H / 2 + 70, 'ROBOTIC ARMOR', {
-            fontSize: '20px',
-            fill: '#00ff88',
-            fontStyle: 'bold'
-        }).setOrigin(0.5).setDepth(2)
-
-        this.armorStatus = this.add.text(W / 2, H / 2 + 100, '', {
-            fontSize: '16px',
-            fill: '#888888'
-        }).setOrigin(0.5).setDepth(2)
-
-        this.updateArmorStatus()
-
-        
         // ─── Dialog ────────────────────────────────────
         this.dialog = new DialogBox(this)
         this.spaceKey = this.input.keyboard.addKey('SPACE')
@@ -55,28 +39,31 @@ export default class SecretBaseScene extends Phaser.Scene {
         this.testItems = []
         this.cutsceneItems = []
 
-        // ─── Intro dialog ──────────────────────────────
-        if (!GameState.getFlag('secretBaseIntroSeen')) {
-            this.dialog.show([
-                { name: 'Trader', text: 'Welcome to my secret workshop.' },
-                { name: 'Trader', text: 'I found this place years ago, deep underground.' },
-                { name: 'Trader', text: 'And this...' },
-                { name: 'Trader', text: 'This is what I wanted to show you.' },
-                { name: 'You', text: 'Is that... an armor frame?' },
-                { name: 'Trader', text: 'Not just any armor. This is ancient engineering.' },
-                { name: 'Trader', text: 'No one else could figure out how to power it.' },
-                { name: 'Trader', text: 'But you bought that core. You understand machines.' },
-                { name: 'You', text: 'You think I can make it work?' },
-                { name: 'Trader', text: 'I don\'t think. I know.' },
-                { name: 'Trader', text: 'The city needs protection. This armor is the answer.' },
-                { name: '', text: 'You can now assemble armor parts here.' }
-            ], () => {
-                GameState.setFlag('secretBaseIntroSeen')
+        // ─── Delay then show intro ──────────────────────
+        // FIX: use arrow function inline, not this.startIntro
+        this.time.delayedCall(100, () => {
+            if (!GameState.getFlag('secretBaseIntroSeen')) {
+                this.dialog.show([
+                    { name: 'Trader', text: 'Welcome to my secret workshop.' },
+                    { name: 'Trader', text: 'I found this place years ago, deep underground.' },
+                    { name: 'Trader', text: 'And this...' },
+                    { name: 'Trader', text: 'This is what I wanted to show you.' },
+                    { name: 'You', text: 'Is that... an armor frame?' },
+                    { name: 'Trader', text: 'Not just any armor. This is ancient engineering.' },
+                    { name: 'Trader', text: 'No one else could figure out how to power it.' },
+                    { name: 'Trader', text: 'But you bought that core. You understand machines.' },
+                    { name: 'You', text: 'You think I can make it work?' },
+                    { name: 'Trader', text: 'I don\'t think. I know.' },
+                    { name: 'Trader', text: 'The city needs protection. This armor is the answer.' },
+                    { name: '', text: 'You can now assemble armor parts here.' }
+                ], () => {
+                    GameState.setFlag('secretBaseIntroSeen')
+                    this.showBaseMenu()
+                })
+            } else {
                 this.showBaseMenu()
-            })
-        } else {
-            this.showBaseMenu()
-        }
+            }
+        })
     }
 
     update() {
