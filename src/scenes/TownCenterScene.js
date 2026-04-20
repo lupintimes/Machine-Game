@@ -1,3 +1,4 @@
+
 import DialogBox from '../dialog.js'
 import UI from '../ui.js'
 
@@ -7,249 +8,296 @@ export default class TownCenterScene extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('towncenter-bg', 'assets/images/towncenter-bg.png')
+        this.load.image('town-ruined', 'assets/images/towncenter/town_ruined.png')
+
+        // Normal buttons
+        this.load.image('btn-hospital', 'assets/images/towncenter/hospital_button.png')
+        this.load.image('btn-water', 'assets/images/towncenter/water_button.png')
+        this.load.image('btn-power', 'assets/images/towncenter/power_button.png')
+
+        // Fixed versions (after repair)
+        this.load.image('btn-hospital-fixed', 'assets/images/towncenter/fixed_hospital.png')
+        this.load.image('btn-water-fixed', 'assets/images/towncenter/fixed_water.png')
+        this.load.image('btn-power-fixed', 'assets/images/towncenter/fixed_power.png')
     }
 
     create() {
         const W = this.cameras.main.width
         const H = this.cameras.main.height
 
-        // ─── UI ────────────────────────
         this.ui = new UI(this)
         this.ui.create()
 
-        // ─── Background ────────────────
-        this.bg = this.add.image(0, 0, 'towncenter-bg')
-        this.bg.setOrigin(0, 0)
-        this.bg.setDepth(-1)
+        // Background
+        this.add.image(W / 2, H / 2, 'town-ruined')
+            .setDisplaySize(W, H)
+            .setDepth(0)
 
-        const scaleY = H / this.bg.height
-        this.bg.setScale(scaleY)
-
-        const scaledWidth = this.bg.width * scaleY
-        this.physics.world.setBounds(0, 0, scaledWidth, H)
-        this.cameras.main.setBounds(0, 0, scaledWidth, H)
-
-        // ─── Ruins ─────────────────────
-        // Collapsed building left
-        this.add.rectangle(300, H - 200, 300, 200, 0x443322)
-            .setAlpha(0.7).setDepth(1)
-        this.add.text(250, H - 280, '🏚️', { fontSize: '48px' }).setDepth(2)
-
-        // Rubble piles
-        this.add.rectangle(600, H - 80, 200, 60, 0x554433)
-            .setAlpha(0.6).setDepth(1)
-        this.add.rectangle(1200, H - 90, 150, 70, 0x443322)
-            .setAlpha(0.6).setDepth(1)
-
-        // ─── Buildings to repair ────────
-        this.buildings = [
-            {
-                id: 'medical',
-                rect: this.add.rectangle(500, H / 2 - 50, 180, 250, 0x553333)
-                    .setDepth(1).setAlpha(0.7),
-                icon: this.add.text(500, H / 2 - 100, '🏥', { fontSize: '40px' })
-                    .setOrigin(0.5).setDepth(2),
-                label: this.add.text(500, H / 2 + 80, 'Medical Center', {
-                    fontSize: '16px', fill: '#ff4444'
-                }).setOrigin(0.5).setDepth(2),
-                status: this.add.text(500, H / 2 + 105, '❌ Damaged', {
-                    fontSize: '14px', fill: '#ff4444'
-                }).setOrigin(0.5).setDepth(2),
-                repairCost: 150,
-                repairSkill: 10
-            },
-            {
-                id: 'school',
-                rect: this.add.rectangle(900, H / 2 - 50, 180, 250, 0x335533)
-                    .setDepth(1).setAlpha(0.7),
-                icon: this.add.text(900, H / 2 - 100, '🏫', { fontSize: '40px' })
-                    .setOrigin(0.5).setDepth(2),
-                label: this.add.text(900, H / 2 + 80, 'School', {
-                    fontSize: '16px', fill: '#ff4444'
-                }).setOrigin(0.5).setDepth(2),
-                status: this.add.text(900, H / 2 + 105, '❌ Damaged', {
-                    fontSize: '14px', fill: '#ff4444'
-                }).setOrigin(0.5).setDepth(2),
-                repairCost: 200,
-                repairSkill: 15
-            },
-            {
-                id: 'power',
-                rect: this.add.rectangle(1300, H / 2 - 50, 180, 250, 0x333355)
-                    .setDepth(1).setAlpha(0.7),
-                icon: this.add.text(1300, H / 2 - 100, '⚡', { fontSize: '40px' })
-                    .setOrigin(0.5).setDepth(2),
-                label: this.add.text(1300, H / 2 + 80, 'Power Station', {
-                    fontSize: '16px', fill: '#ff4444'
-                }).setOrigin(0.5).setDepth(2),
-                status: this.add.text(1300, H / 2 + 105, '❌ Damaged', {
-                    fontSize: '14px', fill: '#ff4444'
-                }).setOrigin(0.5).setDepth(2),
-                repairCost: 250,
-                repairSkill: 20
-            }
-        ]
-
-        // Update building status if already repaired
-        this.updateBuildingStatus()
-
-        // ─── Luvaza (GF) ───────────────
-        this.luvaza = this.add.rectangle(700, H / 2 + 100, 40, 70, 0xff69b4)
-            .setDepth(3)
-        this.add.text(700, H / 2 + 30, '💕 Luvaza', {
-            fontSize: '20px',
-            fill: '#ff69b4'
-        }).setOrigin(0.5).setDepth(4)
-
-        // ─── Interact hint ─────────────
-        this.interactHint = this.add.text(0, 0, 'Press E to interact', {
-            fontSize: '20px',
-            fill: '#ffff00',
-            backgroundColor: '#000000',
-            padding: { x: 8, y: 4 }
-        }).setDepth(20).setVisible(false)
-
-        // ─── Player ────────────────────
-        this.player = this.physics.add.image(200, H / 2 + 100)
-        this.player.setDisplaySize(104, 156)
-        this.player.body.setCollideWorldBounds(true)
-        this.playerGfx = this.add.rectangle(200, H / 2 + 100, 32, 48, 0x00ff88)
-        this.playerGfx.setDepth(10)
-        this.playerGfx.setScale(7.25)
-
-        // ─── Camera ────────────────────
-        this.cameras.main.startFollow(this.player, true, 0.1, 0.1)
-
-        // ─── Controls ──────────────────
-        this.cursors = this.input.keyboard.createCursorKeys()
+        this.dialog = new DialogBox(this)
         this.spaceKey = this.input.keyboard.addKey('SPACE')
-        this.eKey = this.input.keyboard.addKey('E')
-        this.wasd = this.input.keyboard.addKeys({
-            up: Phaser.Input.Keyboard.KeyCodes.W,
-            down: Phaser.Input.Keyboard.KeyCodes.S,
-            left: Phaser.Input.Keyboard.KeyCodes.A,
-            right: Phaser.Input.Keyboard.KeyCodes.D
+
+        this.buildings = []
+
+        if (!GameState.rebuiltBuildings) GameState.rebuiltBuildings = []
+
+        // Buildings (BUTTON ONLY SYSTEM)
+        this.createBuilding({
+            id: 'hospital',
+            btnKey: 'btn-hospital',
+            fixedKey: 'btn-hospital-fixed',
+            btnX: 326.50,
+            btnY: 542.50,
+            label: 'Medical Center',
+            repairCost: 150,
+            repairSkill: 10,
+            repaired: GameState.rebuiltBuildings.includes('hospital')
         })
 
-        // ─── Dialog ────────────────────
-        this.dialog = new DialogBox(this)
-        this.menuActive = false
-        this.menuItems = []
-        this.nearTarget = null
+        this.createBuilding({
+            id: 'water',
+            btnKey: 'btn-water',
+            fixedKey: 'btn-water-fixed',
+            btnX: 1084.50,
+            btnY: 842,
+            label: 'Water Station',
+            repairCost: 200,
+            repairSkill: 15,
+            repaired: GameState.rebuiltBuildings.includes('water')
+        })
 
-        // ─── Scene Title ───────────────
-        this.add.text(W / 2, 30, '🏛️ Town Center', {
-            fontSize: '28px',
-            fill: '#ffffff'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(20)
+        this.createBuilding({
+            id: 'power',
+            btnKey: 'btn-power',
+            fixedKey: 'btn-power-fixed',
+            btnX: 1710.50,
+            btnY: 532.50,
+            label: 'Power Station',
+            repairCost: 250,
+            repairSkill: 20,
+            repaired: GameState.rebuiltBuildings.includes('power')
+        })
 
-        // ─── First time intro ──────────
+        this.createLuvaza({
+            x: W * 0.35,
+            y: H * 0.75,
+            labelOffsetY: -50
+        })
+
+        this.createBackButton()
+
         if (!GameState.getFlag('metLuvaza')) {
-            this.dialog.show([
-                { name: '', text: 'The town center is barely recognizable.' },
-                { name: '', text: 'Collapsed walls, debris everywhere.' },
-                { name: '', text: 'But someone is already here, trying to help...' }
-            ])
+            this.time.delayedCall(100, () => {
+                this.dialog.show([
+                    { name: '', text: 'The town center is barely recognizable.' },
+                    { name: '', text: 'Collapsed walls, debris everywhere.' },
+                    { name: '', text: 'But someone is already here, trying to help...' }
+                ])
+            })
         }
     }
 
     update() {
-        const speed = 600
-
-        if (this.dialog.isActive) {
+        if (this.dialog && this.dialog.isActive) {
             if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
                 this.dialog.next()
             }
+        }
+    }
+
+    // ─────────────────────────────────────────────
+    // CREATE BUILDING (BUTTON-ONLY SYSTEM)
+    // ─────────────────────────────────────────────
+
+    createBuilding(config) {
+        const {
+            id, btnKey, fixedKey,
+            btnX, btnY,
+            label, repairCost, repairSkill,
+            repaired
+        } = config
+
+        const texture = repaired ? fixedKey : btnKey
+
+        const btnImage = this.add.image(btnX, btnY, texture)
+            .setDepth(3)
+
+        if (repaired) {
+            btnImage.setAlpha(1)
+        } else {
+            btnImage.setInteractive({
+                useHandCursor: true,
+                pixelPerfect: true,
+                alphaTolerance: 50
+            })
+
+            btnImage.on('pointerover', () => {
+                this.showTooltip(
+                    btnX,
+                    btnY - (btnImage.displayHeight / 2) - 20,
+                    `${label}  💰${repairCost}  🔧${repairSkill}`
+                )
+            })
+
+            btnImage.on('pointerout', () => {
+                this.hideTooltip()
+            })
+
+            btnImage.on('pointerdown', () => {
+                this.repairBuilding(id)
+            })
+        }
+
+        const buildingData = {
+            id,
+            btnImage,
+            btnKey,
+            fixedKey,
+            label,
+            repairCost,
+            repairSkill,
+            repaired
+        }
+
+        this.buildings.push(buildingData)
+    }
+
+    // ─────────────────────────────────────────────
+    // REPAIR BUILDING
+    // ─────────────────────────────────────────────
+
+    repairBuilding(buildingId) {
+        if (!GameState.rebuiltBuildings) GameState.rebuiltBuildings = []
+
+        const building = this.buildings.find(b => b.id === buildingId)
+        if (!building) return
+
+        if (building.repaired) {
+            this.dialog.show([
+                { name: 'You', text: 'This building is already repaired.' }
+            ])
             return
         }
 
-        this.player.setVelocity(0)
-
-        if (this.cursors.left.isDown || this.wasd.left.isDown) {
-            this.player.setVelocityX(-speed)
-        } else if (this.cursors.right.isDown || this.wasd.right.isDown) {
-            this.player.setVelocityX(speed)
+        if (GameState.skills.repair < building.repairSkill) {
+            this.dialog.show([
+                { name: 'You', text: `Need 🔧${building.repairSkill} repair skill.` },
+                { name: 'You', text: `Current: 🔧${GameState.skills.repair}` }
+            ])
+            return
         }
 
-        if (this.cursors.up.isDown || this.wasd.up.isDown) {
-            this.player.setVelocityY(-speed)
-        } else if (this.cursors.down.isDown || this.wasd.down.isDown) {
-            this.player.setVelocityY(speed)
+        if (GameState.money < building.repairCost) {
+            this.dialog.show([
+                { name: 'You', text: `Need 💰${building.repairCost}.` },
+                { name: 'You', text: `Current: 💰${GameState.money}` }
+            ])
+            return
         }
 
-        this.playerGfx.x = this.player.x
-        this.playerGfx.y = this.player.y
+        // Spend + update
+        GameState.spendMoney(building.repairCost)
+        GameState.rebuiltBuildings.push(buildingId)
+        GameState.addReputation(20)
+        GameState.addSkill('repair', 5)
 
-        this.nearTarget = null
+        building.repaired = true
 
-        // ─── Check Luvaza ──────────────
-        const luvazaDist = Phaser.Math.Distance.Between(
-            this.player.x, this.player.y,
-            this.luvaza.x, this.luvaza.y
-        )
+        // Swap texture → FIXED VERSION
+        building.btnImage.setTexture(building.fixedKey)
 
-        if (luvazaDist < 150) {
-            this.nearTarget = 'luvaza'
-            this.interactHint.setVisible(true)
-            this.interactHint.setPosition(this.luvaza.x - 70, this.luvaza.y - 120)
-            this.luvaza.setStrokeStyle(3, 0xffff00)
-        } else {
-            this.luvaza.setStrokeStyle(0)
-        }
+        // Disable interaction
+        building.btnImage.disableInteractive()
+        building.btnImage.setAlpha(1)
 
-        // ─── Check Buildings ───────────
-        this.buildings.forEach(building => {
-            const dist = Phaser.Math.Distance.Between(
-                this.player.x, this.player.y,
-                building.rect.x, building.rect.y
-            )
+        this.hideTooltip()
 
-            if (dist < 150 && !GameState.rebuiltBuildings?.includes(building.id)) {
-                this.nearTarget = building
-                this.interactHint.setVisible(true)
-                this.interactHint.setPosition(
-                    building.rect.x - 80,
-                    building.rect.y - 200
-                )
-                building.rect.setStrokeStyle(3, 0xffff00)
-            } else {
-                building.rect.setStrokeStyle(0)
-            }
-        })
-
-        if (!this.nearTarget) {
-            this.interactHint.setVisible(false)
-        }
-
-        // ─── Press E ───────────────────
-        if (Phaser.Input.Keyboard.JustDown(this.eKey)) {
-            if (this.nearTarget === 'luvaza') {
-                this.talkToLuvaza()
-            } else if (this.nearTarget && this.nearTarget.id) {
-                this.repairBuilding(this.nearTarget)
-            }
-        }
+        // Visual feedback
+        this.cameras.main.flash(300, 0, 255, 100)
 
         this.ui.updateStats()
+
+        const allBuilt = ['hospital', 'water', 'power']
+            .every(id => GameState.rebuiltBuildings.includes(id))
+
+        if (allBuilt) {
+            GameState.setFlag('rebuiltBuildings')
+            this.dialog.show([
+                { name: 'You', text: '⭐ All buildings repaired!' },
+                { name: 'Luvaza', text: 'You did it! The town is operational!' },
+                { name: '', text: '+20 reputation earned!' }
+            ])
+        } else {
+            this.dialog.show([
+                { name: 'You', text: `✅ ${building.label} repaired!` },
+                { name: 'You', text: '+20 reputation, +5 repair skill earned.' }
+            ])
+        }
     }
 
-    // ─── Update building visuals ───────────────────────
-    updateBuildingStatus() {
-        if (!GameState.rebuiltBuildings) GameState.rebuiltBuildings = []
+    // ─────────────────────────────────────────────
+    // TOOLTIP
+    // ─────────────────────────────────────────────
 
-        this.buildings.forEach(building => {
-            if (GameState.rebuiltBuildings.includes(building.id)) {
-                building.rect.setFillStyle(0x225522)
-                building.rect.setAlpha(0.9)
-                building.status.setText('✅ Repaired')
-                building.status.setFill('#00ff88')
-                building.label.setFill('#00ff88')
-            }
+    showTooltip(x, y, message) {
+        this.hideTooltip()
+
+        const container = this.add.container(x, y).setDepth(200)
+
+        const text = this.add.text(0, 0, message, {
+            fontSize: '16px',
+            fill: '#fff',
+            padding: { x: 12, y: 6 }
+        }).setOrigin(0.5)
+
+        const bg = this.add.rectangle(
+            0, 0,
+            text.width + 24,
+            text.height + 12,
+            0x000000, 0.9
+        )
+
+        container.add([bg, text])
+        this.tooltip = container
+    }
+
+    hideTooltip() {
+        if (this.tooltip) {
+            this.tooltip.destroy()
+            this.tooltip = null
+        }
+    }
+
+    // ─────────────────────────────────────────────
+    // LUVAZA + BACK BUTTON (unchanged)
+    // ─────────────────────────────────────────────
+
+    createLuvaza({ x, y, labelOffsetY }) {
+        this.luvazaSprite = this.add.rectangle(x, y, 40, 70, 0xff69b4).setDepth(5)
+
+        this.luvazaLabel = this.add.text(x, y + labelOffsetY, '💕 Luvaza', {
+            fontSize: '20px', fill: '#ff69b4'
+        }).setOrigin(0.5).setDepth(6)
+
+        const zone = this.add.rectangle(x, y, 100, 120, 0x000000, 0)
+            .setInteractive({ useHandCursor: true })
+
+        zone.on('pointerdown', () => this.talkToLuvaza())
+    }
+
+    createBackButton() {
+        const W = this.cameras.main.width
+
+        const backBtn = this.add.text(W - 30, 80, '🔙', {
+            fontSize: '32px'
+        }).setOrigin(1, 0)
+            .setInteractive({ useHandCursor: true })
+
+        backBtn.on('pointerdown', () => {
+            this.scene.start('HubScene')
         })
     }
 
-    // ─── Talk to Luvaza ────────────────────────────────
+
     talkToLuvaza() {
         if (!GameState.getFlag('metLuvaza')) {
             this.dialog.show([
@@ -262,7 +310,7 @@ export default class TownCenterScene extends Phaser.Scene {
                 { name: 'You', text: 'An engineer. I want to help rebuild.' },
                 { name: 'Luvaza', text: 'Really? That\'s amazing!' },
                 { name: 'Luvaza', text: 'Three buildings need urgent repair.' },
-                { name: 'Luvaza', text: 'The Medical Center, the School and the Power Station.' },
+                { name: 'Luvaza', text: 'The Medical Center, the Water Station and the Power Station.' },
                 { name: 'Luvaza', text: 'My father asked me to oversee it.' },
                 { name: 'You', text: 'I\'ll get to work.' },
                 { name: 'Luvaza', text: 'Thank you. The city needs more people like you.' }
@@ -275,7 +323,10 @@ export default class TownCenterScene extends Phaser.Scene {
         }
     }
 
-    // ─── Luvaza Menu ───────────────────────────────────
+    // ═══════════════════════════════════════════════════
+    // ─── LUVAZA MENU ───────────────────────────────────
+    // ═══════════════════════════════════════════════════
+
     showLuvazaMenu() {
         const W = this.cameras.main.width
         const H = this.cameras.main.height
@@ -290,27 +341,23 @@ export default class TownCenterScene extends Phaser.Scene {
             .setStrokeStyle(3, 0xff69b4).setScrollFactor(0).setDepth(51)
 
         this.menuTitle = this.add.text(W / 2, H / 2 - 160, '💕 Luvaza', {
-            fontSize: '28px',
-            fill: '#ff69b4',
-            fontStyle: 'bold'
+            fontSize: '28px', fill: '#ff69b4', fontStyle: 'bold'
         }).setOrigin(0.5).setScrollFactor(0).setDepth(52)
 
-        // 💬 Talk
         this.createMenuButton(W / 2, H / 2 - 60, '💬 Talk', () => {
             this.closeMenu()
             this.luvazaTalk()
         })
 
-        // 📋 Building status
         this.createMenuButton(W / 2, H / 2 + 20, '🏗️ Building Status', () => {
             this.closeMenu()
             this.showBuildingStatus()
         })
 
-        // 🔙 Leave
         this.createMenuButton(W / 2, H / 2 + 100, '🔙 Leave', () => {
             this.closeMenu()
-            this.scene.start('HubScene')
+            this.cameras.main.fade(300, 0, 0, 0)
+            this.time.delayedCall(300, () => this.scene.start('HubScene'))
         })
     }
 
@@ -321,8 +368,7 @@ export default class TownCenterScene extends Phaser.Scene {
             .setInteractive({ useHandCursor: true })
 
         const label = this.add.text(x, y, text, {
-            fontSize: '20px',
-            fill: '#ffffff'
+            fontSize: '20px', fill: '#ffffff'
         }).setOrigin(0.5).setScrollFactor(0).setDepth(53)
 
         btn.on('pointerover', () => btn.setFillStyle(0x443344))
@@ -342,11 +388,13 @@ export default class TownCenterScene extends Phaser.Scene {
         this.menuItems = []
     }
 
-    // ─── Luvaza Talk ───────────────────────────────────
+    // ═══════════════════════════════════════════════════
+    // ─── LUVAZA TALK ───────────────────────────────────
+    // ═══════════════════════════════════════════════════
+
     luvazaTalk() {
         const rebuilt = GameState.rebuiltBuildings || []
 
-        // After first meeting, if player has comms device
         if (GameState.getFlag('hasCommsDevice') && !GameState.getFlag('gaveCommsToGF')) {
             this.dialog.show([
                 { name: 'You', text: 'Luvaza, I have something for you.' },
@@ -384,7 +432,6 @@ export default class TownCenterScene extends Phaser.Scene {
             ], () => { this.showLuvazaMenu() })
 
         } else if (!GameState.getFlag('luvazaClueFound')) {
-            // ─── Luvaza drops the clue ─────
             this.dialog.show([
                 { name: 'Luvaza', text: 'You repaired everything! Thank you so much.' },
                 { name: 'You', text: 'Luvaza... can I ask you something personal?' },
@@ -421,78 +468,18 @@ export default class TownCenterScene extends Phaser.Scene {
         }
     }
 
-    // ─── Building Status ───────────────────────────────
+    // ═══════════════════════════════════════════════════
+    // ─── BUILDING STATUS ───────────────────────────────
+    // ═══════════════════════════════════════════════════
+
     showBuildingStatus() {
         const rebuilt = GameState.rebuiltBuildings || []
         this.dialog.show([
             { name: 'Luvaza', text: 'Here\'s the current status:' },
-            { name: '🏥', text: `Medical Center: ${rebuilt.includes('medical') ? '✅ Repaired' : '❌ Needs repair (💰150, 🔧10)'}` },
-            { name: '🏫', text: `School: ${rebuilt.includes('school') ? '✅ Repaired' : '❌ Needs repair (💰200, 🔧15)'}` },
+            { name: '🏥', text: `Medical Center: ${rebuilt.includes('hospital') ? '✅ Repaired' : '❌ Needs repair (💰150, 🔧10)'}` },
+            { name: '💧', text: `Water Station: ${rebuilt.includes('water') ? '✅ Repaired' : '❌ Needs repair (💰200, 🔧15)'}` },
             { name: '⚡', text: `Power Station: ${rebuilt.includes('power') ? '✅ Repaired' : '❌ Needs repair (💰250, 🔧20)'}` },
-            { name: 'Luvaza', text: 'Walk up to each building and press E to repair!' }
+            { name: 'Luvaza', text: 'Click on each building to repair it!' }
         ], () => { this.showLuvazaMenu() })
-    }
-
-    // ─── Repair Building ───────────────────────────────
-    repairBuilding(building) {
-        if (!GameState.rebuiltBuildings) GameState.rebuiltBuildings = []
-
-        if (GameState.rebuiltBuildings.includes(building.id)) {
-            this.dialog.show([
-                { name: 'You', text: 'This building is already repaired.' }
-            ])
-            return
-        }
-
-        if (GameState.skills.repair < building.repairSkill) {
-            this.dialog.show([
-                { name: 'You', text: `I need at least ${building.repairSkill} repair skill for this.` },
-                { name: 'You', text: `Current skill: ${GameState.skills.repair}` }
-            ])
-            return
-        }
-
-        if (GameState.money < building.repairCost) {
-            this.dialog.show([
-                { name: 'You', text: `I need 💰${building.repairCost} to repair this.` },
-                { name: 'You', text: `I only have 💰${GameState.money}.` }
-            ])
-            return
-        }
-
-        // ─── Repair! ───────────────────
-        GameState.spendMoney(building.repairCost)
-        GameState.rebuiltBuildings.push(building.id)
-        GameState.addReputation(20)
-        GameState.addSkill('repair', 5)
-
-        // Update visual
-        building.rect.setFillStyle(0x225522)
-        building.rect.setAlpha(0.9)
-        building.status.setText('✅ Repaired')
-        building.status.setFill('#00ff88')
-        building.label.setFill('#00ff88')
-
-        this.ui.updateStats()
-
-        // Check if all rebuilt
-        const allBuilt = ['medical', 'school', 'power']
-            .every(id => GameState.rebuiltBuildings.includes(id))
-
-        if (allBuilt) {
-            GameState.setFlag('rebuiltBuildings')
-            this.dialog.show([
-                { name: 'You', text: '⭐ All buildings repaired!' },
-                { name: 'Luvaza', text: 'You did it! The whole town center is operational!' },
-                { name: 'Luvaza', text: 'My father will be so pleased.' },
-                { name: 'You', text: 'It\'s what needed to be done.' },
-                { name: '', text: '+20 reputation earned!' }
-            ])
-        } else {
-            this.dialog.show([
-                { name: 'You', text: `✅ ${building.id === 'medical' ? 'Medical Center' : building.id === 'school' ? 'School' : 'Power Station'} repaired!` },
-                { name: 'You', text: '+20 reputation, +5 repair skill earned.' }
-            ])
-        }
     }
 }
