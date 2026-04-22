@@ -29,24 +29,35 @@ export default class DialogBox {
 
         // ─── Default portraits (no expression) ─────────
         this.defaultPortrait = {
-            'King': 'dialog-king-neutral',
-            'You': 'dialog-player',
-            'Luvaza': 'dialog-luvaza',
-            'Trader': 'dialog-trader',
-            'Park Cleaner': 'dialog-parkcleaner',
+            'King':               'dialog-king-neutral',
+            'You':                'dialog-player-neutral',
+            'Luvaza':             'dialog-luvaza',
+            'Trader':             'dialog-trader',
+            'Park Cleaner':       'dialog-parkcleaner',
             'Luvaza (recording)': 'dialog-luvaza'
         }
 
         // ─── Expression portraits ──────────────────────
         this.expressionMap = {
             'King': {
-                'neutral': 'dialog-king-neutral',
-                'serious': 'dialog-king-serious',
-                'angry': 'dialog-king-angry',
-                'surprised': 'dialog-king-surprised',
+                'neutral':    'dialog-king-neutral',
+                'serious':    'dialog-king-serious',
+                'angry':      'dialog-king-angry',
+                'surprised':  'dialog-king-surprised',
                 'suspicious': 'dialog-king-suspicious'
+            },
+            'You': {
+                'neutral':    'dialog-player-neutral',
+                'serious':    'dialog-player-serious',
+                'angry':      'dialog-player-angry',
+                'surprised':  'dialog-player-surprised',
+                'determined': 'dialog-player-determined',
+                'sad':        'dialog-player-sad'
             }
         }
+
+        // ─── Characters that appear on left side ───────
+        this.leftSideCharacters = ['You']
     }
 
     // ═══════════════════════════════════════════════════
@@ -76,16 +87,26 @@ export default class DialogBox {
         const W = this.scene.cameras.main.width
         const H = this.scene.cameras.main.height
 
-        this.portrait = this.scene.add.image(W - 372, H - 403, imageKey)
+        // ─── Player = LEFT, others = RIGHT ─────────────
+        const isLeftSide = this.leftSideCharacters.includes(name)
+        const posX = isLeftSide ? 371 : W - 371
+        const posY = H - 403
+
+        this.portrait = this.scene.add.image(posX, posY, imageKey)
             .setScale(0.75)
             .setDepth(99)
             .setScrollFactor(0)
             .setAlpha(0)
 
+        // ─── Flip player to face right ─────────────────
+        if (isLeftSide) {
+            this.portrait.setFlipX(true)
+        }
+
         this.scene.tweens.add({
             targets: this.portrait,
             alpha: 1,
-            y: this.portrait.y - 10,
+            y: posY - 10,
             duration: 200,
             ease: 'Sine.easeOut'
         })
@@ -294,11 +315,11 @@ export default class DialogBox {
         if (!line) return
 
         const nameColors = {
-            'You': '#00ff88',
-            'Luvaza': '#ff69b4',
-            'King': '#ffdd00',
-            'Trader': '#ff8800',
-            'Park Cleaner': '#44ff44',
+            'You':                '#00ff88',
+            'Luvaza':             '#ff69b4',
+            'King':               '#ffdd00',
+            'Trader':             '#ff8800',
+            'Park Cleaner':       '#44ff44',
             'Luvaza (recording)': '#ff69b4'
         }
 
@@ -428,11 +449,11 @@ export default class DialogBox {
         const recentHistory = this.history.slice(startIndex)
 
         const nameColors = {
-            'You': '#00ff88',
-            'Luvaza': '#ff69b4',
-            'King': '#ffdd00',
-            'Trader': '#ff8800',
-            'Park Cleaner': '#44ff44',
+            'You':                '#00ff88',
+            'Luvaza':             '#ff69b4',
+            'King':               '#ffdd00',
+            'Trader':             '#ff8800',
+            'Park Cleaner':       '#44ff44',
             'Luvaza (recording)': '#ff69b4'
         }
 

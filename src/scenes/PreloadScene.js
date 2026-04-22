@@ -140,6 +140,14 @@ export default class PreloadScene extends Phaser.Scene {
         this.load.image('dialog-king-surprised', 'assets/images/dialog/King/Surprised.png')
         this.load.image('dialog-king-suspicious', 'assets/images/dialog/King/Suspicious.png')
 
+        // ─── Player Expressions ────────────────────────
+        this.load.image('dialog-player-neutral', 'assets/images/dialog/Player/Neutral.png')
+        this.load.image('dialog-player-serious', 'assets/images/dialog/Player/Serious.png')
+        this.load.image('dialog-player-angry', 'assets/images/dialog/Player/Angry.png')
+        this.load.image('dialog-player-surprised', 'assets/images/dialog/Player/Surprised.png')
+        this.load.image('dialog-player-determined', 'assets/images/dialog/Player/Determined.png')
+        this.load.image('dialog-player-sad', 'assets/images/dialog/Player/Sad.png')
+
 
         // ─── Add any other assets here ─────────────────
         // this.load.image('player', 'assets/images/player.png')
