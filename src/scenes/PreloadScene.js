@@ -77,7 +77,7 @@ export default class PreloadScene extends Phaser.Scene {
         this.load.image('workshop-noon', 'assets/images/workshop/workshop-noon.png')
         this.load.image('workshop-evening', 'assets/images/workshop/workshop-evening.png')
         this.load.image('workshop-night', 'assets/images/workshop/workshop-night.png')
-        
+
         // ─── Junkyard ──────────────────────────────────
         this.load.image('junkyard-morning', 'assets/images/junkyard/junkyard-morning.png')
         this.load.image('junkyard-noon', 'assets/images/junkyard/junkyard-noon.png')
@@ -124,6 +124,22 @@ export default class PreloadScene extends Phaser.Scene {
         // ─── Secret Base ───────────────────────────────
         this.load.image('secretbase-bg', 'assets/images/secretbase-bg.png')
         this.load.image('armor-still', 'assets/images/armor-still.png')
+
+
+        // ─── Dialog Portraits ──────────────────────────
+        this.load.image('dialog-king', 'assets/images/dialog/King_dialog.png')
+        this.load.image('dialog-player', 'assets/images/dialog/Player_dialog.png')
+        this.load.image('dialog-trader', 'assets/images/dialog/Trader_dialog.png')
+        this.load.image('dialog-luvaza', 'assets/images/dialog/Luvaza_dialog.png')
+        this.load.image('dialog-parkcleaner', 'assets/images/dialog/ParkCleaner_dialog.png')
+
+        // ─── King Expressions ──────────────────────────
+        this.load.image('dialog-king-neutral', 'assets/images/dialog/King/Neutral.png')
+        this.load.image('dialog-king-serious', 'assets/images/dialog/King/Serious.png')
+        this.load.image('dialog-king-angry', 'assets/images/dialog/King/Angry.png')
+        this.load.image('dialog-king-surprised', 'assets/images/dialog/King/Surprised.png')
+        this.load.image('dialog-king-suspicious', 'assets/images/dialog/King/Suspicious.png')
+
 
         // ─── Add any other assets here ─────────────────
         // this.load.image('player', 'assets/images/player.png')

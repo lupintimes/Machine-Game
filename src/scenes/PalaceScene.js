@@ -8,6 +8,7 @@ export default class PalaceScene extends Phaser.Scene {
 
     preload() {
         this.load.image('palace-bg', 'assets/images/palace-bg.png')
+        this.load.image('palace-bg', 'assets/images/King.png')
     }
 
     create() {
