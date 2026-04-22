@@ -65,52 +65,62 @@ export default class DialogBox {
     // ═══════════════════════════════════════════════════
 
     showPortrait(name, expression) {
-        // ─── Get the right image key ───────────────────
-        let imageKey = null
+    let imageKey = null
 
-        if (expression && this.expressionMap[name] && this.expressionMap[name][expression]) {
-            imageKey = this.expressionMap[name][expression]
-        } else if (this.defaultPortrait[name]) {
-            imageKey = this.defaultPortrait[name]
+    // ─── Try expression first ──────────────────────
+    if (expression && this.expressionMap[name] && this.expressionMap[name][expression]) {
+        const expKey = this.expressionMap[name][expression]
+        // ─── Only use if texture actually exists ───
+        if (this.scene.textures.exists(expKey)) {
+            imageKey = expKey
         }
-
-        if (!imageKey) return
-
-        // ─── Same portrait, skip ───────────────────────
-        if (this.lastPortraitKey === imageKey && this.portrait) return
-
-        this.hidePortrait()
-        this.lastPortraitKey = imageKey
-
-        if (!this.scene.textures.exists(imageKey)) return
-
-        const W = this.scene.cameras.main.width
-        const H = this.scene.cameras.main.height
-
-        // ─── Player = LEFT, others = RIGHT ─────────────
-        const isLeftSide = this.leftSideCharacters.includes(name)
-        const posX = isLeftSide ? 371 : W - 371
-        const posY = H - 403
-
-        this.portrait = this.scene.add.image(posX, posY, imageKey)
-            .setScale(0.75)
-            .setDepth(99)
-            .setScrollFactor(0)
-            .setAlpha(0)
-
-        // ─── Flip player to face right ─────────────────
-        if (isLeftSide) {
-            this.portrait.setFlipX(true)
-        }
-
-        this.scene.tweens.add({
-            targets: this.portrait,
-            alpha: 1,
-            y: posY - 10,
-            duration: 200,
-            ease: 'Sine.easeOut'
-        })
     }
+
+    // ─── Fall back to default if expression failed ─
+    if (!imageKey && this.defaultPortrait[name]) {
+        const defaultKey = this.defaultPortrait[name]
+        if (this.scene.textures.exists(defaultKey)) {
+            imageKey = defaultKey
+        }
+    }
+
+    // ─── Nothing found, hide portrait ─────────────
+    if (!imageKey) {
+        this.hidePortrait()
+        return
+    }
+
+    // ─── Same portrait already showing, skip ───────
+    if (this.lastPortraitKey === imageKey && this.portrait) return
+
+    this.hidePortrait()
+    this.lastPortraitKey = imageKey
+
+    const W = this.scene.cameras.main.width
+    const H = this.scene.cameras.main.height
+
+    const isLeftSide = this.leftSideCharacters.includes(name)
+    const posX = isLeftSide ? 371 : W - 371
+    const posY = H - 403
+
+    this.portrait = this.scene.add.image(posX, posY, imageKey)
+        .setScale(0.75)
+        .setDepth(99)
+        .setScrollFactor(0)
+        .setAlpha(0)
+
+    if (isLeftSide) {
+        this.portrait.setFlipX(true)
+    }
+
+    this.scene.tweens.add({
+        targets: this.portrait,
+        alpha: 1,
+        y: posY - 10,
+        duration: 200,
+        ease: 'Sine.easeOut'
+    })
+}
 
     hidePortrait() {
         if (this.portrait) {
