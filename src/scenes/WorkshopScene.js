@@ -8,6 +8,7 @@ export default class WorkshopScene extends Phaser.Scene {
 
     preload() {
         this.load.image('workshop-bg', 'assets/images/workshop-bg.png')
+        this.load.image('e-key', 'assets/images/ui/E_key.png')
     }
 
     create() {
@@ -44,7 +45,7 @@ export default class WorkshopScene extends Phaser.Scene {
         this.stations = [
             {
                 rect: this.add.rectangle(820, 800, 700, 600, 0x8b4513)
-                    .setDepth(1).setAlpha(0.3),
+                    .setDepth(1).setAlpha(0),
                 label: this.add.text(720, 500, '🔧 Hardware Bench', {
                     fontSize: '22px', fill: '#fff'
                 }).setDepth(2),
@@ -55,7 +56,7 @@ export default class WorkshopScene extends Phaser.Scene {
             },
             {
                 rect: this.add.rectangle(1930, 800, 700, 600, 0x555577)
-                    .setDepth(1).setAlpha(0.3),
+                    .setDepth(1).setAlpha(0),
                 label: this.add.text(1830, 500, '⚡ Electrical Bench', {
                     fontSize: '22px', fill: '#fff'
                 }).setDepth(2),
@@ -66,7 +67,7 @@ export default class WorkshopScene extends Phaser.Scene {
             },
             {
                 rect: this.add.rectangle(3250, 800, 1200, 600, 0x9b59b6)
-                    .setDepth(1).setAlpha(0.3),
+                    .setDepth(1).setAlpha(0),
                 label: this.add.text(3100, 500, '🔮 Magical Bench', {
                     fontSize: '22px', fill: '#fff'
                 }).setDepth(2),
@@ -88,12 +89,12 @@ export default class WorkshopScene extends Phaser.Scene {
         }
 
         // ─── Interact hint ─────────────────────────────
-        this.interactHint = this.add.text(0, 0, 'Press E to interact', {
-            fontSize: '20px',
-            fill: '#ffff00',
-            backgroundColor: '#000000',
-            padding: { x: 8, y: 4 }
-        }).setDepth(20).setVisible(false)
+        this.interactHint = this.add.image(0, 0, 'e-key')
+            .setScale(0.5)
+            .setDepth(20)
+            .setVisible(false)
+
+        
 
         // ─── Player ────────────────────────────────────
         this.player = this.physics.add.image(400, 850)
@@ -204,24 +205,28 @@ export default class WorkshopScene extends Phaser.Scene {
         // ─── Station proximity ─────────────────────────
         this.nearStation = null
 
-        this.stations.forEach(station => {
-            const dist = Phaser.Math.Distance.Between(
-                this.player.x, this.player.y,
-                station.rect.x, station.rect.y
-            )
+                this.stations.forEach(station => {
+            const r = station.rect
+            const left = r.x - r.width / 2
+            const right = r.x + r.width / 2 -200
+            const top = r.y - r.height / 2
+            const bottom = r.y + r.height / 2 -200
 
-            if (dist < 200) {
+            const inside = this.player.x > left &&
+                           this.player.x < right &&
+                           this.player.y > top &&
+                           this.player.y < bottom
+
+            if (inside) {
                 this.nearStation = station
                 this.interactHint.setVisible(true)
                 this.interactHint.setPosition(
-                    station.rect.x - 80,
-                    station.rect.y - 350
+                    r.x,
+                    top + 30
                 )
                 station.rect.setStrokeStyle(3, station.locked ? 0xff0000 : 0xffff00)
-                if (!station.locked) station.rect.setAlpha(0.5)
             } else {
                 station.rect.setStrokeStyle(0)
-                station.rect.setAlpha(station.locked ? 0.15 : 0.3)
             }
         })
 
