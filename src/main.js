@@ -13,6 +13,7 @@ import CutsceneScene from './scenes/CutsceneScene.js'
 import EnemyScene from './scenes/EnemyScene.js'
 import EnergyCalibrationGame from './scenes/minigames/EnergyCalibrationGame.js'
 import Level3PalaceScene from './scenes/Level3PalaceScene.js'
+import CoreAssemblyGame from './scenes/minigames/CoreAssemblyGame.js'
 
 window.GameState = GameState
 
@@ -47,6 +48,7 @@ const config = {
         EnemyScene,
         WireConnectGame,
         PressureValveGame,
+        CoreAssemblyGame,
         EnergyCalibrationGame,
     ]
 }

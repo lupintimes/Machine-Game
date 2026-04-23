@@ -39,6 +39,14 @@ export default class SecretBaseScene extends Phaser.Scene {
         this.cutsceneItems = []
         this.minigameItems = []
 
+        this.events.on('resume', () => {
+            this.updateBackground()
+            if (this.ui) this.ui.updateStats()
+            this.time.delayedCall(100, () => {
+                this.showBaseMenu()
+            })
+        })
+
         // ─── Delay then show intro ─────────────────────
         this.time.delayedCall(100, () => {
             if (!GameState.getFlag('secretBaseIntroSeen')) {
@@ -53,31 +61,16 @@ export default class SecretBaseScene extends Phaser.Scene {
                     { name: 'Trader', text: 'But you bought that core. You understand machines.' },
                     { name: 'You', text: 'You think I can make it work?' },
                     { name: 'Trader', text: 'I don\'t think. I know.' },
-                    { name: 'Trader', text: 'First things first — install that power core.' },
-                    { name: 'Trader', text: 'Drag it into the chest cavity and connect the wires.' },
-                    { name: '', text: 'Install the power core to begin.' }
+                    { name: 'Trader', text: 'Use the assembly bench when you\'re ready.' },
+                    { name: '', text: 'Use the menu to install the core and build parts.' }
                 ], () => {
                     GameState.setFlag('secretBaseIntroSeen')
-                    if (!GameState.getFlag('coreInstalled')) {
-                        this.startCoreInstallation()
-                    } else {
-                        this.showBaseMenu()
-                    }
+                    this.showBaseMenu()
                 })
-            } else if (!GameState.getFlag('coreInstalled') && GameState.getFlag('boughtCore')) {
-                this.dialog.show([
-                    { name: 'Trader', text: 'The armor still needs its core.' },
-                    { name: 'Trader', text: 'You\'ve got it with you. Let\'s get it installed.' }
-                ], () => {
-                    this.startCoreInstallation()
-                })
-
-                // ─── CHANGED: Only reveal after trader CALLED about it ─
             } else if (GameState.getFlag('traderCalledArmor') &&
                 GameState.getFlag('traderFinishing') &&
                 !GameState.getFlag('armorRevealSeen')) {
                 this.showTraderFinishedDialog()
-
             } else {
                 this.showBaseMenu()
             }
@@ -97,20 +90,20 @@ export default class SecretBaseScene extends Phaser.Scene {
     // ═══════════════════════════════════════════════════
 
     getArmorBackground() {
-    if (GameState.getFlag('armorRevealSeen')) {
-        return 'armor-ready'
+        if (GameState.getFlag('armorRevealSeen')) {
+            return 'armor-ready'
+        }
+        if (GameState.getFlag('armorHeadFixed')) {
+            return 'armor-head'
+        }
+        if (GameState.getFlag('armorLimbsInstalled')) {
+            return 'armor-nohead'
+        }
+        if (GameState.getFlag('coreInstalled')) {
+            return 'armor-core'
+        }
+        return 'armor-nocore'
     }
-    if (GameState.getFlag('armorHeadFixed')) {
-        return 'armor-head'
-    }
-    if (GameState.getFlag('armorLimbsInstalled')) {
-        return 'armor-nohead'
-    }
-    if (GameState.getFlag('coreInstalled')) {
-        return 'armor-core'
-    }
-    return 'armor-nocore'
-}
 
     // ═══════════════════════════════════════════════════
     // ─── Background Swap with Animation ────────────────
@@ -689,9 +682,13 @@ export default class SecretBaseScene extends Phaser.Scene {
 
         // ─── Install Core (if not done) ────────────────
         if (!GameState.getFlag('coreInstalled') && GameState.getFlag('boughtCore')) {
-            this.createMenuButton(W / 2 - 400, H - 150, '⚡ Install Core', () => {
+            this.createMenuButton(W / 2 - 400, H - 220, '⚡ Core Assembly', () => {
+                console.log('Button clicked')
+                console.log('Scene manager scenes:', this.scene.manager.keys)
+                console.log('CoreAssemblyGame exists:', this.scene.get('CoreAssemblyGame'))
                 this.closeBaseMenu()
-                this.startCoreInstallation()
+                this.scene.pause('SecretBaseScene')
+                this.scene.launch('CoreAssemblyGame')
             })
         } else {
             const canAssemble = this.getAvailableParts().length > 0
@@ -699,6 +696,15 @@ export default class SecretBaseScene extends Phaser.Scene {
                 this.closeBaseMenu()
                 this.showAssemblyMenu()
             }, !canAssemble)
+
+            // ─── Core Assembly Minigame ────────────────
+            if (GameState.getFlag('coreInstalled')) {
+                this.createMenuButton(W / 2 - 400, H - 220, '⚡ Core Assembly', () => {
+                    this.closeBaseMenu()
+                    this.scene.pause('SecretBaseScene')
+                    this.scene.launch('CoreAssemblyGame')
+                })
+            }
         }
 
         // ─── Inspect Armor ─────────────────────────────
