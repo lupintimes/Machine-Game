@@ -8,7 +8,9 @@ export default class WorkshopScene extends Phaser.Scene {
 
     preload() {
         this.load.image('workshop-bg', 'assets/images/workshop-bg.png')
+        this.load.image('lock-key', 'assets/images/ui/lock_key.png')
         this.load.image('e-key', 'assets/images/ui/E_key.png')
+        this.load.image('lock-overlay', 'assets/images/ui/electric_bench_locked.png')
     }
 
     create() {
@@ -79,8 +81,19 @@ export default class WorkshopScene extends Phaser.Scene {
         ]
 
         // ─── Lock visual on electrical ─────────────────
+        // ─── Lock visual on electrical ─────────────────
         if (this.stations[1].locked) {
-            this.stations[1].rect.setAlpha(0.15)
+            this.stations[1].rect.setAlpha(0)
+
+            // Same scale as background
+            const bgScale = this.bg.scaleX
+
+            this.stations[1].lockOverlay = this.add.image(1858, 730.00, 'lock-overlay')
+                .setOrigin(0.5, 0.5)
+                .setScale(bgScale)
+                .setDepth(2)
+                .setAlpha(0.8)
+
             this.stations[1].lockLabel = this.add.text(
                 1830, 550, '🔒 Need 5 repair skill', {
                 fontSize: '18px',
@@ -94,7 +107,7 @@ export default class WorkshopScene extends Phaser.Scene {
             .setDepth(20)
             .setVisible(false)
 
-        
+
 
         // ─── Player ────────────────────────────────────
         this.player = this.physics.add.image(400, 850)
@@ -174,18 +187,14 @@ export default class WorkshopScene extends Phaser.Scene {
         // ─── Electrical bench unlock (one time) ────────
         if (this.stations[1].locked && GameState.getFlag('electricalUnlocked')) {
             this.stations[1].locked = false
-            this.stations[1].rect.setAlpha(0.3)
+            this.stations[1].rect.setAlpha(0)
+            if (this.stations[1].lockOverlay) {
+                this.stations[1].lockOverlay.destroy()
+                this.stations[1].lockOverlay = null
+            }
             if (this.stations[1].lockLabel) {
                 this.stations[1].lockLabel.destroy()
                 this.stations[1].lockLabel = null
-            }
-            if (!GameState.getFlag('electricalUnlockShown')) {
-                GameState.setFlag('electricalUnlockShown')
-                this.dialog.show([
-                    { name: 'You', text: '⚡ My repair skills are good enough now!' },
-                    { name: 'You', text: 'I can work on the Electrical Bench!' }
-                ])
-                return
             }
         }
 
@@ -205,24 +214,25 @@ export default class WorkshopScene extends Phaser.Scene {
         // ─── Station proximity ─────────────────────────
         this.nearStation = null
 
-                this.stations.forEach(station => {
+        this.stations.forEach(station => {
             const r = station.rect
             const left = r.x - r.width / 2
-            const right = r.x + r.width / 2 -200
+            const right = r.x + r.width / 2
             const top = r.y - r.height / 2
-            const bottom = r.y + r.height / 2 -200
+            const bottom = r.y + r.height / 2
 
             const inside = this.player.x > left &&
-                           this.player.x < right &&
-                           this.player.y > top &&
-                           this.player.y < bottom
+                this.player.x < right &&
+                this.player.y > top &&
+                this.player.y < bottom
 
             if (inside) {
                 this.nearStation = station
+                this.interactHint.setTexture(station.locked ? 'lock-key' : 'e-key')
                 this.interactHint.setVisible(true)
                 this.interactHint.setPosition(
-                    r.x,
-                    top + 30
+                    r.x + 220,
+                    top + 120
                 )
                 station.rect.setStrokeStyle(3, station.locked ? 0xff0000 : 0xffff00)
             } else {
