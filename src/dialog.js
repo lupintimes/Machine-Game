@@ -29,30 +29,59 @@ export default class DialogBox {
 
         // ─── Default portraits (no expression) ─────────
         this.defaultPortrait = {
-            'King':               'dialog-king-neutral',
-            'You':                'dialog-player-neutral',
-            'Luvaza':             'dialog-luvaza',
-            'Trader':             'dialog-trader',
-            'Park Cleaner':       'dialog-parkcleaner',
-            'Luvaza (recording)': 'dialog-luvaza'
+            'King': 'dialog-king-neutral',
+            'You': 'dialog-player-neutral',
+            'Luvaza': 'dialog-luvaza-neutral',
+            'Trader': 'dialog-trader-neutral',
+            'Park Cleaner': 'dialog-parkcleaner-neutral',
+            'Luvaza (recording)': 'dialog-luvaza-neutral'
         }
 
         // ─── Expression portraits ──────────────────────
         this.expressionMap = {
             'King': {
-                'neutral':    'dialog-king-neutral',
-                'serious':    'dialog-king-serious',
-                'angry':      'dialog-king-angry',
-                'surprised':  'dialog-king-surprised',
+                'neutral': 'dialog-king-neutral',
+                'serious': 'dialog-king-serious',
+                'angry': 'dialog-king-angry',
+                'surprised': 'dialog-king-surprised',
                 'suspicious': 'dialog-king-suspicious'
             },
             'You': {
-                'neutral':    'dialog-player-neutral',
-                'serious':    'dialog-player-serious',
-                'angry':      'dialog-player-angry',
-                'surprised':  'dialog-player-surprised',
+                'neutral': 'dialog-player-neutral',
+                'serious': 'dialog-player-serious',
+                'angry': 'dialog-player-angry',
+                'surprised': 'dialog-player-surprised',
                 'determined': 'dialog-player-determined',
-                'sad':        'dialog-player-sad'
+                'sad': 'dialog-player-sad'
+            },
+            'Luvaza': {
+                'neutral': 'dialog-luvaza-neutral',
+                'happy': 'dialog-luvaza-happy',
+                'sad': 'dialog-luvaza-sad',
+                'worried': 'dialog-luvaza-worried',
+                'surprised': 'dialog-luvaza-surprised',
+                'serious': 'dialog-luvaza-serious'
+            },
+            'Luvaza (recording)': {
+                'neutral': 'dialog-luvaza-neutral',
+                'happy': 'dialog-luvaza-happy',
+                'sad': 'dialog-luvaza-sad',
+                'worried': 'dialog-luvaza-worried',
+                'surprised': 'dialog-luvaza-surprised',
+                'serious': 'dialog-luvaza-serious'
+            },
+            'Trader': {
+                'neutral': 'dialog-trader-neutral',
+                'suspicious': 'dialog-trader-suspicious',
+                'serious': 'dialog-trader-serious',
+                'surprised': 'dialog-trader-surprised',
+                'smug': 'dialog-trader-smug'
+            },
+            'Park Cleaner': {
+                'neutral': 'dialog-parkcleaner-neutral',
+                'worried': 'dialog-parkcleaner-worried',
+                'serious': 'dialog-parkcleaner-serious',
+                'surprised': 'dialog-parkcleaner-surprised'
             }
         }
 
@@ -65,62 +94,62 @@ export default class DialogBox {
     // ═══════════════════════════════════════════════════
 
     showPortrait(name, expression) {
-    let imageKey = null
+        let imageKey = null
 
-    // ─── Try expression first ──────────────────────
-    if (expression && this.expressionMap[name] && this.expressionMap[name][expression]) {
-        const expKey = this.expressionMap[name][expression]
-        // ─── Only use if texture actually exists ───
-        if (this.scene.textures.exists(expKey)) {
-            imageKey = expKey
+        // ─── Try expression first ──────────────────────
+        if (expression && this.expressionMap[name] && this.expressionMap[name][expression]) {
+            const expKey = this.expressionMap[name][expression]
+            // ─── Only use if texture actually exists ───
+            if (this.scene.textures.exists(expKey)) {
+                imageKey = expKey
+            }
         }
-    }
 
-    // ─── Fall back to default if expression failed ─
-    if (!imageKey && this.defaultPortrait[name]) {
-        const defaultKey = this.defaultPortrait[name]
-        if (this.scene.textures.exists(defaultKey)) {
-            imageKey = defaultKey
+        // ─── Fall back to default if expression failed ─
+        if (!imageKey && this.defaultPortrait[name]) {
+            const defaultKey = this.defaultPortrait[name]
+            if (this.scene.textures.exists(defaultKey)) {
+                imageKey = defaultKey
+            }
         }
-    }
 
-    // ─── Nothing found, hide portrait ─────────────
-    if (!imageKey) {
+        // ─── Nothing found, hide portrait ─────────────
+        if (!imageKey) {
+            this.hidePortrait()
+            return
+        }
+
+        // ─── Same portrait already showing, skip ───────
+        if (this.lastPortraitKey === imageKey && this.portrait) return
+
         this.hidePortrait()
-        return
+        this.lastPortraitKey = imageKey
+
+        const W = this.scene.cameras.main.width
+        const H = this.scene.cameras.main.height
+
+        const isLeftSide = this.leftSideCharacters.includes(name)
+        const posX = isLeftSide ? 371 : W - 371
+        const posY = H - 403
+
+        this.portrait = this.scene.add.image(posX, posY, imageKey)
+            .setScale(0.75)
+            .setDepth(99)
+            .setScrollFactor(0)
+            .setAlpha(0)
+
+        if (isLeftSide) {
+            this.portrait.setFlipX(true)
+        }
+
+        this.scene.tweens.add({
+            targets: this.portrait,
+            alpha: 1,
+            y: posY - 10,
+            duration: 200,
+            ease: 'Sine.easeOut'
+        })
     }
-
-    // ─── Same portrait already showing, skip ───────
-    if (this.lastPortraitKey === imageKey && this.portrait) return
-
-    this.hidePortrait()
-    this.lastPortraitKey = imageKey
-
-    const W = this.scene.cameras.main.width
-    const H = this.scene.cameras.main.height
-
-    const isLeftSide = this.leftSideCharacters.includes(name)
-    const posX = isLeftSide ? 371 : W - 371
-    const posY = H - 403
-
-    this.portrait = this.scene.add.image(posX, posY, imageKey)
-        .setScale(0.75)
-        .setDepth(99)
-        .setScrollFactor(0)
-        .setAlpha(0)
-
-    if (isLeftSide) {
-        this.portrait.setFlipX(true)
-    }
-
-    this.scene.tweens.add({
-        targets: this.portrait,
-        alpha: 1,
-        y: posY - 10,
-        duration: 200,
-        ease: 'Sine.easeOut'
-    })
-}
 
     hidePortrait() {
         if (this.portrait) {
@@ -325,11 +354,11 @@ export default class DialogBox {
         if (!line) return
 
         const nameColors = {
-            'You':                '#00ff88',
-            'Luvaza':             '#ff69b4',
-            'King':               '#ffdd00',
-            'Trader':             '#ff8800',
-            'Park Cleaner':       '#44ff44',
+            'You': '#00ff88',
+            'Luvaza': '#ff69b4',
+            'King': '#ffdd00',
+            'Trader': '#ff8800',
+            'Park Cleaner': '#44ff44',
             'Luvaza (recording)': '#ff69b4'
         }
 
@@ -459,11 +488,11 @@ export default class DialogBox {
         const recentHistory = this.history.slice(startIndex)
 
         const nameColors = {
-            'You':                '#00ff88',
-            'Luvaza':             '#ff69b4',
-            'King':               '#ffdd00',
-            'Trader':             '#ff8800',
-            'Park Cleaner':       '#44ff44',
+            'You': '#00ff88',
+            'Luvaza': '#ff69b4',
+            'King': '#ffdd00',
+            'Trader': '#ff8800',
+            'Park Cleaner': '#44ff44',
             'Luvaza (recording)': '#ff69b4'
         }
 

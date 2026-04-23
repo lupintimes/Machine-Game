@@ -110,27 +110,41 @@ export default class PreloadScene extends Phaser.Scene {
         this.load.image('armor-still', 'assets/images/armor-still.png')
 
 
-        // ─── Dialog Portraits ──────────────────────────
-        this.load.image('dialog-king', 'assets/images/dialog/King_dialog.png')
-        this.load.image('dialog-player', 'assets/images/dialog/Player_dialog.png')
-        this.load.image('dialog-trader', 'assets/images/dialog/Trader_dialog.png')
-        this.load.image('dialog-luvaza', 'assets/images/dialog/Luvaza_dialog.png')
-        this.load.image('dialog-parkcleaner', 'assets/images/dialog/ParkCleaner_dialog.png')
+        // ─── Luvaza ────────────────────────────────────
+        this.load.image('dialog-luvaza-neutral', 'assets/images/dialog/Luvaza/Neutral.png')
+        this.load.image('dialog-luvaza-happy', 'assets/images/dialog/Luvaza/Happy.png')
+        this.load.image('dialog-luvaza-sad', 'assets/images/dialog/Luvaza/Sad.png')
+        this.load.image('dialog-luvaza-worried', 'assets/images/dialog/Luvaza/Worried.png')
+        this.load.image('dialog-luvaza-surprised', 'assets/images/dialog/Luvaza/Surprised.png')
+        this.load.image('dialog-luvaza-serious', 'assets/images/dialog/Luvaza/Serious.png')
+
+        // ─── Trader ────────────────────────────────────
+        this.load.image('dialog-trader-neutral', 'assets/images/dialog/Trader/Neutral.png')
+        this.load.image('dialog-trader-suspicious', 'assets/images/dialog/Trader/Suspicious.png')
+        this.load.image('dialog-trader-serious', 'assets/images/dialog/Trader/Serious.png')
+        this.load.image('dialog-trader-surprised', 'assets/images/dialog/Trader/Surprised.png')
+        this.load.image('dialog-trader-smug', 'assets/images/dialog/Trader/Smug.png')
+
+        // ─── Park Cleaner ──────────────────────────────
+        this.load.image('dialog-parkcleaner-neutral', 'assets/images/dialog/ParkCleaner/Neutral.png')
+        this.load.image('dialog-parkcleaner-worried', 'assets/images/dialog/ParkCleaner/Worried.png')
+        this.load.image('dialog-parkcleaner-serious', 'assets/images/dialog/ParkCleaner/Serious.png')
+        this.load.image('dialog-parkcleaner-surprised', 'assets/images/dialog/ParkCleaner/Surprised.png')
 
         // ─── King Expressions ──────────────────────────
-        this.load.image('dialog-king-neutral',    'assets/images/dialog/king/Neutral.png')
-        this.load.image('dialog-king-serious',    'assets/images/dialog/king/Serious.png')
-        this.load.image('dialog-king-angry',      'assets/images/dialog/king/Angry.png')
-        this.load.image('dialog-king-surprised',  'assets/images/dialog/king/Surprised.png')
+        this.load.image('dialog-king-neutral', 'assets/images/dialog/king/Neutral.png')
+        this.load.image('dialog-king-serious', 'assets/images/dialog/king/Serious.png')
+        this.load.image('dialog-king-angry', 'assets/images/dialog/king/Angry.png')
+        this.load.image('dialog-king-surprised', 'assets/images/dialog/king/Surprised.png')
         this.load.image('dialog-king-suspicious', 'assets/images/dialog/king/Suspicious.png')
 
         // ─── Player Expressions ────────────────────────
-        this.load.image('dialog-player-neutral',    'assets/images/dialog/Player/Neutral.png')
-        this.load.image('dialog-player-serious',    'assets/images/dialog/Player/Serious.png')
-        this.load.image('dialog-player-angry',      'assets/images/dialog/Player/Angry.png')
-        this.load.image('dialog-player-surprised',  'assets/images/dialog/Player/Surprised.png')
+        this.load.image('dialog-player-neutral', 'assets/images/dialog/Player/Neutral.png')
+        this.load.image('dialog-player-serious', 'assets/images/dialog/Player/Serious.png')
+        this.load.image('dialog-player-angry', 'assets/images/dialog/Player/Angry.png')
+        this.load.image('dialog-player-surprised', 'assets/images/dialog/Player/Surprised.png')
         this.load.image('dialog-player-determined', 'assets/images/dialog/Player/Smirk.png')
-        this.load.image('dialog-player-sad',        'assets/images/dialog/Player/Sad.png')
+        this.load.image('dialog-player-sad', 'assets/images/dialog/Player/Sad.png')
 
 
         // ─── Add any other assets here ─────────────────
