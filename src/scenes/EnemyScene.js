@@ -50,6 +50,8 @@ export default class EnemyScene extends Phaser.Scene {
         this.physics.world.setBounds(0, 0, worldWidth, H)
         this.worldWidth = worldWidth
 
+        this.cameras.main.fadeIn(300, 0, 0, 0)
+
 
         // Prevent main camera from rendering the viewer objects if they exist
         this.events.on('update', () => {
@@ -68,6 +70,12 @@ export default class EnemyScene extends Phaser.Scene {
         this.ui.create()
         this.dialog = new DialogBox(this)
         this.spaceKey = this.input.keyboard.addKey('SPACE')
+
+        // ─── Shutdown cleanup ──────────────────────────
+        this.events.on('shutdown', () => {
+            if (this.ui) this.ui.destroy()
+            this.closeEnemyBaseViewer()
+        })
 
         // ─── Animations FIRST (so enemies can play on spawn) ─
         this.createAnimations()

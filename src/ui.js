@@ -484,9 +484,9 @@ export default class UI {
     }
 
     hideInvTooltip() {
-        if (this.invTooltipBg) this.invTooltipBg.setAlpha(0)
-        if (this.invTooltipName) this.invTooltipName.setAlpha(0)
-        if (this.invTooltipDesc) this.invTooltipDesc.setAlpha(0)
+        if (this.invTooltipBg) { this.invTooltipBg.destroy(); this.invTooltipBg = null }
+        if (this.invTooltipName) { this.invTooltipName.destroy(); this.invTooltipName = null }
+        if (this.invTooltipDesc) { this.invTooltipDesc.destroy(); this.invTooltipDesc = null }
     }
 
     hideInventory() {

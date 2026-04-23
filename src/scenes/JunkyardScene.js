@@ -40,8 +40,10 @@ export default class JunkyardScene extends Phaser.Scene {
         const scaleY = H / this.bg.height
         this.bg.setScale(scaleY)
 
+        this.cameras.main.fadeIn(300, 0, 0, 0)
+
         // ─── Scene Title ───────────────────────────────
-        this.add.text(W / 2, 50, '🗑️ Junkyard', {
+        this.add.text(W / 2, 70, '🗑️ Junkyard', {
             fontSize: '28px',
             fill: '#fff'
         }).setOrigin(0.5).setScrollFactor(0).setDepth(20)

@@ -40,6 +40,11 @@ export default class Level3PalaceScene extends Phaser.Scene {
         this.spaceKey = this.input.keyboard.addKey('SPACE')
         this.cutsceneItems = []
 
+        // ─── Shutdown cleanup ──────────────────────────
+        this.events.on('shutdown', () => {
+            if (this.ui) this.ui.destroy()
+        })
+
         this.startArrivalSequence()
     }
 

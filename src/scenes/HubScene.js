@@ -23,6 +23,9 @@ export default class HubScene extends Phaser.Scene {
         this.ui = new UI(this)
         this.ui.create()
 
+        // ─── Shutdown cleanup ──────────────────────────
+        this.events.on('shutdown', () => { if (this.ui) this.ui.destroy() })
+
         if (!GameState.getFlag('introSeen')) {
             this.scene.start('CutsceneScene', {
                 key: 'gameIntro',
@@ -37,6 +40,8 @@ export default class HubScene extends Phaser.Scene {
         const scaleY = H / this.bg.height
         this.bg.setScale(Math.max(scaleX, scaleY))
         this.bg.setDepth(0)
+
+        this.cameras.main.fadeIn(300, 0, 0, 0)
 
         this.locations = []
 

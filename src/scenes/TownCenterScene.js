@@ -33,11 +33,18 @@ export default class TownCenterScene extends Phaser.Scene {
             .setDisplaySize(W, H)
             .setDepth(0)
 
+        this.cameras.main.fadeIn(300, 0, 0, 0)
+
         this.dialog = new DialogBox(this)
         this.spaceKey = this.input.keyboard.addKey('SPACE')
         this.menuActive = false
         this.menuItems = []
         this.buildings = []
+
+        // ─── Shutdown cleanup ──────────────────────────
+        this.events.on('shutdown', () => {
+            if (this.ui) this.ui.destroy()
+        })
 
         if (!GameState.rebuiltBuildings) GameState.rebuiltBuildings = []
 

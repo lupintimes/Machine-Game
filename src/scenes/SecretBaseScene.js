@@ -24,6 +24,8 @@ export default class SecretBaseScene extends Phaser.Scene {
             .setDisplaySize(W, H)
             .setDepth(-10)
 
+        this.cameras.main.fadeIn(300, 0, 0, 0)
+
         // ─── UI ────────────────────────────────────────
         this.ui = new UI(this)
         this.ui.create()
@@ -38,6 +40,11 @@ export default class SecretBaseScene extends Phaser.Scene {
         this.testItems = []
         this.cutsceneItems = []
         this.minigameItems = []
+
+        // ─── Shutdown cleanup ──────────────────────────
+        this.events.on('shutdown', () => {
+            if (this.ui) this.ui.destroy()
+        })
 
         this.events.on('resume', () => {
             this.updateBackground()

@@ -43,6 +43,8 @@ export default class WorkshopScene extends Phaser.Scene {
         this.physics.world.setBounds(0, 0, scaledWidth, H)
         this.cameras.main.setBounds(0, 0, scaledWidth, H)
 
+        this.cameras.main.fadeIn(300, 0, 0, 0)
+
         // ─── Stations ──────────────────────────────────
         this.stations = [
             {
@@ -249,8 +251,6 @@ export default class WorkshopScene extends Phaser.Scene {
             this.onInteract(this.nearStation)
         }
 
-
-        this.ui.updateStats()
     }
 
     // ═══════════════════════════════════════════════════

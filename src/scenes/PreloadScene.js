@@ -99,27 +99,11 @@ export default class PreloadScene extends Phaser.Scene {
         this.load.image('tasks-icon', 'assets/images/icons/tasks.png')
         this.load.image('hub-icon', 'assets/images/icons/hub.png')
 
-
         // ─── Hub ───────────────────────────────────────
         this.load.image('hub-bg', 'assets/images/hub-bg.png')
 
-        // ─── Workshop ──────────────────────────────────
+        // ─── Workshop (single) ─────────────────────────
         this.load.image('workshop-bg', 'assets/images/workshop-bg.png')
-
-        // ─── Junkyard (time-based) ─────────────────────
-        this.load.image('junkyard-morning', 'assets/images/junkyard/junkyard-morning.png')
-        this.load.image('junkyard-noon', 'assets/images/junkyard/junkyard-noon.png')
-        this.load.image('junkyard-evening', 'assets/images/junkyard/junkyard-evening.png')
-        this.load.image('junkyard-night', 'assets/images/junkyard/junkyard-night.png')
-
-        // ─── Palace ────────────────────────────────────
-        this.load.image('palace-bg', 'assets/images/palace-bg.png')
-
-        // ─── Town Center ───────────────────────────────
-        this.load.image('towncenter-bg', 'assets/images/towncenter-bg.png')
-
-        // ─── Park ──────────────────────────────────────
-        this.load.image('park-bg', 'assets/images/park-bg.png')
 
         // ─── Secret Base ───────────────────────────────
         this.load.image('secretbase-bg', 'assets/images/secretbase-bg.png')
@@ -134,19 +118,19 @@ export default class PreloadScene extends Phaser.Scene {
         this.load.image('dialog-parkcleaner', 'assets/images/dialog/ParkCleaner_dialog.png')
 
         // ─── King Expressions ──────────────────────────
-        this.load.image('dialog-king-neutral', 'assets/images/dialog/King/Neutral.png')
-        this.load.image('dialog-king-serious', 'assets/images/dialog/King/Serious.png')
-        this.load.image('dialog-king-angry', 'assets/images/dialog/King/Angry.png')
-        this.load.image('dialog-king-surprised', 'assets/images/dialog/King/Surprised.png')
-        this.load.image('dialog-king-suspicious', 'assets/images/dialog/King/Suspicious.png')
+        this.load.image('dialog-king-neutral',    'assets/images/dialog/king/Neutral.png')
+        this.load.image('dialog-king-serious',    'assets/images/dialog/king/Serious.png')
+        this.load.image('dialog-king-angry',      'assets/images/dialog/king/Angry.png')
+        this.load.image('dialog-king-surprised',  'assets/images/dialog/king/Surprised.png')
+        this.load.image('dialog-king-suspicious', 'assets/images/dialog/king/Suspicious.png')
 
         // ─── Player Expressions ────────────────────────
-        this.load.image('dialog-player-neutral', 'assets/images/dialog/Player/Neutral.png')
-        this.load.image('dialog-player-serious', 'assets/images/dialog/Player/Serious.png')
-        this.load.image('dialog-player-angry', 'assets/images/dialog/Player/Angry.png')
-        this.load.image('dialog-player-surprised', 'assets/images/dialog/Player/Surprised.png')
-        this.load.image('dialog-player-determined', 'assets/images/dialog/Player/Determined.png')
-        this.load.image('dialog-player-sad', 'assets/images/dialog/Player/Sad.png')
+        this.load.image('dialog-player-neutral',    'assets/images/dialog/Player/Neutral.png')
+        this.load.image('dialog-player-serious',    'assets/images/dialog/Player/Serious.png')
+        this.load.image('dialog-player-angry',      'assets/images/dialog/Player/Angry.png')
+        this.load.image('dialog-player-surprised',  'assets/images/dialog/Player/Surprised.png')
+        this.load.image('dialog-player-determined', 'assets/images/dialog/Player/Smirk.png')
+        this.load.image('dialog-player-sad',        'assets/images/dialog/Player/Sad.png')
 
 
         // ─── Add any other assets here ─────────────────

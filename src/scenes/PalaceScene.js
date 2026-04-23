@@ -22,10 +22,17 @@ export default class PalaceScene extends Phaser.Scene {
             .setDepth(-1)
             .setDisplaySize(W, H)
 
+        this.cameras.main.fadeIn(300, 0, 0, 0)
+
         this.dialog = new DialogBox(this)
         this.spaceKey = this.input.keyboard.addKey('SPACE')
         this.menuActive = false
         this.menuItems = []
+
+        // ─── Shutdown cleanup ──────────────────────────
+        this.events.on('shutdown', () => {
+            if (this.ui) this.ui.destroy()
+        })
 
         if (!GameState.getFlag('metKing')) {
             this.dialog.show([

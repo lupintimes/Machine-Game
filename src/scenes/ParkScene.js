@@ -30,6 +30,8 @@ export default class ParkScene extends Phaser.Scene {
         this.physics.world.setBounds(0, 0, scaledWidth, H)
         this.cameras.main.setBounds(0, 0, scaledWidth, H)
 
+        this.cameras.main.fadeIn(300, 0, 0, 0)
+
         // ─── Debris ────────────────────────────────────
         this.add.rectangle(400, H - 100, 200, 80, 0x443322)
             .setAlpha(0.6).setDepth(1)
@@ -89,6 +91,11 @@ export default class ParkScene extends Phaser.Scene {
         this.dialog = new DialogBox(this)
         this.menuActive = false
         this.menuItems = []
+
+        // ─── Shutdown cleanup ──────────────────────────
+        this.events.on('shutdown', () => {
+            if (this.ui) this.ui.destroy()
+        })
 
         // ─── Daily tracking ────────────────────────────
         this.lastCleanedDay = -1
