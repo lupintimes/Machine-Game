@@ -125,8 +125,8 @@ export default class UI {
         // [DYNAMIC] Day tab indicator underneath (Now includes specific time name)
         const timeNames = ['Morning', 'Afternoon', 'Evening', 'Night'];
         const initTimeName = timeNames[initIdx] || 'Morning';
-        this.dayPillTab = this.scene.add.rectangle(-60, 25, 90, 20, 0x5a3a9a);
-        this.dayPillText = this.scene.add.text(-60, 25, `Day ${GameState.day} - ${initTimeName}`, {
+        this.dayPillTab = this.scene.add.rectangle(0, 25, 90, 20, 0x5a3a9a);
+        this.dayPillText = this.scene.add.text(0, 25, `Day ${GameState.day} - ${initTimeName}`, {
             fontSize: '11px', fill: '#ffffff', fontStyle: 'bold'
         }).setOrigin(0.5);
         this.timePillContainer.add(this.dayPillTab);
@@ -148,7 +148,7 @@ export default class UI {
         }).setOrigin(0.5).setDepth(52).setScrollFactor(0)
 
         // ─── Navigation Icons (Top Right) ──────────────
-        const btnY = 78
+        const btnY = 98
         const btnGap = 14
         const topMargin = 30
         let rightX = W - topMargin
