@@ -5,10 +5,12 @@
     <title>Engineer Game</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Share+Tech+Mono&family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
     <style>
         /* Hidden element to force font load before Phaser needs it */
         .font-preload { font-family: 'Fredoka', sans-serif; position: absolute; left: -9999px; }
+        .font-preload-mono { font-family: 'Share Tech Mono', monospace; position: absolute; left: -9999px; }
+        .font-preload-orbit { font-family: 'Orbitron', sans-serif; position: absolute; left: -9999px; }
     </style>
     <style>
         * {
@@ -26,8 +28,10 @@
 </head>
 <body>
     <div class="font-preload">.</div>
+    <div class="font-preload-mono">.</div>
+    <div class="font-preload-orbit">.</div>
     <div id="game-container"></div>
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.88.2/dist/phaser.min.js"></script>
     <script type="module" src="src/main.js"></script>
 </body>
 </html>
