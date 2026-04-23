@@ -177,18 +177,18 @@ export default class ParkScene extends Phaser.Scene {
     talkToParkCleaner() {
         if (!GameState.getFlag('metParkCleaner')) {
             this.dialog.show([
-                { name: 'Park Cleaner', text: 'Oh! A visitor! Not many people come to the park these days.' },
-                { name: 'You', text: 'Understandable. The whole city is in chaos.' },
-                { name: 'Park Cleaner', text: 'Haha, yeah. But someone has to clean up!' },
-                { name: 'Park Cleaner', text: 'Might as well be me. I love this park.' },
-                { name: 'You', text: 'You seem very cheerful for someone cleaning up after an attack.' },
-                { name: 'Park Cleaner', text: 'What can I say? A clean park means a happy city!' },
-                { name: 'Park Cleaner', text: 'Besides, worrying doesn\'t fix anything. Action does!' },
-                { name: 'You', text: 'Fair enough. I\'m an engineer. I\'m trying to help rebuild.' },
-                { name: 'Park Cleaner', text: 'An engineer! Perfect.' },
-                { name: 'Park Cleaner', text: 'Maybe you could help me fix the park fountain sometime?' },
-                { name: 'You', text: 'Sure. I\'d be happy to.' },
-                { name: 'Park Cleaner', text: 'Come back anytime. The park is always open!' }
+                { name: 'Park Cleaner', text: 'Oh! A visitor! Not many people come to the park these days.', expression: 'surprised' },
+                { name: 'You', text: 'Understandable. The whole city is in chaos.', expression: 'serious' },
+                { name: 'Park Cleaner', text: 'Haha, yeah. But someone has to clean up!', expression: 'neutral' },
+                { name: 'Park Cleaner', text: 'Might as well be me. I love this park.', expression: 'neutral' },
+                { name: 'You', text: 'You seem very cheerful for someone cleaning up after an attack.', expression: 'neutral' },
+                { name: 'Park Cleaner', text: 'What can I say? A clean park means a happy city!', expression: 'neutral' },
+                { name: 'Park Cleaner', text: 'Besides, worrying doesn\'t fix anything. Action does!', expression: 'serious' },
+                { name: 'You', text: 'Fair enough. I\'m an engineer. I\'m trying to help rebuild.', expression: 'neutral' },
+                { name: 'Park Cleaner', text: 'An engineer! Perfect.', expression: 'surprised' },
+                { name: 'Park Cleaner', text: 'Maybe you could help me fix the park fountain sometime?', expression: 'neutral' },
+                { name: 'You', text: 'Sure. I\'d be happy to.', expression: 'neutral' },
+                { name: 'Park Cleaner', text: 'Come back anytime. The park is always open!', expression: 'neutral' }
             ], () => {
                 GameState.setFlag('metParkCleaner')
                 this.showCleanerMenu()
@@ -300,20 +300,20 @@ export default class ParkScene extends Phaser.Scene {
             !GameState.getFlag('parkClueFound') &&
             GameState.level < 3) {
             this.dialog.show([
-                { name: 'Park Cleaner', text: 'Ah! The city engineer! How goes the rebuilding?' },
-                { name: 'You', text: 'Good. Almost done.' },
-                { name: 'Park Cleaner', text: 'Wonderful! This city deserves to shine again.' },
-                { name: 'You', text: 'Hey... can I ask you something?' },
-                { name: 'Park Cleaner', text: 'Of course! Anything!' },
-                { name: 'You', text: 'Do you know anything about the material vaults?' },
-                { name: 'Park Cleaner', text: '...' },
-                { name: 'Park Cleaner', text: 'The Veridium vaults? Under the east district?' },
-                { name: 'You', text: 'How do you know about those?' },
-                { name: 'Park Cleaner', text: 'Oh! I uh... I clean the parks near there.' },
-                { name: 'Park Cleaner', text: 'You hear things. Haha!' },
-                { name: 'You', text: 'The name Veridium... that\'s classified.' },
-                { name: 'Park Cleaner', text: 'Is it? I had no idea. Haha!' },
-                { name: 'You', text: '(He knew the exact name. Something isn\'t right.)' },
+                { name: 'Park Cleaner', text: 'Ah! The city engineer! How goes the rebuilding?', expression: 'neutral' },
+                { name: 'You', text: 'Good. Almost done.', expression: 'neutral' },
+                { name: 'Park Cleaner', text: 'Wonderful! This city deserves to shine again.', expression: 'neutral' },
+                { name: 'You', text: 'Hey... can I ask you something?', expression: 'serious' },
+                { name: 'Park Cleaner', text: 'Of course! Anything!', expression: 'neutral' },
+                { name: 'You', text: 'Do you know anything about the material vaults?', expression: 'serious' },
+                { name: 'Park Cleaner', text: '...', expression: 'worried' },
+                { name: 'Park Cleaner', text: 'The Veridium vaults? Under the east district?', expression: 'worried' },
+                { name: 'You', text: 'How do you know about those?', expression: 'surprised' },
+                { name: 'Park Cleaner', text: 'Oh! I uh... I clean the parks near there.', expression: 'neutral' },
+                { name: 'Park Cleaner', text: 'You hear things. Haha!', expression: 'neutral' },
+                { name: 'You', text: 'The name Veridium... that\'s classified.', expression: 'serious' },
+                { name: 'Park Cleaner', text: 'Is it? I had no idea. Haha!', expression: 'neutral' },
+                { name: 'You', text: '(He knew the exact name. Something isn\'t right.)', expression: 'serious' },
                 { name: '', text: '📌 Clue found! Keep investigating.' }
             ], () => {
                 GameState.setFlag('parkClueFound')
