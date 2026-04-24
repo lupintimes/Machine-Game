@@ -109,7 +109,7 @@ export default class EnemyScene extends Phaser.Scene {
 
         // ─── Ladder ────────────────────────────────────
         this.ladderZones = []
-        this.createLadder(2978, 1112, 106, 678)
+        this.createLadder(2978, 902, 106, 468)
 
         // ─── Slope Zones ───────────────────────────────
         this.slopeZones = []
@@ -463,6 +463,9 @@ export default class EnemyScene extends Phaser.Scene {
 
     createLadder(x, y, w, h) {
         this.ladderZones.push({ x: x - w / 2, y: y - h, w, h })
+        this.add.rectangle(x, y - h / 2, w, h, 0x00ff00, 0.3)
+            .setStrokeStyle(2, 0x00ff00)
+            .setDepth(1)
     }
 
     // ═══════════════════════════════════════════════════

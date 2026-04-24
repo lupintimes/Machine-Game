@@ -14,17 +14,28 @@ export default class HubScene extends Phaser.Scene {
         this.load.image('loc-towncenter', 'assets/images/locations/towncenter.png')
         this.load.image('loc-park', 'assets/images/locations/park.png')
         this.load.image('loc-enemy', 'assets/images/locations/enemy.png')
+
+        this.load.image('legend', 'assets/images/locations/legend.png')
+        this.load.image('hub-overlay', 'assets/images/locations/border.png')
     }
 
     create() {
         const W = this.cameras.main.width
         const H = this.cameras.main.height
 
-        this.ui = new UI(this)
-        this.ui.create()
+        // ─── Background color + zoom ───────────────────
+        this.cameras.main.setBackgroundColor('#e0d0ae')
+        this.cameras.main.setZoom(0.98)
+        this.cameras.main.centerOn(W / 2, H / 2 - 20)
 
         // ─── Shutdown cleanup ──────────────────────────
-        this.events.on('shutdown', () => { if (this.ui) this.ui.destroy() })
+        this.events.on('shutdown', () => {
+            if (this.ui) this.ui.destroy()
+            if (this.uiCam) {
+                this.cameras.remove(this.uiCam)
+                this.uiCam = null
+            }
+        })
 
         if (!GameState.getFlag('introSeen')) {
             this.scene.start('CutsceneScene', {
@@ -34,7 +45,7 @@ export default class HubScene extends Phaser.Scene {
             return
         }
 
-        // Background
+        // ─── Background ────────────────────────────────
         this.bg = this.add.image(W / 2, H / 2, 'hub-bg')
         const scaleX = W / this.bg.width
         const scaleY = H / this.bg.height
@@ -43,53 +54,69 @@ export default class HubScene extends Phaser.Scene {
 
         this.cameras.main.fadeIn(300, 0, 0, 0)
 
+        // ─── Locations ─────────────────────────────────
         this.locations = []
 
         this.createLocation({
             x: 1510.00,
             y: 299.00,
-            label: 'Workshop',
+            label: 'WORKSHOP',
             imageKey: 'loc-workshop',
             targetScene: 'WorkshopScene',
-            unlocked: true
+            unlocked: true,
+            tooltipW: 145,
+            tooltipH: 30,
+            tooltipFont: '24px'
         })
 
         this.createLocation({
             x: 1545,
             y: 733,
-            label: 'Junkyard',
+            label: 'JUNKYARD',
             imageKey: 'loc-junkyard',
             targetScene: 'JunkyardScene',
-            unlocked: true
+            unlocked: true,
+            tooltipW: 145,
+            tooltipH: 30,
+            tooltipFont: '24px'
         })
 
         this.createLocation({
             x: 606.00,
             y: 274.00,
-            label: "King's Palace",
+            label: "PALACE",
             imageKey: 'loc-palace',
             targetScene: GameState.level >= 3 && GameState.getFlag('gfCalledComms')
                 ? 'Level3PalaceScene'
                 : 'PalaceScene',
-            unlocked: GameState.level >= 2
+            unlocked: GameState.level >= 2,
+            tooltipW: 175,
+            tooltipH: 30,
+            tooltipFont: '24px'
         })
 
         this.createLocation({
             x: 1034.00,
             y: 570.00,
-            label: 'Town Center',
+            label: 'TOWN CENTER',
             imageKey: 'loc-towncenter',
             targetScene: 'TownCenterScene',
-            unlocked: GameState.getFlag('metKing')
+            unlocked: GameState.getFlag('metKing'),
+            tooltipW: 200,
+            tooltipH: 40,
+            tooltipFont: '24px'
         })
 
         this.createLocation({
             x: 717.00,
             y: 815.00,
-            label: 'Park',
+            label: 'PARK',
             imageKey: 'loc-park',
             targetScene: 'ParkScene',
-            unlocked: GameState.getFlag('metLuvaza')
+            unlocked: GameState.getFlag('metLuvaza'),
+            tooltipW: 145,
+            tooltipH: 30,
+            tooltipFont: '24px'
         })
 
         this.createLocation({
@@ -98,7 +125,79 @@ export default class HubScene extends Phaser.Scene {
             label: 'Enemy Territory',
             imageKey: 'loc-enemy',
             targetScene: 'EnemyScene',
-            unlocked: GameState.flags.enemyTerritoryUnlocked
+            unlocked: GameState.flags.enemyTerritoryUnlocked,
+            tooltipW: 200,
+            tooltipH: 30,
+            tooltipFont: '14px'
+        })
+
+        // ─── Legend (interactive, no tooltip) ───────────
+        this.legend = this.add.image(211, 911, 'legend')
+            .setDepth(3)
+            .setInteractive({ useHandCursor: true, pixelPerfect: true, alphaTolerance: 50 })
+
+        this.legend.on('pointerover', () => {
+            this.tweens.add({
+                targets: this.legend,
+                scale: 1.1,
+                duration: 200,
+                ease: 'Back.easeOut'
+            })
+        })
+
+        this.legend.on('pointerout', () => {
+            this.tweens.add({
+                targets: this.legend,
+                scale: 1,
+                duration: 200,
+                ease: 'Sine.easeOut'
+            })
+        })
+
+        this.legend.on('pointerdown', () => {
+            // ─── Add functionality here later ──────────
+        })
+
+        // ─── Overlay above everything except UI ────────
+        this.hubOverlay = this.add.image(W / 2, H / 2, 'hub-overlay')
+        const overlayScaleX = W / this.hubOverlay.width
+        const overlayScaleY = H / this.hubOverlay.height
+        this.hubOverlay.setScale(Math.max(overlayScaleX, overlayScaleY))
+        this.hubOverlay.setDepth(100)
+
+        // ─── UI (created AFTER game content) ───────────
+        this.ui = new UI(this)
+        this.ui.create()
+
+        // ─── UI Camera (full size, no zoom) ────────────
+        this.uiCam = this.cameras.add(0, 0, W, H)
+        this.uiCam.setScroll(0, 0)
+
+        // ─── Collect all UI elements ───────────────────
+        const uiElements = [
+            this.ui.bar,
+            this.ui.statsText,
+            this.ui.dayText,
+            this.ui.levelText,
+            this.ui.crisisBarBg,
+            this.ui.crisisBar,
+            this.ui.crisisLabel,
+            this.ui.timePillContainer,
+            this.ui.taskIcon,
+            this.ui.invIcon,
+            this.ui.hubIcon
+        ].filter(el => el)
+
+        // ─── Main camera ignores UI ────────────────────
+        uiElements.forEach(el => {
+            this.cameras.main.ignore(el)
+        })
+
+        // ─── UI camera ignores everything except UI ────
+        this.children.list.forEach(child => {
+            if (!uiElements.includes(child)) {
+                this.uiCam.ignore(child)
+            }
         })
     }
 
@@ -106,13 +205,12 @@ export default class HubScene extends Phaser.Scene {
         const {
             x, y,
             label, imageKey,
-            targetScene, unlocked
+            targetScene, unlocked,
+            tooltipW, tooltipH, tooltipFont
         } = config
 
-        // The image
         const locImage = this.add.image(x, y, imageKey).setDepth(3)
 
-        // Declare before if block
         let lockIcon = null
         let outlineShadows = null
 
@@ -140,7 +238,6 @@ export default class HubScene extends Phaser.Scene {
                 outlineShadows.push(shadow)
             })
 
-            // ===== FIXED: Added padding to prevent cropping =====
             lockIcon = this.add.image(x, y, 'lock-icon')
                 .setOrigin(0.5)
                 .setDepth(6)
@@ -161,18 +258,15 @@ export default class HubScene extends Phaser.Scene {
                 })
             })
         } else {
-            // Unlocked: full color
             locImage.clearTint()
             locImage.setAlpha(1)
 
-            // Make image interactive
             locImage.setInteractive({
                 useHandCursor: true,
                 pixelPerfect: true,
                 alphaTolerance: 50
             })
 
-            // Hover - scale up + tooltip
             locImage.on('pointerover', () => {
                 this.tweens.add({
                     targets: locImage,
@@ -180,10 +274,16 @@ export default class HubScene extends Phaser.Scene {
                     duration: 200,
                     ease: 'Back.easeOut'
                 })
-                this.showTooltip(x, y - (locImage.displayHeight / 2) - 20, label)
+                this.showTooltip(
+                    x,
+                    y - (locImage.displayHeight / 2) - 20,
+                    label,
+                    tooltipW || 145,
+                    tooltipH || 30,
+                    tooltipFont || '14px'
+                )
             })
 
-            // Hover out - scale back
             locImage.on('pointerout', () => {
                 this.tweens.add({
                     targets: locImage,
@@ -194,7 +294,6 @@ export default class HubScene extends Phaser.Scene {
                 this.hideTooltip()
             })
 
-            // Click - travel
             locImage.on('pointerdown', () => {
                 this.tweens.add({
                     targets: locImage,
@@ -211,10 +310,10 @@ export default class HubScene extends Phaser.Scene {
             })
         }
 
-        // Store
         const locationData = {
             locImage, lockIcon, outlineShadows,
-            unlocked, label, targetScene, x, y
+            unlocked, label, targetScene, x, y,
+            tooltipW, tooltipH, tooltipFont
         }
         this.locations.push(locationData)
 
@@ -227,7 +326,6 @@ export default class HubScene extends Phaser.Scene {
 
         loc.unlocked = true
 
-        // Animate tint removal
         let progress = { val: 0 }
         this.tweens.add({
             targets: progress,
@@ -244,7 +342,6 @@ export default class HubScene extends Phaser.Scene {
             }
         })
 
-        // Remove outline shadows
         if (loc.outlineShadows) {
             loc.outlineShadows.forEach(shadow => {
                 this.tweens.add({
@@ -259,7 +356,6 @@ export default class HubScene extends Phaser.Scene {
             loc.outlineShadows = null
         }
 
-        // Remove lock icon
         if (loc.lockIcon) {
             this.tweens.add({
                 targets: loc.lockIcon,
@@ -275,10 +371,8 @@ export default class HubScene extends Phaser.Scene {
             })
         }
 
-        // Flash
         this.cameras.main.flash(300, 0, 255, 100)
 
-        // Bounce
         this.tweens.add({
             targets: loc.locImage,
             scale: 1.2,
@@ -287,14 +381,12 @@ export default class HubScene extends Phaser.Scene {
             ease: 'Back.easeOut'
         })
 
-        // Enable interactions
         loc.locImage.setInteractive({
             useHandCursor: true,
             pixelPerfect: true,
             alphaTolerance: 50
         })
 
-        // Add hover/click events
         loc.locImage.on('pointerover', () => {
             this.tweens.add({
                 targets: loc.locImage,
@@ -302,7 +394,14 @@ export default class HubScene extends Phaser.Scene {
                 duration: 200,
                 ease: 'Back.easeOut'
             })
-            this.showTooltip(loc.x, loc.y - (loc.locImage.displayHeight / 2) - 20, loc.label)
+            this.showTooltip(
+                loc.x,
+                loc.y - (loc.locImage.displayHeight / 2) - 20,
+                loc.label,
+                loc.tooltipW || 145,
+                loc.tooltipH || 30,
+                loc.tooltipFont || '14px'
+            )
         })
 
         loc.locImage.on('pointerout', () => {
@@ -331,25 +430,35 @@ export default class HubScene extends Phaser.Scene {
         })
     }
 
-    showTooltip(x, y, message) {
+    showTooltip(x, y, message, boxW = 145, boxH = 30, fontSize = '14px') {
         this.hideTooltip()
 
         const tooltipContainer = this.add.container(x, y).setDepth(200)
 
+        const w = boxW
+        const h = boxH
+
+        // ─── Outer border (96705b) ─────────────────────
+        const border1 = this.add.rectangle(0, 0, w + 8, h + 8, 0x96705b)
+
+        // ─── Middle border (black) ─────────────────────
+        const border2 = this.add.rectangle(0, 0, w + 4, h + 4, 0x000000)
+
+        // ─── Inner border (96705b) ─────────────────────
+        const border3 = this.add.rectangle(0, 0, w, h, 0x96705b)
+
+        // ─── Fill (fae9cc) ─────────────────────────────
+        const bg = this.add.rectangle(0, 0, w - 4, h - 4, 0xfae9cc)
+
+        // ─── Text ──────────────────────────────────────
         const text = this.add.text(0, 0, message, {
             fontFamily: 'Courier, monospace',
-            fontSize: '16px',
-            fill: '#ffffff',
-            padding: { x: 12, y: 6 }
+            fontSize: fontSize,
+            fill: '#000000',
+            fontStyle: 'bold'
         }).setOrigin(0.5)
 
-        const bg = this.add.rectangle(0, 0,
-            text.width + 24, text.height + 12,
-            0x000000, 0.9
-        ).setStrokeStyle(1, 0xffffff, 0.3)
-
-        tooltipContainer.add(bg)
-        tooltipContainer.add(text)
+        tooltipContainer.add([border1, border2, border3, bg, text])
 
         tooltipContainer.setAlpha(0)
         tooltipContainer.setY(y + 10)
@@ -363,6 +472,11 @@ export default class HubScene extends Phaser.Scene {
         })
 
         this.tooltip = tooltipContainer
+
+        // ─── Hide from UI camera ───────────────────────
+        if (this.uiCam) {
+            this.uiCam.ignore(tooltipContainer)
+        }
     }
 
     hideTooltip() {

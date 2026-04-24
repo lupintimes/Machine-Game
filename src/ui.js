@@ -27,14 +27,6 @@ export default class UI {
             fill: '#ffffff'
         }).setDepth(51).setScrollFactor(0)
 
-        // Day text:
-        this.dayText = this.scene.add.text(W / 2, 8, '', {
-            fontFamily: "'Share Tech Mono', monospace",
-            fontSize: '16px',
-            fill: '#ffdd44',
-            fontStyle: 'bold'
-        }).setOrigin(0.5, 0).setDepth(51).setScrollFactor(0)
-
         // Level text:
         this.levelText = this.scene.add.text(W - 220, 8, '', {
             fontFamily: "'Orbitron', monospace",
@@ -42,6 +34,34 @@ export default class UI {
             fill: '#00ff88',
             fontStyle: 'bold'
         }).setOrigin(1, 0).setDepth(51).setScrollFactor(0)
+
+        // ─── Crisis Bar (left) + Days text (right), centered ─
+        const crisisW = 300
+        const groupW = 520
+        const groupStartX = (W - groupW) / 2
+        const crisisY = 20
+
+        const barX = groupStartX
+
+        this.crisisBarBg = this.scene.add.rectangle(barX + crisisW / 2, crisisY, crisisW, 22, 0x222222, 0.6)
+            .setStrokeStyle(1, 0x444444)
+            .setDepth(51).setScrollFactor(0)
+
+        this.crisisBar = this.scene.add.rectangle(barX, crisisY, 0, 20, 0xff4444)
+            .setOrigin(0, 0.5).setDepth(52).setScrollFactor(0)
+
+        this.crisisLabel = this.scene.add.text(barX + crisisW / 2, crisisY, '', {
+            fontSize: '11px',
+            fill: '#ffffff',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setDepth(53).setScrollFactor(0)
+
+        this.dayText = this.scene.add.text(barX + crisisW + 15, crisisY, '', {
+            fontFamily: "'Share Tech Mono', monospace",
+            fontSize: '14px',
+            fill: '#ffdd44',
+            fontStyle: 'bold'
+        }).setOrigin(0, 0.5).setDepth(53).setScrollFactor(0)
 
         // ─── Time Pill Indicator ───────────────────────
         this.timePillContainer = this.scene.add.container(W - 100, 20).setDepth(51).setScrollFactor(0)
@@ -130,28 +150,15 @@ export default class UI {
         this.timePillContainer.add(this.dayPillText)
         this.dayPillTab.setSize(this.dayPillText.width + 20, 20)
 
-        // ─── Crisis Bar ────────────────────────────────
-        this.crisisBarBg = this.scene.add.rectangle(W / 2, 50, W - 40, 16, 0x222222)
-            .setDepth(50).setScrollFactor(0)
-
-        this.crisisBar = this.scene.add.rectangle(20, 50, 0, 12, 0xff4444)
-            .setOrigin(0, 0.5).setDepth(51).setScrollFactor(0)
-
-        this.crisisLabel = this.scene.add.text(W / 2, 50, '', {
-            fontSize: '11px',
-            fill: '#ffffff',
-            fontStyle: 'bold'
-        }).setOrigin(0.5).setDepth(52).setScrollFactor(0)
-
-        // ─── Navigation Icons (Top Right) ──────────────
-        const btnY = 98
-        const btnGap = 14
-        const topMargin = 30
-        let rightX = W - topMargin
+        // ─── Navigation Icons (Top Right, Vertical) ────
+        const btnX = W - 80
+        const btnGap = 10
+        const iconScale = 0.15
+        let iconY = 55+80
 
         const makeIcon = (x, y, iconKey, onClick) => {
             const icon = this.scene.add.image(x, y, iconKey)
-                .setScale(0.15)
+                .setScale(iconScale)
                 .setDepth(51)
                 .setScrollFactor(0)
                 .setInteractive({ useHandCursor: true })
@@ -159,23 +166,23 @@ export default class UI {
             return icon
         }
 
-        // Tasks
-        this.taskIcon = makeIcon(rightX, btnY, 'tasks-icon', () => this.toggleTaskPanel())
-        rightX -= (this.taskIcon.displayWidth + btnGap)
-
-        // Inventory
-        this.invIcon = makeIcon(rightX, btnY, 'inventory-icon', () => this.toggleInventory())
-        rightX -= (this.invIcon.displayWidth + btnGap)
-
         // Hub (not in HubScene)
         if (this.scene.scene.key !== 'HubScene') {
-            this.hubIcon = makeIcon(rightX, btnY, 'hub-icon', () => {
+            this.hubIcon = makeIcon(btnX, iconY, 'hub-icon', () => {
                 this.scene.cameras.main.fade(300, 0, 0, 0)
                 this.scene.time.delayedCall(300, () => {
                     this.scene.scene.start('HubScene')
                 })
             })
+            iconY += (this.hubIcon.displayHeight + btnGap)
         }
+
+        // Inventory
+        this.invIcon = makeIcon(btnX, iconY, 'inventory-icon', () => this.toggleInventory())
+        iconY += (this.invIcon.displayHeight + btnGap)
+
+        // Tasks
+        this.taskIcon = makeIcon(btnX, iconY, 'tasks-icon', () => this.toggleTaskPanel())
 
         // ─── ESC handler ───────────────────────────────
         this._escHandler = () => {
@@ -214,7 +221,8 @@ export default class UI {
         this.showTimeTransition()
     }
 
-        showTimeTransition() {
+    // ─── Time Transition ───────────────────────────────
+    showTimeTransition() {
         const W = this.scene.cameras.main.width
         const H = this.scene.cameras.main.height
 
@@ -257,35 +265,37 @@ export default class UI {
             }
         })
     }
-        updateSceneBackground() {
+
+    // ─── Update Scene Background After Time Change ──────
+    updateSceneBackground() {
         const scene = this.scene
         const time = GameState.timeOfDay
         const H = scene.cameras.main.height
 
         const bgMaps = {
             'WorkshopScene': {
-                'morning':   'workshop-morning',
+                'morning': 'workshop-morning',
                 'afternoon': 'workshop-noon',
-                'evening':   'workshop-evening',
-                'night':     'workshop-night'
+                'evening': 'workshop-evening',
+                'night': 'workshop-night'
             },
             'ParkScene': {
-                'morning':   'park-morning',
+                'morning': 'park-morning',
                 'afternoon': 'park-noon',
-                'evening':   'park-evening',
-                'night':     'park-night'
+                'evening': 'park-evening',
+                'night': 'park-night'
             },
             'JunkyardScene': {
-                'morning':   'junkyard-morning',
+                'morning': 'junkyard-morning',
                 'afternoon': 'junkyard-noon',
-                'evening':   'junkyard-evening',
-                'night':     'junkyard-night'
+                'evening': 'junkyard-evening',
+                'night': 'junkyard-night'
             },
             'HubScene': {
-                'morning':   'hub-morning',
+                'morning': 'hub-morning',
                 'afternoon': 'hub-noon',
-                'evening':   'hub-evening',
-                'night':     'hub-night'
+                'evening': 'hub-evening',
+                'night': 'hub-night'
             }
         }
 
@@ -305,8 +315,6 @@ export default class UI {
             duration: 400,
             onComplete: () => {
                 scene.bg.setTexture(bgKey)
-
-                // ─── Re-apply origin and scale after texture swap ─
                 scene.bg.setOrigin(0, 0)
                 const scaleY = H / scene.bg.height
                 scene.bg.setScale(scaleY)
@@ -333,7 +341,7 @@ export default class UI {
 
         const daysLeft = GameState.getDaysLeft()
         this.dayText.setText(`⏳ ${daysLeft} days remaining`)
-        this.dayText.setFill('#ffffff')
+        this.dayText.setFill('#ffdd44')
 
         const tIndex = GameState.timeIndex || 0
         const targetX = -60 + tIndex * 40
@@ -376,9 +384,11 @@ export default class UI {
             })
         }
 
+        // ─── Crisis bar update ─────────────────────────
+        const crisisW = 300
         const progress = Math.min(1, (GameState.day) / GameState.maxDays)
-        const barWidth = Math.max(0, (W - 40) * progress)
-        this.crisisBar.setSize(barWidth, 12)
+        const barWidth = Math.max(0, crisisW * progress)
+        this.crisisBar.setSize(barWidth, 20)
 
         if (progress < 0.4) {
             this.crisisBar.setFillStyle(0x00ff88)
@@ -388,7 +398,7 @@ export default class UI {
             this.crisisBar.setFillStyle(0xff4444)
         }
 
-        this.crisisLabel.setText(`TIMELINE: Day ${GameState.day} of ${GameState.maxDays}`)
+        this.crisisLabel.setText(`Day ${GameState.day}/${GameState.maxDays}`)
     }
 
     // ─── Inventory ─────────────────────────────────────

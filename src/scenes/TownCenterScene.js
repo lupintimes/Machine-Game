@@ -8,6 +8,7 @@ export default class TownCenterScene extends Phaser.Scene {
 
     preload() {
         this.load.image('town-ruined', 'assets/images/towncenter/town_ruined.png')
+        this.load.image('town-overlay', 'assets/images/towncenter/overlay.png')
 
         this.load.image('btn-hospital', 'assets/images/towncenter/hospital_button.png')
         this.load.image('btn-water', 'assets/images/towncenter/water_button.png')
@@ -27,9 +28,15 @@ export default class TownCenterScene extends Phaser.Scene {
         this.ui = new UI(this)
         this.ui.create()
 
+        // ─── Background ────────────────────────────────
         this.bg = this.add.image(W / 2, H / 2, 'town-ruined')
             .setDisplaySize(W, H)
             .setDepth(0)
+
+        // ─── Overlay on top of background ──────────────
+        this.overlay = this.add.image(W / 2, H / 2, 'town-overlay')
+            .setDisplaySize(W, H)
+            .setDepth(1)
 
         this.cameras.main.fadeIn(300, 0, 0, 0)
 
@@ -114,7 +121,7 @@ export default class TownCenterScene extends Phaser.Scene {
             labelOffsetY: -150
         })
 
-        this.createBackButton()
+        
 
         // ─── Check if any buildings finished overnight ─
         this.checkConstructionComplete()
@@ -135,11 +142,11 @@ export default class TownCenterScene extends Phaser.Scene {
             this.luvazaLabel.setVisible(false)
             if (this.luvazaZone) this.luvazaZone.setVisible(false)
 
-            // Hide back button during intro
-            if (this.backBtn) this.backBtn.setVisible(false)
+   
 
-            // Hide main background
+            // Hide main background and overlay
             this.bg.setVisible(false)
+            this.overlay.setVisible(false)
 
             // ─── Zoomed town hall background ───────────
             this.introBg = this.add.image(W / 2, H / 2, 'btn-town')
@@ -147,7 +154,7 @@ export default class TownCenterScene extends Phaser.Scene {
                 .setDepth(0)
                 .setScrollFactor(0)
 
-
+            // ─── Luvaza standing near town hall ────────
             this.introLuvaza = this.add.image(W - 150, H - 200, 'dialog-luvaza-neutral')
                 .setDepth(5)
                 .setScrollFactor(0)
@@ -170,7 +177,7 @@ export default class TownCenterScene extends Phaser.Scene {
                         this.introLuvaza.setInteractive({ useHandCursor: true })
 
                         // ─── Tap hint ──────────────────
-                        this.introTapHint = this.add.text(W / 2 + 100, H / 2 - 10, '👆 Tap to talk', {
+                        this.introTapHint = this.add.text(W - 150, H - 400, '👆 Tap to talk', {
                             fontSize: '14px',
                             fill: '#ffff00',
                             fontStyle: 'bold'
@@ -217,56 +224,9 @@ export default class TownCenterScene extends Phaser.Scene {
     // ═══════════════════════════════════════════════════
 
     showFirstMeetMenu() {
-        const W = this.cameras.main.width
-        const H = this.cameras.main.height
-
-        this.firstMeetItems = []
-
-        const panel = this.add.rectangle(W / 2, H - 120, 400, 140, 0x000000, 0.8)
-            .setStrokeStyle(2, 0xff69b4)
-            .setScrollFactor(0).setDepth(50)
-        this.firstMeetItems.push(panel)
-
-        // ─── Fix Buildings button ──────────────────────
-        const fixBtn = this.add.rectangle(W / 2, H - 140, 300, 50, 0x333355)
-            .setStrokeStyle(2, 0x00ff88)
-            .setScrollFactor(0).setDepth(51)
-            .setInteractive({ useHandCursor: true })
-        this.firstMeetItems.push(fixBtn)
-
-        const fixLabel = this.add.text(W / 2, H - 140, '🔧 Fix Buildings', {
-            fontSize: '20px', fill: '#00ff88', fontStyle: 'bold'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(52)
-        this.firstMeetItems.push(fixLabel)
-
-        fixBtn.on('pointerover', () => fixBtn.setFillStyle(0x444477))
-        fixBtn.on('pointerout', () => fixBtn.setFillStyle(0x333355))
-        fixBtn.on('pointerdown', () => {
-            this.cleanupIntro()
-            this.transitionToFullView()
-        })
-
-        // ─── Back to Hub button ────────────────────────
-        const hubBtn = this.add.rectangle(W / 2, H - 80, 300, 50, 0x333355)
-            .setStrokeStyle(2, 0x888888)
-            .setScrollFactor(0).setDepth(51)
-            .setInteractive({ useHandCursor: true })
-        this.firstMeetItems.push(hubBtn)
-
-        const hubLabel = this.add.text(W / 2, H - 80, '🔙 Back to Hub', {
-            fontSize: '20px', fill: '#888888'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(52)
-        this.firstMeetItems.push(hubLabel)
-
-        hubBtn.on('pointerover', () => hubBtn.setFillStyle(0x443344))
-        hubBtn.on('pointerout', () => hubBtn.setFillStyle(0x333355))
-        hubBtn.on('pointerdown', () => {
-            this.cleanupIntro()
-            this.cameras.main.fade(300, 0, 0, 0)
-            this.time.delayedCall(300, () => this.scene.start('HubScene'))
-        })
+        this.cleanupIntro()
+        this.transitionToFullView()
     }
-
     // ═══════════════════════════════════════════════════
     // ─── CLEANUP INTRO ELEMENTS ────────────────────────
     // ═══════════════════════════════════════════════════
@@ -292,12 +252,15 @@ export default class TownCenterScene extends Phaser.Scene {
 
         this.cameras.main.flash(400, 255, 255, 255)
 
+        // ─── Show main background + overlay ────────────
         this.bg.setVisible(true)
-        this.luvazaSprite.setVisible(true)
-        
+        if (this.overlay) this.overlay.setVisible(true)
 
+        // ─── Show Luvaza at normal position ────────────
         this.luvazaSprite.setPosition(200, H - 200)
-        
+        this.luvazaLabel.setPosition(200, H - 350)
+        this.luvazaSprite.setVisible(true)
+        this.luvazaLabel.setVisible(true)
 
         if (this.luvazaZone) {
             this.luvazaZone.setPosition(200, H - 200)
@@ -306,6 +269,7 @@ export default class TownCenterScene extends Phaser.Scene {
 
         if (this.backBtn) this.backBtn.setVisible(true)
 
+        // ─── Fade in buildings one by one ──────────────
         this.buildings.forEach((b, i) => {
             b.btnImage.setVisible(true)
             b.btnImage.setAlpha(0)
@@ -371,8 +335,9 @@ export default class TownCenterScene extends Phaser.Scene {
         this.luvazaSprite.setVisible(false)
         this.luvazaLabel.setVisible(false)
         if (this.luvazaZone) this.luvazaZone.setVisible(false)
-        if (this.backBtn) this.backBtn.setVisible(false)
+
         this.bg.setVisible(false)
+        if (this.overlay) this.overlay.setVisible(false)
 
         this.townViewBg = this.add.image(W / 2, H / 2, 'btn-town')
             .setDisplaySize(W, H)
@@ -385,7 +350,6 @@ export default class TownCenterScene extends Phaser.Scene {
             alpha: 1,
             duration: 400
         })
-
 
         this.townViewLuvaza = this.add.image(W - 150, H - 200, 'dialog-luvaza-neutral')
             .setDepth(5)
@@ -515,7 +479,6 @@ export default class TownCenterScene extends Phaser.Scene {
             return
         }
 
-        // ─── Already under construction ────────────────
         if (GameState.constructionQueue[buildingId]) {
             const startDay = GameState.constructionQueue[buildingId]
             if (GameState.day <= startDay) {
@@ -527,7 +490,6 @@ export default class TownCenterScene extends Phaser.Scene {
             }
         }
 
-        // ─── Check repair skill ────────────────────────
         if (GameState.skills.repair < building.repairSkill) {
             this.dialog.show([
                 { name: 'You', text: `Need 🔧${building.repairSkill} repair skill.`, expression: 'serious' },
@@ -536,7 +498,6 @@ export default class TownCenterScene extends Phaser.Scene {
             return
         }
 
-        // ─── Check money ──────────────────────────────
         if (GameState.money < building.repairCost) {
             this.dialog.show([
                 { name: 'You', text: `Need 💰${building.repairCost}.`, expression: 'serious' },
@@ -545,7 +506,6 @@ export default class TownCenterScene extends Phaser.Scene {
             return
         }
 
-        // ─── Check blueprints ──────────────────────────
         const blueprintCount = this.getBlueprintCount()
         if (blueprintCount < building.blueprintsNeeded) {
             this.dialog.show([
@@ -556,7 +516,6 @@ export default class TownCenterScene extends Phaser.Scene {
             return
         }
 
-        // ─── Start construction ────────────────────────
         GameState.spendMoney(building.repairCost)
         this.spendBlueprints(building.blueprintsNeeded)
         GameState.constructionQueue[buildingId] = GameState.day
@@ -682,14 +641,12 @@ export default class TownCenterScene extends Phaser.Scene {
             }
         })
 
-        // ─── Check if all buildings done ───────────────
         const allBuilt = ['hospital', 'water', 'power']
             .every(id => GameState.rebuiltBuildings.includes(id))
 
         if (allBuilt && !GameState.getFlag('rebuiltBuildings')) {
             GameState.setFlag('rebuiltBuildings')
 
-            // ─── Update town hall to fixed texture ─────
             const townBuilding = this.buildings.find(b => b.id === 'town')
             if (townBuilding) {
                 townBuilding.repaired = true
@@ -775,30 +732,6 @@ export default class TownCenterScene extends Phaser.Scene {
         })
     }
 
-    // ═══════════════════════════════════════════════════
-    // ─── BACK BUTTON ───────────────────────────────────
-    // ═══════════════════════════════════════════════════
-
-    createBackButton() {
-        const W = this.cameras.main.width
-
-        this.backBtn = this.add.text(W - 30, 80, '🔙', {
-            fontSize: '32px'
-        }).setOrigin(1, 0).setDepth(50).setScrollFactor(0)
-            .setInteractive({ useHandCursor: true })
-
-        this.backBtn.on('pointerover', () => {
-            this.showTooltip(W - 60, 120, 'Back to Hub')
-        })
-        this.backBtn.on('pointerout', () => {
-            this.hideTooltip()
-        })
-        this.backBtn.on('pointerdown', () => {
-            this.hideTooltip()
-            this.cameras.main.fade(300, 0, 0, 0)
-            this.time.delayedCall(300, () => this.scene.start('HubScene'))
-        })
-    }
 
     // ═══════════════════════════════════════════════════
     // ─── TALK TO LUVAZA ────────────────────────────────
@@ -850,19 +783,16 @@ export default class TownCenterScene extends Phaser.Scene {
             fontSize: '28px', fill: '#ff69b4', fontStyle: 'bold'
         }).setOrigin(0.5).setScrollFactor(0).setDepth(52)
 
-        // ─── Talk ──────────────────────────────────────
         this.createMenuButton(W / 2, H / 2 - 100, '💬 Talk', () => {
             this.closeMenu()
             this.luvazaTalk()
         })
 
-        // ─── Building Status ───────────────────────────
         this.createMenuButton(W / 2, H / 2 - 30, '🏗️ Building Status', () => {
             this.closeMenu()
             this.showBuildingStatus()
         })
 
-        // ─── Fix Buildings (go to full map) ────────────
         const inTownView = this.townViewBg && this.townViewBg.visible
         if (inTownView) {
             this.createMenuButton(W / 2, H / 2 + 40, '🔧 Fix Buildings', () => {
@@ -871,7 +801,6 @@ export default class TownCenterScene extends Phaser.Scene {
             })
         }
 
-        // ─── Back to Hub ───────────────────────────────
         this.createMenuButton(W / 2, H / 2 + 110, '🔙 Back to Hub', () => {
             this.closeMenu()
             if (inTownView) this.cleanupTownHallView()
@@ -879,7 +808,6 @@ export default class TownCenterScene extends Phaser.Scene {
             this.time.delayedCall(300, () => this.scene.start('HubScene'))
         })
 
-        // ─── Close menu ────────────────────────────────
         this.createMenuButton(W / 2, H / 2 + 180, '✖ Close', () => {
             this.closeMenu()
         })
