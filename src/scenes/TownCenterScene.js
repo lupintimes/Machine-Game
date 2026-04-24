@@ -434,7 +434,7 @@ export default class TownCenterScene extends Phaser.Scene {
         this.transitionToFullView()
     }
 
-    // ═══════════════════════════════════════════════════
+    // ═══════════════════════════════════════════════════ 
     // ─── CLEANUP TOWN HALL VIEW ────────────────────────
     // ═══════════════════════════════════════════════════
 

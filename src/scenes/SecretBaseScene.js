@@ -687,31 +687,22 @@ export default class SecretBaseScene extends Phaser.Scene {
         }).setOrigin(0.5).setDepth(51)
         this.menuItems.push(this.menuTitle)
 
-        // ─── Install Core (if not done) ────────────────
+        // ─── Core not installed → show Core Assembly ───
         if (!GameState.getFlag('coreInstalled') && GameState.getFlag('boughtCore')) {
-            this.createMenuButton(W / 2 - 400, H - 220, '⚡ Core Assembly', () => {
-                console.log('Button clicked')
-                console.log('Scene manager scenes:', this.scene.manager.keys)
-                console.log('CoreAssemblyGame exists:', this.scene.get('CoreAssemblyGame'))
+            this.createMenuButton(W / 2 - 400, H - 150, '⚡ Core Assembly', () => {
                 this.closeBaseMenu()
                 this.scene.pause('SecretBaseScene')
                 this.scene.launch('CoreAssemblyGame')
             })
-        } else {
+        }
+
+        // ─── Core installed → show Assemble Parts ──────
+        if (GameState.getFlag('coreInstalled')) {
             const canAssemble = this.getAvailableParts().length > 0
             this.createMenuButton(W / 2 - 400, H - 150, '🔧 Assemble Parts', () => {
                 this.closeBaseMenu()
                 this.showAssemblyMenu()
             }, !canAssemble)
-
-            // ─── Core Assembly Minigame ────────────────
-            if (GameState.getFlag('coreInstalled')) {
-                this.createMenuButton(W / 2 - 400, H - 220, '⚡ Core Assembly', () => {
-                    this.closeBaseMenu()
-                    this.scene.pause('SecretBaseScene')
-                    this.scene.launch('CoreAssemblyGame')
-                })
-            }
         }
 
         // ─── Inspect Armor ─────────────────────────────

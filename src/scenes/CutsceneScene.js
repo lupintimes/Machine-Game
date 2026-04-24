@@ -231,16 +231,6 @@ export default class CutsceneScene extends Phaser.Scene {
 
 
 
-            this.add.rectangle(200, 850, 32, 48, 0x00ff88).setDepth(2).setScale(7.25)
-            this.add.text(200, 700, 'You', {
-                fontSize: '16px', fill: '#00ff88'
-            }).setOrigin(0.5).setDepth(3)
-
-            this.add.rectangle(1720, 850, 32, 48, 0xff69b4).setDepth(2).setScale(7.25)
-            this.add.text(1720, 700, 'Luvaza', {
-                fontSize: '16px', fill: '#ff69b4'
-            }).setOrigin(0.5).setDepth(3)
-
             this.introDialog = new DialogBox(this)
             this.introDialog.show([
                 { name: 'You', text: '...' },

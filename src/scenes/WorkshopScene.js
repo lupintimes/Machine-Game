@@ -158,13 +158,13 @@ export default class WorkshopScene extends Phaser.Scene {
         }
     }
 
-    update() {
+        update() {
         const speed = 600
 
         // ─── Dialog takes priority ─────────────────────
-        if (this.dialog.isActive) {
+        if (this.dialog && this.dialog.isActive) {
             if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
-                if (this.dialog.isActive && !this.dialog.isClosed) {
+                if (!this.dialog.isClosed) {
                     this.dialog.next()
                 }
             }
@@ -204,8 +204,8 @@ export default class WorkshopScene extends Phaser.Scene {
         if (GameState.canMeetTrader() && !GameState.getFlag('traderHintShown')) {
             GameState.setFlag('traderHintShown')
             this.dialog.show([
-                { name: 'You', text: 'I know enough now to look for parts.' },
-                { name: 'You', text: 'Maybe the Junkyard trader has what I need.' }
+                { name: 'You', text: 'I know enough now to look for parts.', expression: 'serious' },
+                { name: 'You', text: 'Maybe the Junkyard trader has what I need.', expression: 'neutral' }
             ])
             return
         }
@@ -250,7 +250,6 @@ export default class WorkshopScene extends Phaser.Scene {
         if (Phaser.Input.Keyboard.JustDown(this.eKey) && this.nearStation) {
             this.onInteract(this.nearStation)
         }
-
     }
 
     // ═══════════════════════════════════════════════════

@@ -9,7 +9,7 @@ export default class UI {
         this.hubBtnLabel = null
         this.invBtnLabel = null
         this.taskBtnLabel = null
-        this.timeSegments = [] // Holds individual animated time containers
+        this.timeSegments = []
     }
 
     create() {
@@ -44,70 +44,67 @@ export default class UI {
         }).setOrigin(1, 0).setDepth(51).setScrollFactor(0)
 
         // ─── Time Pill Indicator ───────────────────────
-        this.timePillContainer = this.scene.add.container(W - 100, 20).setDepth(51).setScrollFactor(0);
+        this.timePillContainer = this.scene.add.container(W - 100, 20).setDepth(51).setScrollFactor(0)
 
-        // [DYNAMIC] Background fill for the pill
-        this.pillBg = this.scene.add.rectangle(0, 0, 160, 30, 0x000000, 0.4);
-        this.timePillContainer.add(this.pillBg);
+        this.pillBg = this.scene.add.rectangle(0, 0, 160, 30, 0x000000, 0.4)
+        this.timePillContainer.add(this.pillBg)
 
-        // [DYNAMIC] Glowing Active Slider
-        this.timeSlider = this.scene.add.graphics();
-        this.timeSlider.fillStyle(0xffffff, 0.3);
-        this.timeSlider.fillRoundedRect(-18, -16, 36, 32, 14);
-        this.timeSlider.x = -60 + (GameState.timeIndex || 0) * 40;
-        this.timePillContainer.add(this.timeSlider);
+        this.timeSlider = this.scene.add.graphics()
+        this.timeSlider.fillStyle(0xffffff, 0.3)
+        this.timeSlider.fillRoundedRect(-18, -16, 36, 32, 14)
+        this.timeSlider.x = -60 + (GameState.timeIndex || 0) * 40
+        this.timePillContainer.add(this.timeSlider)
 
-        // [DYNAMIC] Create Independent Segments for Animation
-        this.timeSegments = [];
+        this.timeSegments = []
 
         // Morning (0) - Center at -60
-        const mornGfx = this.scene.add.graphics();
-        mornGfx.fillStyle(0xffe4b5);
-        mornGfx.beginPath();
-        mornGfx.arc(-5, 0, 15, Phaser.Math.DegToRad(90), Phaser.Math.DegToRad(270), false);
-        mornGfx.lineTo(20, -15); mornGfx.lineTo(20, 15); mornGfx.closePath(); mornGfx.fillPath();
-        mornGfx.fillStyle(0xff8c00); mornGfx.fillCircle(0, 12, 8);
-        mornGfx.fillStyle(0xffd700, 0.4); mornGfx.fillCircle(0, 12, 12);
-        mornGfx.fillStyle(0xaaaaaa);
-        mornGfx.beginPath(); mornGfx.arc(0, 14, 8, Phaser.Math.DegToRad(180), Phaser.Math.DegToRad(0), false); mornGfx.fillPath();
-        const mornCont = this.scene.add.container(-60, 0); mornCont.add(mornGfx);
-        this.timePillContainer.add(mornCont); this.timeSegments.push(mornCont);
+        const mornGfx = this.scene.add.graphics()
+        mornGfx.fillStyle(0xffe4b5)
+        mornGfx.beginPath()
+        mornGfx.arc(-5, 0, 15, Phaser.Math.DegToRad(90), Phaser.Math.DegToRad(270), false)
+        mornGfx.lineTo(20, -15); mornGfx.lineTo(20, 15); mornGfx.closePath(); mornGfx.fillPath()
+        mornGfx.fillStyle(0xff8c00); mornGfx.fillCircle(0, 12, 8)
+        mornGfx.fillStyle(0xffd700, 0.4); mornGfx.fillCircle(0, 12, 12)
+        mornGfx.fillStyle(0xaaaaaa)
+        mornGfx.beginPath(); mornGfx.arc(0, 14, 8, Phaser.Math.DegToRad(180), Phaser.Math.DegToRad(0), false); mornGfx.fillPath()
+        const mornCont = this.scene.add.container(-60, 0); mornCont.add(mornGfx)
+        this.timePillContainer.add(mornCont); this.timeSegments.push(mornCont)
 
         // Afternoon (1) - Center at -20
-        const aftGfx = this.scene.add.graphics();
-        aftGfx.fillStyle(0x77ccff); aftGfx.fillRect(-20, -15, 40, 30);
-        aftGfx.fillStyle(0xffaa00); aftGfx.fillCircle(0, 2, 8);
-        aftGfx.fillStyle(0xffffff); aftGfx.fillCircle(-5, 8, 6); aftGfx.fillCircle(5, 8, 5); aftGfx.fillCircle(0, 10, 4);
-        const aftCont = this.scene.add.container(-20, 0); aftCont.add(aftGfx);
-        this.timePillContainer.add(aftCont); this.timeSegments.push(aftCont);
+        const aftGfx = this.scene.add.graphics()
+        aftGfx.fillStyle(0x77ccff); aftGfx.fillRect(-20, -15, 40, 30)
+        aftGfx.fillStyle(0xffaa00); aftGfx.fillCircle(0, 2, 8)
+        aftGfx.fillStyle(0xffffff); aftGfx.fillCircle(-5, 8, 6); aftGfx.fillCircle(5, 8, 5); aftGfx.fillCircle(0, 10, 4)
+        const aftCont = this.scene.add.container(-20, 0); aftCont.add(aftGfx)
+        this.timePillContainer.add(aftCont); this.timeSegments.push(aftCont)
 
         // Evening (2) - Center at 20
-        const eveGfx = this.scene.add.graphics();
-        eveGfx.fillStyle(0x555566); eveGfx.fillRect(-20, -15, 40, 30);
-        eveGfx.fillStyle(0xdddddd); eveGfx.fillCircle(0, 0, 6);
-        eveGfx.fillStyle(0x555566); eveGfx.fillCircle(3, -2, 5);
-        const eveCont = this.scene.add.container(20, 0); eveCont.add(eveGfx);
-        this.timePillContainer.add(eveCont); this.timeSegments.push(eveCont);
+        const eveGfx = this.scene.add.graphics()
+        eveGfx.fillStyle(0x555566); eveGfx.fillRect(-20, -15, 40, 30)
+        eveGfx.fillStyle(0xdddddd); eveGfx.fillCircle(0, 0, 6)
+        eveGfx.fillStyle(0x555566); eveGfx.fillCircle(3, -2, 5)
+        const eveCont = this.scene.add.container(20, 0); eveCont.add(eveGfx)
+        this.timePillContainer.add(eveCont); this.timeSegments.push(eveCont)
 
         // Night (3) - Center at 60
-        const nightGfx = this.scene.add.graphics();
-        nightGfx.fillStyle(0x1a1a24);
-        nightGfx.beginPath(); nightGfx.lineTo(-20, -15); nightGfx.lineTo(5, -15);
-        nightGfx.arc(5, 0, 15, Phaser.Math.DegToRad(-90), Phaser.Math.DegToRad(90), false);
-        nightGfx.lineTo(-20, 15); nightGfx.closePath(); nightGfx.fillPath();
-        nightGfx.fillStyle(0xffffff); nightGfx.fillRect(-12, -5, 2, 2); nightGfx.fillRect(3, -8, 1, 1);
-        nightGfx.fillRect(-8, 5, 2, 2); nightGfx.fillRect(8, 2, 1, 1);
-        const nightCont = this.scene.add.container(60, 0); nightCont.add(nightGfx);
-        this.timePillContainer.add(nightCont); this.timeSegments.push(nightCont);
+        const nightGfx = this.scene.add.graphics()
+        nightGfx.fillStyle(0x1a1a24)
+        nightGfx.beginPath(); nightGfx.lineTo(-20, -15); nightGfx.lineTo(5, -15)
+        nightGfx.arc(5, 0, 15, Phaser.Math.DegToRad(-90), Phaser.Math.DegToRad(90), false)
+        nightGfx.lineTo(-20, 15); nightGfx.closePath(); nightGfx.fillPath()
+        nightGfx.fillStyle(0xffffff); nightGfx.fillRect(-12, -5, 2, 2); nightGfx.fillRect(3, -8, 1, 1)
+        nightGfx.fillRect(-8, 5, 2, 2); nightGfx.fillRect(8, 2, 1, 1)
+        const nightCont = this.scene.add.container(60, 0); nightCont.add(nightGfx)
+        this.timePillContainer.add(nightCont); this.timeSegments.push(nightCont)
 
-        // [DYNAMIC] Set initial scales and alphas immediately
-        const initIdx = GameState.timeIndex || 0;
+        // Set initial scales and alphas
+        const initIdx = GameState.timeIndex || 0
         this.timeSegments.forEach((seg, i) => {
-            seg.setScale(i === initIdx ? 1.15 : 0.85);
-            seg.setAlpha(i === initIdx ? 1 : 0.4);
-        });
+            seg.setScale(i === initIdx ? 1.15 : 0.85)
+            seg.setAlpha(i === initIdx ? 1 : 0.4)
+        })
 
-        // Add hit pads for interactivity
+        // Hit pads for interactivity
         const segments = [-60, -20, 20, 60]
         segments.forEach((sx, i) => {
             const hitPad = this.scene.add.rectangle(sx, 0, 40, 30, 0x000000, 0)
@@ -117,22 +114,21 @@ export default class UI {
         })
 
         // Pill outline border
-        const border = this.scene.add.graphics();
-        border.lineStyle(2, 0xffffff, 1);
-        border.strokeRoundedRect(-80, -15, 160, 30, 15);
-        this.timePillContainer.add(border);
+        const border = this.scene.add.graphics()
+        border.lineStyle(2, 0xffffff, 1)
+        border.strokeRoundedRect(-80, -15, 160, 30, 15)
+        this.timePillContainer.add(border)
 
-        // [DYNAMIC] Day tab indicator underneath (Now includes specific time name)
-        const timeNames = ['Morning', 'Afternoon', 'Evening', 'Night'];
-        const initTimeName = timeNames[initIdx] || 'Morning';
-        this.dayPillTab = this.scene.add.rectangle(0, 25, 90, 20, 0x5a3a9a);
+        // Day tab indicator
+        const timeNames = ['Morning', 'Afternoon', 'Evening', 'Night']
+        const initTimeName = timeNames[initIdx] || 'Morning'
+        this.dayPillTab = this.scene.add.rectangle(0, 25, 90, 20, 0x5a3a9a)
         this.dayPillText = this.scene.add.text(0, 25, `Day ${GameState.day} - ${initTimeName}`, {
             fontSize: '11px', fill: '#ffffff', fontStyle: 'bold'
-        }).setOrigin(0.5);
-        this.timePillContainer.add(this.dayPillTab);
-        this.timePillContainer.add(this.dayPillText);
-        // Fit background to text width
-        this.dayPillTab.setSize(this.dayPillText.width + 20, 20);
+        }).setOrigin(0.5)
+        this.timePillContainer.add(this.dayPillTab)
+        this.timePillContainer.add(this.dayPillText)
+        this.dayPillTab.setSize(this.dayPillText.width + 20, 20)
 
         // ─── Crisis Bar ────────────────────────────────
         this.crisisBarBg = this.scene.add.rectangle(W / 2, 50, W - 40, 16, 0x222222)
@@ -159,9 +155,7 @@ export default class UI {
                 .setDepth(51)
                 .setScrollFactor(0)
                 .setInteractive({ useHandCursor: true })
-
             icon.on('pointerdown', onClick)
-
             return icon
         }
 
@@ -201,7 +195,6 @@ export default class UI {
         if (newIndex === GameState.timeIndex) return
 
         if (newIndex === 0) {
-            // Advancing to the next morning
             const gameOver = GameState.skipToMorning()
             if (gameOver) {
                 this.scene.scene.start('CutsceneScene', { key: 'gameOver' })
@@ -214,7 +207,6 @@ export default class UI {
         } else if (newIndex === 3 && GameState.timeIndex < 3) {
             GameState.skipToNight()
         } else {
-            // Cannot go backwards without sleeping to Morning
             return
         }
 
@@ -222,10 +214,12 @@ export default class UI {
         this.showTimeTransition()
     }
 
-    // ─── Time Transition ───────────────────────────────
-    showTimeTransition() {
+        showTimeTransition() {
         const W = this.scene.cameras.main.width
         const H = this.scene.cameras.main.height
+
+        // ─── Update background IMMEDIATELY ─────────────
+        this.updateSceneBackground()
 
         const overlay = this.scene.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.9)
             .setScrollFactor(0).setDepth(300).setInteractive()
@@ -248,7 +242,7 @@ export default class UI {
             alpha: 1,
             duration: 800,
             onComplete: () => {
-                this.scene.time.delayedCall(1500, () => {
+                this.scene.time.delayedCall(800, () => {
                     this.scene.tweens.add({
                         targets: [overlay, text, daysText],
                         alpha: 0,
@@ -259,6 +253,68 @@ export default class UI {
                             daysText.destroy()
                         }
                     })
+                })
+            }
+        })
+    }
+        updateSceneBackground() {
+        const scene = this.scene
+        const time = GameState.timeOfDay
+        const H = scene.cameras.main.height
+
+        const bgMaps = {
+            'WorkshopScene': {
+                'morning':   'workshop-morning',
+                'afternoon': 'workshop-noon',
+                'evening':   'workshop-evening',
+                'night':     'workshop-night'
+            },
+            'ParkScene': {
+                'morning':   'park-morning',
+                'afternoon': 'park-noon',
+                'evening':   'park-evening',
+                'night':     'park-night'
+            },
+            'JunkyardScene': {
+                'morning':   'junkyard-morning',
+                'afternoon': 'junkyard-noon',
+                'evening':   'junkyard-evening',
+                'night':     'junkyard-night'
+            },
+            'HubScene': {
+                'morning':   'hub-morning',
+                'afternoon': 'hub-noon',
+                'evening':   'hub-evening',
+                'night':     'hub-night'
+            }
+        }
+
+        const sceneKey = scene.scene.key
+        const map = bgMaps[sceneKey]
+
+        if (!map || !scene.bg) return
+
+        const bgKey = map[time]
+        if (!bgKey) return
+        if (!scene.textures.exists(bgKey)) return
+        if (scene.bg.texture.key === bgKey) return
+
+        scene.tweens.add({
+            targets: scene.bg,
+            alpha: 0,
+            duration: 400,
+            onComplete: () => {
+                scene.bg.setTexture(bgKey)
+
+                // ─── Re-apply origin and scale after texture swap ─
+                scene.bg.setOrigin(0, 0)
+                const scaleY = H / scene.bg.height
+                scene.bg.setScale(scaleY)
+
+                scene.tweens.add({
+                    targets: scene.bg,
+                    alpha: 1,
+                    duration: 400
                 })
             }
         })
@@ -279,25 +335,22 @@ export default class UI {
         this.dayText.setText(`⏳ ${daysLeft} days remaining`)
         this.dayText.setFill('#ffffff')
 
-        // [DYNAMIC] Animate Time Segments & Slider
-        const tIndex = GameState.timeIndex || 0;
-        const targetX = -60 + tIndex * 40;
-        const timeNames = ['Morning', 'Afternoon', 'Evening', 'Night'];
+        const tIndex = GameState.timeIndex || 0
+        const targetX = -60 + tIndex * 40
+        const timeNames = ['Morning', 'Afternoon', 'Evening', 'Night']
 
-        // Glowing slider animation
         if (this.timeSlider) {
             this.scene.tweens.add({
                 targets: this.timeSlider,
                 x: targetX,
                 duration: 600,
                 ease: 'Back.easeOut'
-            });
+            })
         }
 
-        // Segment bounce and dim animation
         if (this.timeSegments && this.timeSegments.length > 0) {
             this.timeSegments.forEach((seg, i) => {
-                const isActive = i === tIndex;
+                const isActive = i === tIndex
                 this.scene.tweens.add({
                     targets: seg,
                     scaleX: isActive ? 1.2 : 0.85,
@@ -305,24 +358,22 @@ export default class UI {
                     alpha: isActive ? 1 : 0.4,
                     duration: 500,
                     ease: isActive ? 'Elastic.easeOut' : 'Quad.easeInOut'
-                });
-            });
+                })
+            })
         }
 
-        // [DYNAMIC] Update pill tab text to explicitly state the time
         if (this.dayPillText && this.dayPillTab) {
-            const newTimeName = timeNames[tIndex] || 'Time';
-            this.dayPillText.setText(`Day ${GameState.day} - ${newTimeName}`);
-            this.dayPillTab.setSize(this.dayPillText.width + 20, 20);
+            const newTimeName = timeNames[tIndex] || 'Time'
+            this.dayPillText.setText(`Day ${GameState.day} - ${newTimeName}`)
+            this.dayPillTab.setSize(this.dayPillText.width + 20, 20)
 
-            // Bounce tab on update for extra visual feedback
             this.scene.tweens.add({
                 targets: [this.dayPillTab, this.dayPillText],
                 scaleY: 1.2,
                 duration: 100,
                 yoyo: true,
                 ease: 'Quad.easeInOut'
-            });
+            })
         }
 
         const progress = Math.min(1, (GameState.day) / GameState.maxDays)
@@ -422,7 +473,7 @@ export default class UI {
                         this.showInvTooltip(x, y, item)
                     })
                     slot.on('pointerout', () => {
-                        slot.setFillStyle(0x222222)  // ← charcoal
+                        slot.setFillStyle(0x222222)
                         this.hideInvTooltip()
                     })
                 } else {
@@ -450,22 +501,22 @@ export default class UI {
         if (GameState.inventory.length === 0) {
             this.invEmpty = this.scene.add.text(W / 2, H / 2, 'No items yet!\nComplete tasks to earn items.', {
                 fontSize: '22px',
-                fill: '#555555',  // ← charcoal
+                fill: '#555555',
                 align: 'center'
             }).setOrigin(0.5).setScrollFactor(0).setDepth(202)
         }
     }
 
     showInvTooltip(x, y, item) {
-        const tooltipW = 220, tooltipH = 80;
-        const W = this.scene.cameras.main.width;
-        const H = this.scene.cameras.main.height;
-        let tx = x, ty = y - 70;
+        const tooltipW = 220, tooltipH = 80
+        const W = this.scene.cameras.main.width
+        const H = this.scene.cameras.main.height
+        let tx = x, ty = y - 70
 
-        if (ty - tooltipH / 2 < 10) ty = y + 60;
-        if (ty + tooltipH / 2 > H - 10) ty = H - tooltipH / 2 - 10;
-        if (tx - tooltipW / 2 < 10) tx = tooltipW / 2 + 10;
-        if (tx + tooltipW / 2 > W - 10) tx = W - tooltipW / 2 - 10;
+        if (ty - tooltipH / 2 < 10) ty = y + 60
+        if (ty + tooltipH / 2 > H - 10) ty = H - tooltipH / 2 - 10
+        if (tx - tooltipW / 2 < 10) tx = tooltipW / 2 + 10
+        if (tx + tooltipW / 2 > W - 10) tx = W - tooltipW / 2 - 10
 
         if (!this.invTooltipBg) {
             this.invTooltipBg = this.scene.add.rectangle(0, 0, tooltipW, tooltipH, 0x000000, 0.95)
@@ -611,23 +662,18 @@ export default class UI {
         }
         if (GameState.level === 3) {
             return [
-                // ─── Armor ─────────────────────────────────
                 { text: '─── Armor ───', done: false },
                 { text: '⚡ Core installed', done: GameState.getFlag('coreInstalled') },
                 { text: '🦾 Hands & legs assembled', done: GameState.getFlag('armorLimbsInstalled') },
                 { text: '🤖 Head unit repaired', done: GameState.getFlag('armorHeadFixed') },
                 { text: '🛡️ Trader reveals finished armor', done: GameState.getFlag('armorRevealSeen') },
                 { text: '✅ Armor complete & tested', done: GameState.getFlag('armorTested') },
-
-                // ─── Park Cleaner ───────────────────────────
                 { text: '─── Park Cleaner ───', done: false },
                 {
                     text: `Friendship (${GameState.flags.parkCleanerFriendship || 0}/3)`,
                     done: (GameState.flags.parkCleanerFriendship || 0) >= 3
                 },
                 { text: 'Learn reason for attack', done: GameState.getFlag('reasonForAttackKnown') },
-
-                // ─── The Tragedy ────────────────────────────
                 { text: '─── The Tragedy ───', done: false },
                 { text: '📡 Trader: Armor ready', done: GameState.getFlag('traderCalledArmor') },
                 { text: '💔 That evening...', done: GameState.getFlag('gfDead') }
@@ -637,30 +683,28 @@ export default class UI {
     }
 
     getArmorStatus() {
-    const coreInstalled = GameState.getFlag('coreInstalled')
-    const limbsDone = GameState.getFlag('armorLimbsInstalled')
-    const headDone = GameState.getFlag('armorHeadFixed')
-    const traderDone = GameState.getFlag('armorRevealSeen')
+        const coreInstalled = GameState.getFlag('coreInstalled')
+        const limbsDone = GameState.getFlag('armorLimbsInstalled')
+        const headDone = GameState.getFlag('armorHeadFixed')
+        const traderDone = GameState.getFlag('armorRevealSeen')
 
-    // ─── Count completed parts ─────────────────────
-    const doneParts = [coreInstalled, limbsDone, headDone, traderDone].filter(Boolean).length
+        const doneParts = [coreInstalled, limbsDone, headDone, traderDone].filter(Boolean).length
+        let status = `🤖 Armor: ${doneParts}/4 steps`
 
-    let status = `🤖 Armor: ${doneParts}/4 steps`
+        if (traderDone) {
+            status += '  |  ✅ COMPLETE'
+        } else if (headDone) {
+            status += '  |  🔧 Trader finishing...'
+        } else if (limbsDone) {
+            status += '  |  Next: Fix head unit'
+        } else if (coreInstalled) {
+            status += '  |  Next: Assemble limbs'
+        } else {
+            status += '  |  Next: Install core'
+        }
 
-    if (traderDone) {
-        status += '  |  ✅ COMPLETE'
-    } else if (headDone) {
-        status += '  |  🔧 Trader finishing...'
-    } else if (limbsDone) {
-        status += '  |  Next: Fix head unit'
-    } else if (coreInstalled) {
-        status += '  |  Next: Assemble limbs'
-    } else {
-        status += '  |  Next: Install core'
+        return status
     }
-
-    return status
-}
 
     destroy() {
         if (this.bar) this.bar.destroy()
@@ -671,7 +715,6 @@ export default class UI {
         if (this.crisisBar) this.crisisBar.destroy()
         if (this.crisisLabel) this.crisisLabel.destroy()
 
-        // ─── Destroy icons ─────────────────────────────
         if (this.hubIcon) this.hubIcon.destroy()
         if (this.invIcon) this.invIcon.destroy()
         if (this.taskIcon) this.taskIcon.destroy()
