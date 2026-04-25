@@ -67,7 +67,7 @@ export default class UI {
         const timeKeys = ['time-morning', 'time-noon', 'time-evening', 'time-night']
         const timeNames = ['Morning', 'Afternoon', 'Evening', 'Night']
         const initIdx = GameState.timeIndex || 0
-        const timeIconX = W - 80-100
+        const timeIconX = W - 80 - 100
         const timeIconY = 35
         const timeIconW = 300
 
@@ -94,7 +94,7 @@ export default class UI {
             this.timeIcon.setScale(this.timeIcon._baseScale)
         })
 
-        
+
 
         // ─── Navigation Icons (Top Right, Vertical) ────
         const btnX = W - 50 - 80
@@ -427,161 +427,185 @@ export default class UI {
     }
 
     showInventory() {
-        this.invVisible = true
+        if (this.inventoryElements) this.hideInventory()
+
         const W = this.scene.cameras.main.width
         const H = this.scene.cameras.main.height
+        this.inventoryElements = []
 
-        const panelW = Math.min(900, W - 40)
-        const panelH = Math.min(650, H - 60)
+        const overlay = this.scene.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.85)
+            .setScrollFactor(0).setDepth(500).setInteractive()
+        this.inventoryElements.push(overlay)
 
-        this.invOverlay = this.scene.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.7)
-            .setScrollFactor(0).setDepth(200).setInteractive()
-            .on('pointerdown', () => this.hideInventory())
+        const panel = this.scene.add.image(W / 2, H / 2, 'inventory-panel')
+            .setScale(0.8)
+            .setScrollFactor(0).setDepth(501)
+        this.inventoryElements.push(panel)
 
-        this.invPanel = this.scene.add.rectangle(W / 2, H / 2, panelW, panelH, 0x1a1a1a)
-            .setStrokeStyle(3, 0x00ff88)
-            .setScrollFactor(0).setDepth(201).setInteractive()
+        // ─── Get exact panel dimensions after scaling ─────
+        const pW = panel.displayWidth
+        const pH = panel.displayHeight
+        const pX = panel.x - pW / 2
+        const pY = panel.y - pH / 2
 
-        this.invTitle = this.scene.add.text(W / 2, H / 2 - (panelH / 2) + 30, '🎒 Inventory', {
-            fontSize: '30px',
-            fill: '#00ff88',
-            fontStyle: 'bold'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(202)
+        const FONT = "'Share Tech Mono', monospace"
 
-        this.invClose = this.scene.add.text(W / 2 + (panelW / 2) - 30, H / 2 - (panelH / 2) + 30, '✖', {
-            fontSize: '28px',
-            fill: '#ff4444'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(202)
-            .setInteractive({ useHandCursor: true })
+        // ──────────────────────────────────────────────────
+        // DYNAMIC TEXT OVERLAYS (Adjust Y offsets to match your PNG)
+        // ──────────────────────────────────────────────────
 
-        this.invClose.on('pointerover', () => this.invClose.setFill('#ff0000'))
-        this.invClose.on('pointerout', () => this.invClose.setFill('#ff4444'))
-        this.invClose.on('pointerdown', () => this.hideInventory())
 
-        this.invPanel.setAlpha(0)
-        this.scene.tweens.add({ targets: this.invPanel, alpha: 1, duration: 150 })
+        const gridScale = 1.75
 
-        this.invSlots = []
 
-        const maxSlotSize = 100
-        const cols = Math.min(6, Math.floor((panelW - 40) / maxSlotSize))
-        const slotSize = Math.min(maxSlotSize, (panelW - 40) / cols)
+        const gridOffsetX = 0
+        const gridOffsetY = -70
+
+        const cols = 6
         const rows = 4
-        const startX = W / 2 - (cols * slotSize) / 2 + slotSize / 2
-        const startY = H / 2 - 170
+        const slotSize = 65 * gridScale
+        const slotGap = 10 * gridScale
+
+        const iconPadding = 22
+
+
+        const gridStartX = pX + (pW / 2) - ((cols * (slotSize + slotGap) - slotGap) / 2) + gridOffsetX
+        const gridStartY = pY + (pH * 0.25) + gridOffsetY
+
+
+       const lockedSlots = new Set([13, 14, 15, 16])
+
 
         for (let row = 0; row < rows; row++) {
             for (let col = 0; col < cols; col++) {
-                const x = startX + col * slotSize
-                const y = startY + row * slotSize
-                const index = row * cols + col
-                const item = GameState.inventory[index]
+                const slotIndex = row * cols + col; // Converts [row][col] to a single number
+                const slotX = gridStartX + (col * (slotSize + slotGap)) + (slotSize / 2)
+                const slotY = gridStartY + (row * (slotSize + slotGap)) + (slotSize / 2)
 
-                const slot = this.scene.add.rectangle(x, y, slotSize - 8, slotSize - 8, 0x222222)
-                    .setStrokeStyle(1, 0x444444)
-                    .setScrollFactor(0).setDepth(202)
+                if (lockedSlots.has(slotIndex)) {
+                    // ── LOCKED SLOT VISUAL ────────────────
+                    const lockedSlot = this.scene.add.rectangle(
+                        slotX, slotY, slotSize, slotSize,
+                        0x000000, 0.2
+                    )
+                        .setStrokeStyle(2, 0x441111)
+                        .setOrigin(0.5)
+                        .setScrollFactor(0)
+                        .setDepth(501)
+                        .setAlpha(0)
 
-                let icon = null
-                let qty = null
+                    const lockIcon = this.scene.add.text(slotX, slotY, '🔒', {
+                        fontSize: `${slotSize * 0.5}px`
+                    }).setOrigin(0.5).setScrollFactor(0).setDepth(502).setAlpha(0)
 
-                if (item) {
-                    slot.setInteractive({ useHandCursor: true })
-                    icon = this.scene.add.text(x, y - 10, item.icon, {
-                        fontSize: '30px'
-                    }).setOrigin(0.5).setScrollFactor(0).setDepth(203)
-                    qty = this.scene.add.text(x + 35, y + 30, `x${item.quantity}`, {
-                        fontSize: '14px',
-                        fill: '#ffaa00'
-                    }).setOrigin(1, 1).setScrollFactor(0).setDepth(203)
+                    this.inventoryElements.push(lockedSlot, lockIcon)
 
-                    slot.on('pointerover', () => {
-                        slot.setFillStyle(0x333333)
-                        this.showInvTooltip(x, y, item)
-                    })
-                    slot.on('pointerout', () => {
-                        slot.setFillStyle(0x222222)
-                        this.hideInvTooltip()
-                    })
                 } else {
-                    slot.setFillStyle(0x1a1a1a)
-                    slot.setAlpha(0.3)
+                    // ── USABLE EMPTY SLOT VISUAL ──────────
+                    const emptySlot = this.scene.add.rectangle(
+                        slotX, slotY, slotSize, slotSize,
+                        0x000000, 0.4
+                    )
+   
+                        .setOrigin(0.5)
+                        .setScrollFactor(0)
+                        .setDepth(501)
+                        .setAlpha(0)
+
+                    this.inventoryElements.push(emptySlot)
                 }
-                this.invSlots.push({ slot, icon, qty })
             }
         }
 
-        if (GameState.inventory.length > cols * rows) {
-            this.invOverflow = this.scene.add.text(W / 2, startY + rows * slotSize + 10,
-                `+ ${GameState.inventory.length - cols * rows} more items...`, {
-                fontSize: '14px', fill: '#ffaa00'
-            }).setOrigin(0.5).setScrollFactor(0).setDepth(202)
-        }
 
-        const armorY = H / 2 + (panelH / 2) - 50
-        this.invArmor = this.scene.add.text(W / 2, armorY,
-            `🤖 Armor: ${GameState.armor.parts.length}/3 parts  |  Core: ${GameState.armor.hasCore ? '✅' : '❌'}`, {
-            fontSize: '18px',
-            fill: '#888888'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(202)
+        // ─── STEP 2: Place Items (Skipping Locked Slots) ──
+        const inventory = GameState.inventory || []
+        const validItems = inventory.filter(item => item.quantity > 0)
 
-        if (GameState.inventory.length === 0) {
-            this.invEmpty = this.scene.add.text(W / 2, H / 2, 'No items yet!\nComplete tasks to earn items.', {
-                fontSize: '22px',
-                fill: '#555555',
+        let nextAvailableIndex = 0
+
+        validItems.forEach((item) => {
+            if (nextAvailableIndex >= (rows * cols)) return
+
+            while (lockedSlots.has(nextAvailableIndex)) {
+                nextAvailableIndex++
+            }
+
+            const col = nextAvailableIndex % cols
+            const row = Math.floor(nextAvailableIndex / cols)
+
+            const iconX = gridStartX + (col * (slotSize + slotGap)) + (slotSize / 2)
+            const iconY = gridStartY + (row * (slotSize + slotGap)) + (slotSize / 2)
+
+            // ── DRAW THE ICON (With Padding Applied) ─────
+
+            // FOR EMOJIS:
+            const iconSprite = this.scene.add.text(iconX, iconY, item.icon, {
+                fontSize: `${slotSize - (iconPadding * 2)}px`, // 👈 Padding applied here
                 align: 'center'
-            }).setOrigin(0.5).setScrollFactor(0).setDepth(202)
-        }
-    }
+            }).setOrigin(0.5).setScrollFactor(0).setDepth(503)
 
-    showInvTooltip(x, y, item) {
-        const tooltipW = 220, tooltipH = 80
-        const W = this.scene.cameras.main.width
-        const H = this.scene.cameras.main.height
-        let tx = x, ty = y - 70
+            this.inventoryElements.push(iconSprite)
 
-        if (ty - tooltipH / 2 < 10) ty = y + 60
-        if (ty + tooltipH / 2 > H - 10) ty = H - tooltipH / 2 - 10
-        if (tx - tooltipW / 2 < 10) tx = tooltipW / 2 + 10
-        if (tx + tooltipW / 2 > W - 10) tx = W - tooltipW / 2 - 10
+            // ── Quantity Badge (Adjusted for padding) ─────
+            if (item.quantity > 1) {
+                const badgeOffset = (slotSize / 2) - (iconPadding / 2) // Moves badge to corner inside padding
+                const qtyText = this.scene.add.text(iconX + badgeOffset, iconY - badgeOffset, `${item.quantity}`, {
+                    fontFamily: "'Share Tech Mono', monospace",
+                    fontSize: '12px',
+                    fill: '#ffffff',
+                    backgroundColor: '#000000',
+                    padding: { x: 3, y: 1 }
+                }).setOrigin(0.5).setScrollFactor(0).setDepth(504)
+                this.inventoryElements.push(qtyText)
+            }
 
-        if (!this.invTooltipBg) {
-            this.invTooltipBg = this.scene.add.rectangle(0, 0, tooltipW, tooltipH, 0x000000, 0.95)
-                .setStrokeStyle(1, 0x00ff88).setScrollFactor(0).setDepth(210)
-            this.invTooltipName = this.scene.add.text(0, 0, '', {
-                fontSize: '16px', fill: '#00ff88', fontStyle: 'bold'
-            }).setOrigin(0.5).setScrollFactor(0).setDepth(211)
-            this.invTooltipDesc = this.scene.add.text(0, 0, '', {
-                fontSize: '13px', fill: '#aaaaaa', wordWrap: { width: 200 }
-            }).setOrigin(0.5).setScrollFactor(0).setDepth(211)
-        }
+            nextAvailableIndex++
+        })
 
-        this.invTooltipBg.setPosition(tx, ty).setAlpha(1)
-        this.invTooltipName.setPosition(tx, ty - 20).setText(item.name).setAlpha(1)
-        this.invTooltipDesc.setPosition(tx, ty + 10).setText(item.description).setAlpha(1)
-    }
+        // ─── Bottom Stats: Armor Parts ────────────────────
+        // Adjust the 0.88 Y ratio until it sits on the bottom text line
+        const partsCount = GameState.armor ? GameState.armor.parts.length : 0
+        const hasCore = GameState.armor ? GameState.armor.hasCore : false
 
-    hideInvTooltip() {
-        if (this.invTooltipBg) { this.invTooltipBg.destroy(); this.invTooltipBg = null }
-        if (this.invTooltipName) { this.invTooltipName.destroy(); this.invTooltipName = null }
-        if (this.invTooltipDesc) { this.invTooltipDesc.destroy(); this.invTooltipDesc = null }
+        const statsText = this.scene.add.text(
+            W / 2, // Centered horizontally like your PNG
+            pY + (pH * 0.88), // Adjust this ratio (e.g., 0.85, 0.90) to align
+            `Armor: ${partsCount}/3 parts | Core: ${hasCore ? '✓' : '×'}`, {
+            fontFamily: FONT,
+            fontSize: '20px',
+            fill: '#000000',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(502)
+
+        this.inventoryElements.push(statsText)
+
+        // ─── Invisible Close Hitbox ──────────────────────────
+        const closeMark = this.scene.add.rectangle(
+            pX + pW - 70, // X position
+            pY + 50,       // Y position
+            80,            // Width of the clickable area (adjust if needed)
+            80             // Height of the clickable area (adjust if needed)
+        )
+            .setOrigin(0.5)
+            .setScrollFactor(0)
+            .setDepth(502)
+            .setAlpha(1) // 100% invisible
+            .setInteractive({ useHandCursor: true })
+
+        // ONLY the click action
+        closeMark.on('pointerdown', () => {
+            this.hideInventory()
+        })
+
+        this.inventoryElements.push(closeMark)
     }
 
     hideInventory() {
-        this.invVisible = false
-        if (this.invOverlay) this.invOverlay.destroy()
-        if (this.invPanel) this.invPanel.destroy()
-        if (this.invTitle) this.invTitle.destroy()
-        if (this.invClose) this.invClose.destroy()
-        if (this.invArmor) this.invArmor.destroy()
-        if (this.invEmpty) this.invEmpty.destroy()
-        if (this.invOverflow) this.invOverflow.destroy()
-        this.hideInvTooltip()
-        this.invSlots.forEach(s => {
-            if (s.slot) s.slot.destroy()
-            if (s.icon) s.icon.destroy()
-            if (s.qty) s.qty.destroy()
-        })
-        this.invSlots = []
+        if (this.inventoryElements) {
+            this.inventoryElements.forEach(el => { if (el) el.destroy() })
+            this.inventoryElements = []
+        }
     }
 
     // ─── Tasks ─────────────────────────────────────────

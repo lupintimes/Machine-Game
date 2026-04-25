@@ -94,6 +94,8 @@ export default class PreloadScene extends Phaser.Scene {
         this.load.image('park-bg', 'assets/images/park-bg.png')
 
         // ─── UI Icons ──────────────────────────────────
+        this.load.image('inventory-panel', 'assets/images/ui/inventory-panel.png')
+        
         this.load.image('lock-icon', 'assets/images/icons/lock.png')
         this.load.image('inventory-icon', 'assets/images/icons/inventory.png')
         this.load.image('tasks-icon', 'assets/images/icons/tasks.png')
