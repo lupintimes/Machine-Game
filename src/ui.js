@@ -344,69 +344,125 @@ export default class UI {
         const currentTasks = this.getCurrentTasks()
         if (!currentTasks || currentTasks.length === 0) return
 
-        const allDone = currentTasks.every(t => t.done)
+        // Build a signature of the current incomplete tasks
+        const currentIncomplete = currentTasks.filter(t => !t.done).map(t => t.text)
+        const currentSig = currentIncomplete.join('|||')
 
-        if (allDone && !this._newTaskShown) {
-            this._newTaskShown = true
-            this.showNewTaskNotification()
-        } else if (!allDone) {
-            this._newTaskShown = false
+        // On first run, just store the baseline — don't notify
+        if (!this._prevTaskSig && this._prevTaskSig !== '') {
+            this._prevTaskSig = currentSig
+            return
+        }
+
+        // Detect newly appeared tasks
+        if (currentSig !== this._prevTaskSig) {
+            const prevTexts = (this._prevTaskSig || '').split('|||').filter(Boolean)
+            const newQuests = currentIncomplete.filter(t => !prevTexts.includes(t))
+            this._prevTaskSig = currentSig
+
+            if (newQuests.length > 0) {
+                this.showNewTaskNotification(newQuests)
+            }
         }
     }
 
     // ─── New Task Notification ─────────────────────────
-    showNewTaskNotification() {
+    showNewTaskNotification(quests = []) {
         const W = this.scene.cameras.main.width
         const H = this.scene.cameras.main.height
 
-        const startY = H + 40
-        const endY = H - 60
+        // Layout constants
+        const panelW = Math.min(520, W - 80)
+        const questLineH = 32
+        const headerH = 52
+        const footerH = 16
+        const panelH = headerH + (quests.length * questLineH) + footerH + 20
+        const panelX = W / 2
+        const startY = H + panelH
+        const endY = H - panelH / 2 - 30
 
-        const notifBg = this.scene.add.rectangle(W / 2, startY, W - 40, 70, 0x1a1a2e, 0.95)
-            .setStrokeStyle(2, 0x00ff88)
+        const allItems = []
+
+        // ─── Outer glow (shadow rectangle) ─────────────
+        const glow = this.scene.add.rectangle(panelX, startY, panelW + 12, panelH + 12, 0x00ff88, 0.08)
+            .setScrollFactor(0).setDepth(498)
+        allItems.push(glow)
+
+        // ─── Panel background ──────────────────────────
+        const bg = this.scene.add.rectangle(panelX, startY, panelW, panelH, 0x0d1117, 0.96)
+            .setStrokeStyle(2, 0x00ff88, 0.7)
+            .setScrollFactor(0).setDepth(499)
+        allItems.push(bg)
+
+        // ─── Accent bar at top ─────────────────────────
+        const accent = this.scene.add.rectangle(panelX, startY - panelH / 2 + 3, panelW, 6, 0x00ff88, 0.9)
             .setScrollFactor(0).setDepth(500)
+        allItems.push(accent)
 
-        const notifIcon = this.scene.add.text(W / 2 - 180, startY, '📋', {
-            fontSize: '30px'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(501)
+        // ─── Header: icon + title ──────────────────────
+        const iconText = this.scene.add.text(panelX - panelW / 2 + 24, startY - panelH / 2 + 24, '📋', {
+            fontSize: '28px'
+        }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(501)
+        allItems.push(iconText)
 
-        const notifTitle = this.scene.add.text(W / 2, startY - 10, 'New tasks available!', {
+        const titleLabel = quests.length === 1 ? 'New Quest!' : `${quests.length} New Quests!`
+        const title = this.scene.add.text(panelX - panelW / 2 + 62, startY - panelH / 2 + 24, titleLabel, {
+            fontFamily: "'Orbitron', sans-serif",
             fontSize: '20px',
             fill: '#00ff88',
             fontStyle: 'bold'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(501)
+        }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(501)
+        allItems.push(title)
 
-        const notifSub = this.scene.add.text(W / 2, startY + 15, 'Open task panel to see what\'s next', {
-            fontSize: '13px',
-            fill: '#888888'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(501)
+        // ─── Divider line ──────────────────────────────
+        const divider = this.scene.add.rectangle(panelX, startY - panelH / 2 + headerH, panelW - 40, 1, 0x00ff88, 0.25)
+            .setScrollFactor(0).setDepth(500)
+        allItems.push(divider)
 
-        const allItems = [notifBg, notifIcon, notifTitle, notifSub]
+        // ─── Quest items ───────────────────────────────
+        const questItems = []
+        quests.forEach((quest, i) => {
+            const qY = startY - panelH / 2 + headerH + 18 + (i * questLineH)
 
-        this.scene.tweens.add({
-            targets: allItems,
-            y: endY,
-            duration: 500,
-            ease: 'Back.easeOut'
+            const bullet = this.scene.add.text(panelX - panelW / 2 + 30, qY, '▸', {
+                fontSize: '18px',
+                fill: '#ffaa00'
+            }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(501).setAlpha(0)
+            allItems.push(bullet)
+            questItems.push(bullet)
+
+            const questText = this.scene.add.text(panelX - panelW / 2 + 54, qY, quest, {
+                fontFamily: "'Share Tech Mono', monospace",
+                fontSize: '16px',
+                fill: '#e0e0e0',
+                wordWrap: { width: panelW - 90 }
+            }).setOrigin(0, 0.5).setScrollFactor(0).setDepth(501).setAlpha(0)
+            allItems.push(questText)
+            questItems.push(questText)
         })
 
-        this.scene.time.delayedCall(500, () => {
-            this.scene.tweens.add({
-                targets: notifIcon,
-                scaleX: 1.4,
-                scaleY: 1.4,
-                duration: 200,
-                yoyo: true,
-                repeat: 2
-            })
-        })
+        // ─── Footer hint ──────────────────────────────
+        const hint = this.scene.add.text(panelX, startY + panelH / 2 - 14, 'TAP to dismiss', {
+            fontSize: '11px',
+            fill: '#555555',
+            fontStyle: 'italic'
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(501)
+        allItems.push(hint)
 
-        this.scene.time.delayedCall(3500, () => {
+        // ─── Tap to dismiss ────────────────────────────
+        const hitArea = this.scene.add.rectangle(panelX, startY, panelW, panelH, 0x000000, 0)
+            .setScrollFactor(0).setDepth(502).setInteractive({ useHandCursor: true })
+        allItems.push(hitArea)
+
+        let dismissed = false
+        const dismissNotification = () => {
+            if (dismissed) return
+            dismissed = true
             this.scene.tweens.add({
                 targets: allItems,
-                y: startY,
+                y: '+=120',
                 alpha: 0,
-                duration: 400,
+                duration: 350,
                 ease: 'Sine.easeIn',
                 onComplete: () => {
                     allItems.forEach(item => {
@@ -414,7 +470,55 @@ export default class UI {
                     })
                 }
             })
+        }
+        hitArea.on('pointerdown', dismissNotification)
+
+        // ─── Slide-in animation ────────────────────────
+        this.scene.tweens.add({
+            targets: allItems,
+            y: `-=${startY - endY}`,
+            duration: 600,
+            ease: 'Back.easeOut',
+            onComplete: () => {
+                // Staggered fade-in for quest items
+                questItems.forEach((item, idx) => {
+                    this.scene.time.delayedCall(idx * 120, () => {
+                        if (!item || !item.active) return
+                        this.scene.tweens.add({
+                            targets: item,
+                            alpha: 1,
+                            x: item.x,
+                            duration: 300,
+                            ease: 'Quad.easeOut'
+                        })
+                    })
+                })
+
+                // Pulse the icon
+                this.scene.tweens.add({
+                    targets: iconText,
+                    scaleX: 1.3,
+                    scaleY: 1.3,
+                    duration: 250,
+                    yoyo: true,
+                    repeat: 1,
+                    ease: 'Sine.easeInOut'
+                })
+
+                // Subtle glow pulse
+                this.scene.tweens.add({
+                    targets: glow,
+                    alpha: 0.2,
+                    duration: 800,
+                    yoyo: true,
+                    repeat: 2,
+                    ease: 'Sine.easeInOut'
+                })
+            }
         })
+
+        // ─── Auto-dismiss after 5 seconds ──────────────
+        this.scene.time.delayedCall(5000, dismissNotification)
     }
 
     // ─── Inventory ─────────────────────────────────────
