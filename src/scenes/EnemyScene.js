@@ -389,7 +389,8 @@ export default class EnemyScene extends Phaser.Scene {
         // ─── Live camera ───────────────────────────────
         this.viewerCam = this.cameras.add(monX, monY, monW, monH)
         this.viewerCam.setZoom(0.6)
-        this.viewerCam.setScroll(3000, 400)
+        this.viewerCam.setBounds(0, 0, this.worldWidth, H)
+        this.viewerCam.setScroll(2400, 300)
         this.viewerCam.setBackgroundColor('#000000')
 
         // ─── Collect ALL HUD/fixed objects to ignore on viewer cam ──
@@ -419,9 +420,6 @@ export default class EnemyScene extends Phaser.Scene {
         }
 
         this.viewerCam.ignore(hudObjects.filter(obj => obj != null))
-
-        // ─── Main cam ignores viewer overlay so they don't double-render ──
-        this.cameras.main.ignore([overlay, frame, title, closeText])
 
         this.viewerOverlay = { overlay, frame, title, closeText }
     }
