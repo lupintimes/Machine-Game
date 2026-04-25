@@ -122,16 +122,18 @@ export default class EnemyScene extends Phaser.Scene {
         this.physics.add.collider(this.enemies, this.ground)
         this.physics.add.collider(this.enemies, this.platforms)
         this.createEnemy(700, H - 175, 'patrol', 200)
-        this.createEnemy(1300, H - 175, 'patrol', 300)
-        this.createEnemy(1900, H - 175, 'shooter', 0)
-        this.createEnemy(2500, H - 175, 'patrol', 250)
-        this.createEnemy(3100, H - 175, 'shooter', 0)
-        this.createEnemy(3700, H - 175, 'patrol', 200)
+        this.createEnemy(400, H - 500, 'patrol', 200)
+        this.createEnemy(401, 256, 'patrol', 250)
+        this.createEnemy(1744,634, 'patrol', 200)
+        this.createEnemy(2666,452, 'shooter', 0)
+        this.createEnemy(3291, 639, 'shooter', 0)
+        
         this.createEnemy(4300, H - 175, 'shooter', 0)
         this.createEnemy(4900, H - 175, 'patrol', 300)
         this.createEnemy(5500, H - 175, 'shooter', 0)
         this.createEnemy(6100, H - 175, 'patrol', 250)
-        this.createEnemy(6700, H - 175, 'shooter', 0)
+
+        this.createEnemy(1181, 253, 'shooter', 0)
 
         // ─── Spikes ────────────────────────────────────
         this.spikes = this.physics.add.staticGroup()
@@ -197,6 +199,8 @@ export default class EnemyScene extends Phaser.Scene {
         this.cKey = this.input.keyboard.addKey('C')
         this.qKey = this.input.keyboard.addKey('Q')
         this.eKey = this.input.keyboard.addKey('E')
+
+        this.pKey = this.input.keyboard.addKey('P')
 
         this.input.mouse.disableContextMenu()
         this.input.on('pointerdown', (pointer) => {
@@ -504,8 +508,15 @@ export default class EnemyScene extends Phaser.Scene {
     // ═══════════════════════════════════════════════════
     // ─── UPDATE ────────────────────────────────────────
     // ═══════════════════════════════════════════════════
-
     update() {
+
+        // ─── Print player position ─────────────────────
+        if (Phaser.Input.Keyboard.JustDown(this.pKey)) {
+            console.log(`Player: x: ${Math.round(this.player.x)}, y: ${Math.round(this.player.y)}`)
+        }
+
+        // ─── Position Tool ─────────────────────────────
+
         // ─── Position Tool ─────────────────────────────
         if (Phaser.Input.Keyboard.JustDown(this.yKey)) {
             this.positionTool.enabled = !this.positionTool.enabled
@@ -1060,7 +1071,7 @@ export default class EnemyScene extends Phaser.Scene {
     }
 
     createPlatform(x, y, w, h) {
-        const platform = this.add.rectangle(x, y, w, h, 0x000000, 0)
+        const platform = this.add.rectangle(x, y, w, h, 0x000000, 0.8)
         this.physics.add.existing(platform, true); this.platforms.add(platform)
         return platform
     }

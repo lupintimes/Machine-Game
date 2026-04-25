@@ -11,6 +11,7 @@ export default class WorkshopScene extends Phaser.Scene {
         this.load.image('lock-key', 'assets/images/ui/lock_key.png')
         this.load.image('e-key', 'assets/images/ui/E_key.png')
         this.load.image('lock-overlay', 'assets/images/ui/electric_bench_locked.png')
+        this.load.image('arrow', 'assets/images/ui/arrow.png')
     }
 
     create() {
@@ -20,6 +21,9 @@ export default class WorkshopScene extends Phaser.Scene {
         // ─── UI ────────────────────────────────────────
         this.ui = new UI(this)
         this.ui.create()
+
+        // ─── Dialog (MUST be before any dialog.show calls) ─
+        this.dialog = new DialogBox(this)
 
         // ─── Shutdown cleanup ──────────────────────────
         this.events.on('shutdown', () => { if (this.ui) this.ui.destroy() })
@@ -83,19 +87,14 @@ export default class WorkshopScene extends Phaser.Scene {
         ]
 
         // ─── Lock visual on electrical ─────────────────
-        // ─── Lock visual on electrical ─────────────────
         if (this.stations[1].locked) {
             this.stations[1].rect.setAlpha(0)
-
-            // Same scale as background
             const bgScale = this.bg.scaleX
-
-            this.stations[1].lockOverlay = this.add.image(1858, 730.00, 'lock-overlay')
+            this.stations[1].lockOverlay = this.add.image(2008, 730.00, 'lock-overlay')
                 .setOrigin(0.5, 0.5)
                 .setScale(bgScale)
                 .setDepth(2)
                 .setAlpha(0.8)
-
             this.stations[1].lockLabel = this.add.text(
                 1830, 550, '🔒 Need 5 repair skill', {
                 fontSize: '18px',
@@ -103,24 +102,40 @@ export default class WorkshopScene extends Phaser.Scene {
             }).setDepth(3)
         }
 
-        // ─── Interact hint ─────────────────────────────
-        this.interactHint = this.add.image(0, 0, 'e-key')
-            .setScale(0.5)
+        // ─── Current bench index ───────────────────────
+        this.currentBenchIndex = 0
+
+        // ─── Navigation Arrows ─────────────────────────
+        const arrowScale = 0.5
+        const arrowY = H / 2
+
+        this.leftArrow = this.add.image(200, arrowY, 'arrow')
+            .setScale(arrowScale)
+            .setFlipX(true)
             .setDepth(20)
-            .setVisible(false)
+            .setScrollFactor(0)
+            .setInteractive({ useHandCursor: true })
 
+        this.rightArrow = this.add.image(W - 200, arrowY, 'arrow')
+            .setScale(arrowScale)
+            .setDepth(20)
+            .setScrollFactor(0)
+            .setInteractive({ useHandCursor: true })
 
+        this.leftArrow.on('pointerover', () => this.leftArrow.setScale(arrowScale * 1.1))
+        this.leftArrow.on('pointerout', () => this.leftArrow.setScale(arrowScale))
+        this.leftArrow.on('pointerdown', () => this.navigateBench(-1))
 
-        // ─── Player ────────────────────────────────────
-        this.player = this.physics.add.image(400, 850)
-        this.player.setDisplaySize(104, 156)
-        this.player.body.setCollideWorldBounds(true)
-        this.playerGfx = this.add.rectangle(400, 850, 32, 48, 0x00ff88)
-        this.playerGfx.setDepth(10)
-        this.playerGfx.setScale(7.25)
+        this.rightArrow.on('pointerover', () => this.rightArrow.setScale(arrowScale * 1.1))
+        this.rightArrow.on('pointerout', () => this.rightArrow.setScale(arrowScale))
+        this.rightArrow.on('pointerdown', () => this.navigateBench(1))
 
-        // ─── Camera ────────────────────────────────────
-        this.cameras.main.startFollow(this.player, true, 0.1, 0.1)
+        // ─── E key hint ────────────────────────────────
+        this.eKeyHint = null
+
+        // ─── Camera: snap to first bench ───────────────
+        this.snapCameraToBench(0, false)
+        this.updateBenchUI()
 
         // ─── Controls ──────────────────────────────────
         this.cursors = this.input.keyboard.createCursorKeys()
@@ -129,37 +144,47 @@ export default class WorkshopScene extends Phaser.Scene {
         this.keyA = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.A)
         this.keyD = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.D)
 
-        // ─── Dialog ────────────────────────────────────
-        this.dialog = new DialogBox(this)
-
         // ─── State ─────────────────────────────────────
         this.menuActive = false
         this.menuItems = []
-        this.nearStation = null
         this.truthTriggered = false
-
 
         if (GameState.getFlag('learnedTruth')) {
             this.truthTriggered = true
         }
 
-
-
         // ─── Intro dialog ──────────────────────────────
-        // In create() — replace the intro dialog block:
         if (!GameState.getFlag('workshopIntroSeen')) {
-            // ─── Set flag IMMEDIATELY, not in callback ─────
-            GameState.setFlag('workshopIntroSeen')
+            // Hide arrows during intro
+            this.leftArrow.setVisible(false)
+            this.rightArrow.setVisible(false)
+            if (this.eKeyHint) this.eKeyHint.setVisible(false)
 
             this.dialog.show([
-                { name: 'You', text: 'My workshop... at least this place is still standing.' },
-                { name: 'You', text: 'I should start working soon.' }
-            ])
+                { name: 'You', text: 'My workshop... at least this place is still standing.', expression: 'sad' },
+                { name: 'You', text: 'I should start working soon.', expression: 'serious' }
+                        ], () => {
+                GameState.setFlag('workshopIntroSeen')
+
+                // Force show right arrow (we're at bench 0)
+                this.rightArrow.setVisible(true)
+                this.rightArrow.setAlpha(1)
+
+                // Left stays hidden (we're at first bench)
+                this.leftArrow.setVisible(false)
+
+                if (this.eKeyHint) this.eKeyHint.setVisible(true)
+            })
+
+        this.updateBenchUI()
         }
     }
 
-        update() {
-        const speed = 600
+    update() {
+        // ─── Safety: reset stuck dialog state ──────────
+        if (this.dialog && this.dialog.isClosed && this.dialog.isActive) {
+            this.dialog.isActive = false
+        }
 
         // ─── Dialog takes priority ─────────────────────
         if (this.dialog && this.dialog.isActive) {
@@ -171,20 +196,21 @@ export default class WorkshopScene extends Phaser.Scene {
             return
         }
 
-        // ─── Menu blocks movement ──────────────────────
+        // ─── Menu blocks input ─────────────────────────
         if (this.menuActive) return
 
-        // ─── Player movement ───────────────────────────
-        this.player.setVelocity(0)
-
-        if (this.cursors.left.isDown || this.keyA.isDown) {
-            this.player.setVelocityX(-speed)
-        } else if (this.cursors.right.isDown || this.keyD.isDown) {
-            this.player.setVelocityX(speed)
+        // ─── Keyboard navigation between benches ───────
+        if (Phaser.Input.Keyboard.JustDown(this.keyA) || Phaser.Input.Keyboard.JustDown(this.cursors.left)) {
+            this.navigateBench(-1)
+        }
+        if (Phaser.Input.Keyboard.JustDown(this.keyD) || Phaser.Input.Keyboard.JustDown(this.cursors.right)) {
+            this.navigateBench(1)
         }
 
-        this.playerGfx.x = this.player.x
-        this.playerGfx.y = this.player.y
+        // ─── Press E to interact with current bench ────
+        if (Phaser.Input.Keyboard.JustDown(this.eKey)) {
+            this.onInteract(this.stations[this.currentBenchIndex])
+        }
 
         // ─── Electrical bench unlock (one time) ────────
         if (this.stations[1].locked && GameState.getFlag('electricalUnlocked')) {
@@ -198,6 +224,7 @@ export default class WorkshopScene extends Phaser.Scene {
                 this.stations[1].lockLabel.destroy()
                 this.stations[1].lockLabel = null
             }
+            this.updateBenchUI()
         }
 
         // ─── Trader hint (one time) ────────────────────
@@ -212,44 +239,61 @@ export default class WorkshopScene extends Phaser.Scene {
 
         // ─── Truth unlock check ────────────────────────
         this.checkTruthUnlock()
+    }
 
-        // ─── Station proximity ─────────────────────────
-        this.nearStation = null
+    // ═══════════════════════════════════════════════════
+    // ─── BENCH NAVIGATION ──────────────────────────────
+    // ═══════════════════════════════════════════════════
 
-        this.stations.forEach(station => {
-            const r = station.rect
-            const left = r.x - r.width / 2
-            const right = r.x + r.width / 2
-            const top = r.y - r.height / 2
-            const bottom = r.y + r.height / 2
+    navigateBench(direction) {
+        const newIndex = this.currentBenchIndex + direction
+        if (newIndex < 0 || newIndex >= this.stations.length) return
 
-            const inside = this.player.x > left &&
-                this.player.x < right &&
-                this.player.y > top &&
-                this.player.y < bottom
+        this.currentBenchIndex = newIndex
+        this.snapCameraToBench(newIndex, true)
+        this.updateBenchUI()
+    }
 
-            if (inside) {
-                this.nearStation = station
-                this.interactHint.setTexture(station.locked ? 'lock-key' : 'e-key')
-                this.interactHint.setVisible(true)
-                this.interactHint.setPosition(
-                    r.x + 220,
-                    top + 120
-                )
-                station.rect.setStrokeStyle(3, station.locked ? 0xff0000 : 0xffff00)
-            } else {
-                station.rect.setStrokeStyle(0)
-            }
-        })
+    snapCameraToBench(index, animate = true) {
+        const station = this.stations[index]
+        const targetX = station.rect.x - this.cameras.main.width / 2
 
-        if (!this.nearStation) {
-            this.interactHint.setVisible(false)
+        if (animate) {
+            this.tweens.add({
+                targets: this.cameras.main,
+                scrollX: targetX,
+                duration: 500,
+                ease: 'Sine.easeInOut'
+            })
+        } else {
+            this.cameras.main.scrollX = targetX
+        }
+    }
+
+    updateBenchUI() {
+        // ─── Show/hide arrows ──────────────────────────
+        if (this.leftArrow) {
+            this.leftArrow.setVisible(this.currentBenchIndex > 0)
+        }
+        if (this.rightArrow) {
+            this.rightArrow.setVisible(this.currentBenchIndex < this.stations.length - 1)
         }
 
-        // ─── Press E ───────────────────────────────────
-        if (Phaser.Input.Keyboard.JustDown(this.eKey) && this.nearStation) {
-            this.onInteract(this.nearStation)
+        // ─── Update interact hint icon ─────────────────
+        const station = this.stations[this.currentBenchIndex]
+
+        if (this.eKeyHint) {
+            this.eKeyHint.destroy()
+            this.eKeyHint = null
         }
+
+        const W = this.cameras.main.width
+        const H = this.cameras.main.height
+
+        this.eKeyHint = this.add.image(W / 2, H - 100, station.locked ? 'lock-key' : 'e-key')
+            .setScale(0.5)
+            .setScrollFactor(0)
+            .setDepth(20)
     }
 
     // ═══════════════════════════════════════════════════
@@ -258,8 +302,8 @@ export default class WorkshopScene extends Phaser.Scene {
     canDoWork() {
         if (GameState.timeOfDay === 'night') {
             this.dialog.show([
-                { name: 'You', text: 'It\'s too late to work...' },
-                { name: 'You', text: 'I should get some rest.' },
+                { name: 'You', text: 'It\'s too late to work...', expression: 'sad' },
+                { name: 'You', text: 'I should get some rest.', expression: 'neutral' },
                 { name: '', text: '😴 Come back in the morning.' }
             ])
             return false
@@ -282,14 +326,14 @@ export default class WorkshopScene extends Phaser.Scene {
     onInteract(station) {
         if (station.locked) {
             this.dialog.show([
-                { name: 'You', text: '🔒 I need more repair skill to work on this.' }
+                { name: 'You', text: '🔒 I need more repair skill to work on this.', expression: 'serious' }
             ])
             return
         }
 
         if (station.cooldown) {
             this.dialog.show([
-                { name: 'You', text: 'I just worked on this. Let me rest a bit.' }
+                { name: 'You', text: 'I just worked on this. Let me rest a bit.', expression: 'neutral' }
             ])
             return
         }
@@ -318,8 +362,8 @@ export default class WorkshopScene extends Phaser.Scene {
         if (station.name === 'Magical Bench') {
             if (GameState.timeOfDay !== 'night') {
                 this.dialog.show([
-                    { name: 'You', text: 'The magical bench needs darkness to work...' },
-                    { name: 'You', text: 'Ancient energy only flows at night.' },
+                    { name: 'You', text: 'The magical bench needs darkness to work...', expression: 'serious' },
+                    { name: 'You', text: 'Ancient energy only flows at night.', expression: 'neutral' },
                     { name: '', text: '🌙 Come back at night to use this bench.' }
                 ])
                 return
@@ -404,7 +448,6 @@ export default class WorkshopScene extends Phaser.Scene {
             fill: '#aaaaaa'
         }).setOrigin(0.5).setScrollFactor(0).setDepth(52)
 
-        // ─── Night indicator ───────────────────────────
         const timeInfo = this.add.text(W / 2, H / 2 - 125,
             '🌙 Night — Ancient energy is active', {
             fontSize: '14px',
@@ -442,16 +485,16 @@ export default class WorkshopScene extends Phaser.Scene {
                 if (researchDone) {
                     this.closeMagicalMenu()
                     this.dialog.show([
-                        { name: 'You', text: 'Research is complete.' },
-                        { name: 'You', text: 'I need to gather all clues from others.' }
+                        { name: 'You', text: 'Research is complete.', expression: 'serious' },
+                        { name: 'You', text: 'I need to gather all clues from others.', expression: 'determined' }
                     ])
                     return
                 }
                 if (GameState.elixir < 1) {
                     this.closeMagicalMenu()
                     this.dialog.show([
-                        { name: 'You', text: 'I need at least 1 elixir to run the analysis.' },
-                        { name: 'You', text: 'Play Energy Calibration to earn elixir.' }
+                        { name: 'You', text: 'I need at least 1 elixir to run the analysis.', expression: 'serious' },
+                        { name: 'You', text: 'Play Energy Calibration to earn elixir.', expression: 'neutral' }
                     ])
                     return
                 }
@@ -469,7 +512,6 @@ export default class WorkshopScene extends Phaser.Scene {
 
     createBenchButton(x, y, text, subtitle, onClick, locked = false) {
         const btn = this.add.rectangle(x, y, 500, 75, locked ? 0x222222 : 0x2a2a2a)
-
             .setStrokeStyle(2, locked ? 0x444444 : 0x9b59b6)
             .setScrollFactor(0).setDepth(52)
             .setInteractive({ useHandCursor: !locked })
@@ -520,37 +562,37 @@ export default class WorkshopScene extends Phaser.Scene {
 
         if (research <= 5) {
             this.dialog.show([
-                { name: 'You', text: 'Running attack pattern analysis...' },
-                { name: 'You', text: 'Clue 1: The attackers knew exactly which districts to hit.' },
-                { name: 'You', text: 'This wasn\'t random. They had a detailed map.' },
+                { name: 'You', text: 'Running attack pattern analysis...', expression: 'serious' },
+                { name: 'You', text: 'Clue 1: The attackers knew exactly which districts to hit.', expression: 'surprised' },
+                { name: 'You', text: 'This wasn\'t random. They had a detailed map.', expression: 'serious' },
                 { name: '', text: `🔬 Research Progress: ${research}/30` }
             ])
         } else if (research <= 10) {
             this.dialog.show([
-                { name: 'You', text: 'Cross referencing attack timing...' },
-                { name: 'You', text: 'Clue 2: The attack happened during guard rotation.' },
-                { name: 'You', text: 'Someone knew the security schedule inside out.' },
+                { name: 'You', text: 'Cross referencing attack timing...', expression: 'serious' },
+                { name: 'You', text: 'Clue 2: The attack happened during guard rotation.', expression: 'surprised' },
+                { name: 'You', text: 'Someone knew the security schedule inside out.', expression: 'angry' },
                 { name: '', text: `🔬 Research Progress: ${research}/30` }
             ])
         } else if (research <= 15) {
             this.dialog.show([
-                { name: 'You', text: 'Analyzing the damage patterns...' },
-                { name: 'You', text: 'Clue 3: Key areas were deliberately left untouched.' },
-                { name: 'You', text: 'The material vaults... specifically avoided.' },
+                { name: 'You', text: 'Analyzing the damage patterns...', expression: 'serious' },
+                { name: 'You', text: 'Clue 3: Key areas were deliberately left untouched.', expression: 'surprised' },
+                { name: 'You', text: 'The material vaults... specifically avoided.', expression: 'serious' },
                 { name: '', text: `🔬 Research Progress: ${research}/30` }
             ])
         } else if (research <= 20) {
             this.dialog.show([
-                { name: 'You', text: 'Investigating the material vaults...' },
-                { name: 'You', text: 'Clue 4: A rare material only found in this city.' },
-                { name: 'You', text: 'Can\'t be taken publicly. Someone wants it secretly.' },
+                { name: 'You', text: 'Investigating the material vaults...', expression: 'serious' },
+                { name: 'You', text: 'Clue 4: A rare material only found in this city.', expression: 'surprised' },
+                { name: 'You', text: 'Can\'t be taken publicly. Someone wants it secretly.', expression: 'angry' },
                 { name: '', text: `🔬 Research Progress: ${research}/30` }
             ])
         } else if (research <= 25) {
             this.dialog.show([
-                { name: 'You', text: 'Deep analysis of enemy movement data...' },
-                { name: 'You', text: 'Clue 5: The enemy had perfect knowledge of defenses.' },
-                { name: 'You', text: 'This level of intel... from someone with high authority.' },
+                { name: 'You', text: 'Deep analysis of enemy movement data...', expression: 'serious' },
+                { name: 'You', text: 'Clue 5: The enemy had perfect knowledge of defenses.', expression: 'surprised' },
+                { name: 'You', text: 'This level of intel... from someone with high authority.', expression: 'angry' },
                 { name: '', text: `🔬 Research Progress: ${research}/30` }
             ])
         } else if (research >= 30) {
@@ -560,8 +602,8 @@ export default class WorkshopScene extends Phaser.Scene {
 
             if (luvaza && park && trader) {
                 this.dialog.show([
-                    { name: 'You', text: 'Final analysis complete...' },
-                    { name: 'You', text: 'I have everything I need now.' },
+                    { name: 'You', text: 'Final analysis complete...', expression: 'serious' },
+                    { name: 'You', text: 'I have everything I need now.', expression: 'determined' },
                     { name: '', text: '🔬 All clues gathered! Head back to workshop.' }
                 ])
             } else {
@@ -571,8 +613,8 @@ export default class WorkshopScene extends Phaser.Scene {
                 if (!trader) missing.push('🧑 Talk more with Trader at Junkyard')
 
                 this.dialog.show([
-                    { name: 'You', text: 'Research complete...' },
-                    { name: 'You', text: 'But I still need more from others.' },
+                    { name: 'You', text: 'Research complete...', expression: 'serious' },
+                    { name: 'You', text: 'But I still need more from others.', expression: 'sad' },
                     ...missing.map(m => ({ name: '📌', text: m })),
                     { name: '', text: '🔬 Research: 30/30 ✅' }
                 ])

@@ -15,8 +15,8 @@ export default class HubScene extends Phaser.Scene {
         this.load.image('loc-park', 'assets/images/locations/park.png')
         this.load.image('loc-enemy', 'assets/images/locations/enemy.png')
 
-        this.load.image('legend', 'assets/images/locations/legend.png')
         this.load.image('hub-overlay', 'assets/images/locations/border.png')
+        this.load.image('legend', 'assets/images/locations/legend.png')
     }
 
     create() {
@@ -53,6 +53,7 @@ export default class HubScene extends Phaser.Scene {
         this.bg.setDepth(0)
 
         this.cameras.main.fadeIn(300, 0, 0, 0)
+
 
         // ─── Locations ─────────────────────────────────
         this.locations = []
@@ -114,6 +115,7 @@ export default class HubScene extends Phaser.Scene {
             imageKey: 'loc-park',
             targetScene: 'ParkScene',
             unlocked: GameState.getFlag('metLuvaza'),
+            timeRestriction: 'evening',
             tooltipW: 145,
             tooltipH: 30,
             tooltipFont: '24px'
@@ -131,11 +133,11 @@ export default class HubScene extends Phaser.Scene {
             tooltipFont: '14px'
         })
 
-        // ─── Legend (interactive, no tooltip) ───────────
         this.legend = this.add.image(211, 911, 'legend')
             .setDepth(3)
             .setInteractive({ useHandCursor: true, pixelPerfect: true, alphaTolerance: 50 })
 
+            
         this.legend.on('pointerover', () => {
             this.tweens.add({
                 targets: this.legend,
@@ -154,16 +156,13 @@ export default class HubScene extends Phaser.Scene {
             })
         })
 
-        this.legend.on('pointerdown', () => {
-            // ─── Add functionality here later ──────────
-        })
-
         // ─── Overlay above everything except UI ────────
         this.hubOverlay = this.add.image(W / 2, H / 2, 'hub-overlay')
         const overlayScaleX = W / this.hubOverlay.width
         const overlayScaleY = H / this.hubOverlay.height
         this.hubOverlay.setScale(Math.max(overlayScaleX, overlayScaleY))
         this.hubOverlay.setDepth(100)
+
 
         // ─── UI (created AFTER game content) ───────────
         this.ui = new UI(this)
@@ -206,7 +205,8 @@ export default class HubScene extends Phaser.Scene {
             x, y,
             label, imageKey,
             targetScene, unlocked,
-            tooltipW, tooltipH, tooltipFont
+            tooltipW, tooltipH, tooltipFont,
+            timeRestriction
         } = config
 
         const locImage = this.add.image(x, y, imageKey).setDepth(3)
@@ -295,6 +295,21 @@ export default class HubScene extends Phaser.Scene {
             })
 
             locImage.on('pointerdown', () => {
+                // ─── Time restriction check ────────────
+                if (timeRestriction && GameState.timeOfDay !== timeRestriction) {
+                    this.hideTooltip()
+                    this.showTooltip(
+                        x,
+                        y - (locImage.displayHeight / 2) - 20,
+                        `🕐 Only in the ${timeRestriction}`,
+                        250,
+                        35,
+                        '24px'
+                    )
+                    this.time.delayedCall(2000, () => this.hideTooltip())
+                    return
+                }
+
                 this.tweens.add({
                     targets: locImage,
                     scale: 0.95,
@@ -313,7 +328,8 @@ export default class HubScene extends Phaser.Scene {
         const locationData = {
             locImage, lockIcon, outlineShadows,
             unlocked, label, targetScene, x, y,
-            tooltipW, tooltipH, tooltipFont
+            tooltipW, tooltipH, tooltipFont,
+            timeRestriction
         }
         this.locations.push(locationData)
 
@@ -415,6 +431,21 @@ export default class HubScene extends Phaser.Scene {
         })
 
         loc.locImage.on('pointerdown', () => {
+            // ─── Time restriction check ────────────
+            if (loc.timeRestriction && GameState.timeOfDay !== loc.timeRestriction) {
+                this.hideTooltip()
+                this.showTooltip(
+                    loc.x,
+                    loc.y - (loc.locImage.displayHeight / 2) - 20,
+                    `🕐 Only in the ${loc.timeRestriction}`,
+                    250,
+                    35,
+                    '14px'
+                )
+                this.time.delayedCall(2000, () => this.hideTooltip())
+                return
+            }
+
             this.tweens.add({
                 targets: loc.locImage,
                 scale: 0.95,

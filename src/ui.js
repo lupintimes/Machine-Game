@@ -10,61 +10,62 @@ export default class UI {
         this.invBtnLabel = null
         this.taskBtnLabel = null
         this.timeSegments = []
+        this._newTaskShown = false
+        this._lastTaskCheck = 0
     }
 
     create() {
         const W = this.scene.cameras.main.width
         const H = this.scene.cameras.main.height
 
-        // ─── Top Bar Background ────────────────────────
-        this.bar = this.scene.add.rectangle(W / 2, 20, W, 40, 0x000000, 0.8)
+        // ─── Top Bar Background (60px tall) ────────────
+        this.bar = this.scene.add.rectangle(W / 2, 30, W, 60, 0x000000, 0.8)
             .setDepth(50).setScrollFactor(0)
 
         // Stats text:
-        this.statsText = this.scene.add.text(20, 8, '', {
+        this.statsText = this.scene.add.text(20, 15, '', {
             fontFamily: "'Share Tech Mono', monospace",
-            fontSize: '16px',
+            fontSize: '18px',
             fill: '#ffffff'
         }).setDepth(51).setScrollFactor(0)
 
         // Level text:
-        this.levelText = this.scene.add.text(W - 220, 8, '', {
+        this.levelText = this.scene.add.text(W - 220, 15, '', {
             fontFamily: "'Orbitron', monospace",
-            fontSize: '18px',
+            fontSize: '20px',
             fill: '#00ff88',
             fontStyle: 'bold'
         }).setOrigin(1, 0).setDepth(51).setScrollFactor(0)
 
         // ─── Crisis Bar (left) + Days text (right), centered ─
-        const crisisW = 300
-        const groupW = 520
+        const crisisW = 400
+        const groupW = 620
         const groupStartX = (W - groupW) / 2
-        const crisisY = 20
-
+        const crisisY = 30
         const barX = groupStartX
 
-        this.crisisBarBg = this.scene.add.rectangle(barX + crisisW / 2, crisisY, crisisW, 22, 0x222222, 0.6)
+        this.crisisBarBg = this.scene.add.rectangle(barX + crisisW / 2, crisisY, crisisW, 28, 0x222222, 0.6)
             .setStrokeStyle(1, 0x444444)
             .setDepth(51).setScrollFactor(0)
 
-        this.crisisBar = this.scene.add.rectangle(barX, crisisY, 0, 20, 0xff4444)
+        this.crisisBar = this.scene.add.rectangle(barX, crisisY, 0, 26, 0xff4444)
             .setOrigin(0, 0.5).setDepth(52).setScrollFactor(0)
 
         this.crisisLabel = this.scene.add.text(barX + crisisW / 2, crisisY, '', {
-            fontSize: '11px',
+            fontSize: '14px',
             fill: '#ffffff',
             fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(53).setScrollFactor(0)
 
         this.dayText = this.scene.add.text(barX + crisisW + 15, crisisY, '', {
             fontFamily: "'Share Tech Mono', monospace",
-            fontSize: '14px',
+            fontSize: '16px',
             fill: '#ffdd44',
             fontStyle: 'bold'
         }).setOrigin(0, 0.5).setDepth(53).setScrollFactor(0)
 
         // ─── Time Pill Indicator ───────────────────────
-        this.timePillContainer = this.scene.add.container(W - 100, 20).setDepth(51).setScrollFactor(0)
+        this.timePillContainer = this.scene.add.container(W - 100, 30).setDepth(51).setScrollFactor(0)
 
         this.pillBg = this.scene.add.rectangle(0, 0, 160, 30, 0x000000, 0.4)
         this.timePillContainer.add(this.pillBg)
@@ -77,7 +78,7 @@ export default class UI {
 
         this.timeSegments = []
 
-        // Morning (0) - Center at -60
+        // Morning (0)
         const mornGfx = this.scene.add.graphics()
         mornGfx.fillStyle(0xffe4b5)
         mornGfx.beginPath()
@@ -90,7 +91,7 @@ export default class UI {
         const mornCont = this.scene.add.container(-60, 0); mornCont.add(mornGfx)
         this.timePillContainer.add(mornCont); this.timeSegments.push(mornCont)
 
-        // Afternoon (1) - Center at -20
+        // Afternoon (1)
         const aftGfx = this.scene.add.graphics()
         aftGfx.fillStyle(0x77ccff); aftGfx.fillRect(-20, -15, 40, 30)
         aftGfx.fillStyle(0xffaa00); aftGfx.fillCircle(0, 2, 8)
@@ -98,7 +99,7 @@ export default class UI {
         const aftCont = this.scene.add.container(-20, 0); aftCont.add(aftGfx)
         this.timePillContainer.add(aftCont); this.timeSegments.push(aftCont)
 
-        // Evening (2) - Center at 20
+        // Evening (2)
         const eveGfx = this.scene.add.graphics()
         eveGfx.fillStyle(0x555566); eveGfx.fillRect(-20, -15, 40, 30)
         eveGfx.fillStyle(0xdddddd); eveGfx.fillCircle(0, 0, 6)
@@ -106,7 +107,7 @@ export default class UI {
         const eveCont = this.scene.add.container(20, 0); eveCont.add(eveGfx)
         this.timePillContainer.add(eveCont); this.timeSegments.push(eveCont)
 
-        // Night (3) - Center at 60
+        // Night (3)
         const nightGfx = this.scene.add.graphics()
         nightGfx.fillStyle(0x1a1a24)
         nightGfx.beginPath(); nightGfx.lineTo(-20, -15); nightGfx.lineTo(5, -15)
@@ -117,14 +118,12 @@ export default class UI {
         const nightCont = this.scene.add.container(60, 0); nightCont.add(nightGfx)
         this.timePillContainer.add(nightCont); this.timeSegments.push(nightCont)
 
-        // Set initial scales and alphas
         const initIdx = GameState.timeIndex || 0
         this.timeSegments.forEach((seg, i) => {
             seg.setScale(i === initIdx ? 1.15 : 0.85)
             seg.setAlpha(i === initIdx ? 1 : 0.4)
         })
 
-        // Hit pads for interactivity
         const segments = [-60, -20, 20, 60]
         segments.forEach((sx, i) => {
             const hitPad = this.scene.add.rectangle(sx, 0, 40, 30, 0x000000, 0)
@@ -133,13 +132,11 @@ export default class UI {
             this.timePillContainer.add(hitPad)
         })
 
-        // Pill outline border
         const border = this.scene.add.graphics()
         border.lineStyle(2, 0xffffff, 1)
         border.strokeRoundedRect(-80, -15, 160, 30, 15)
         this.timePillContainer.add(border)
 
-        // Day tab indicator
         const timeNames = ['Morning', 'Afternoon', 'Evening', 'Night']
         const initTimeName = timeNames[initIdx] || 'Morning'
         this.dayPillTab = this.scene.add.rectangle(0, 25, 90, 20, 0x5a3a9a)
@@ -151,10 +148,10 @@ export default class UI {
         this.dayPillTab.setSize(this.dayPillText.width + 20, 20)
 
         // ─── Navigation Icons (Top Right, Vertical) ────
-        const btnX = W - 80
+        const btnX = W - 30 - 80
         const btnGap = 10
         const iconScale = 0.15
-        let iconY = 55+80
+        let iconY = 75 + 80
 
         const makeIcon = (x, y, iconKey, onClick) => {
             const icon = this.scene.add.image(x, y, iconKey)
@@ -166,7 +163,6 @@ export default class UI {
             return icon
         }
 
-        // Hub (not in HubScene)
         if (this.scene.scene.key !== 'HubScene') {
             this.hubIcon = makeIcon(btnX, iconY, 'hub-icon', () => {
                 this.scene.cameras.main.fade(300, 0, 0, 0)
@@ -177,11 +173,9 @@ export default class UI {
             iconY += (this.hubIcon.displayHeight + btnGap)
         }
 
-        // Inventory
         this.invIcon = makeIcon(btnX, iconY, 'inventory-icon', () => this.toggleInventory())
         iconY += (this.invIcon.displayHeight + btnGap)
 
-        // Tasks
         this.taskIcon = makeIcon(btnX, iconY, 'tasks-icon', () => this.toggleTaskPanel())
 
         // ─── ESC handler ───────────────────────────────
@@ -226,7 +220,6 @@ export default class UI {
         const W = this.scene.cameras.main.width
         const H = this.scene.cameras.main.height
 
-        // ─── Update background IMMEDIATELY ─────────────
         this.updateSceneBackground()
 
         const overlay = this.scene.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.9)
@@ -301,7 +294,6 @@ export default class UI {
 
         const sceneKey = scene.scene.key
         const map = bgMaps[sceneKey]
-
         if (!map || !scene.bg) return
 
         const bgKey = map[time]
@@ -318,12 +310,7 @@ export default class UI {
                 scene.bg.setOrigin(0, 0)
                 const scaleY = H / scene.bg.height
                 scene.bg.setScale(scaleY)
-
-                scene.tweens.add({
-                    targets: scene.bg,
-                    alpha: 1,
-                    duration: 400
-                })
+                scene.tweens.add({ targets: scene.bg, alpha: 1, duration: 400 })
             }
         })
     }
@@ -374,7 +361,6 @@ export default class UI {
             const newTimeName = timeNames[tIndex] || 'Time'
             this.dayPillText.setText(`Day ${GameState.day} - ${newTimeName}`)
             this.dayPillTab.setSize(this.dayPillText.width + 20, 20)
-
             this.scene.tweens.add({
                 targets: [this.dayPillTab, this.dayPillText],
                 scaleY: 1.2,
@@ -384,11 +370,10 @@ export default class UI {
             })
         }
 
-        // ─── Crisis bar update ─────────────────────────
-        const crisisW = 300
+        const crisisW = 400
         const progress = Math.min(1, (GameState.day) / GameState.maxDays)
         const barWidth = Math.max(0, crisisW * progress)
-        this.crisisBar.setSize(barWidth, 20)
+        this.crisisBar.setSize(barWidth, 26)
 
         if (progress < 0.4) {
             this.crisisBar.setFillStyle(0x00ff88)
@@ -399,6 +384,90 @@ export default class UI {
         }
 
         this.crisisLabel.setText(`Day ${GameState.day}/${GameState.maxDays}`)
+
+        this.checkNewTasks()
+    }
+
+    // ─── Check New Tasks ───────────────────────────────
+    checkNewTasks() {
+        const now = Date.now()
+        if (now - this._lastTaskCheck < 2000) return
+        this._lastTaskCheck = now
+
+        const currentTasks = this.getCurrentTasks()
+        if (!currentTasks || currentTasks.length === 0) return
+
+        const allDone = currentTasks.every(t => t.done)
+
+        if (allDone && !this._newTaskShown) {
+            this._newTaskShown = true
+            this.showNewTaskNotification()
+        } else if (!allDone) {
+            this._newTaskShown = false
+        }
+    }
+
+    // ─── New Task Notification ─────────────────────────
+    showNewTaskNotification() {
+        const W = this.scene.cameras.main.width
+        const H = this.scene.cameras.main.height
+
+        const startY = H + 40
+        const endY = H - 60
+
+        const notifBg = this.scene.add.rectangle(W / 2, startY, W - 40, 70, 0x1a1a2e, 0.95)
+            .setStrokeStyle(2, 0x00ff88)
+            .setScrollFactor(0).setDepth(500)
+
+        const notifIcon = this.scene.add.text(W / 2 - 180, startY, '📋', {
+            fontSize: '30px'
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(501)
+
+        const notifTitle = this.scene.add.text(W / 2, startY - 10, 'New tasks available!', {
+            fontSize: '20px',
+            fill: '#00ff88',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(501)
+
+        const notifSub = this.scene.add.text(W / 2, startY + 15, 'Open task panel to see what\'s next', {
+            fontSize: '13px',
+            fill: '#888888'
+        }).setOrigin(0.5).setScrollFactor(0).setDepth(501)
+
+        const allItems = [notifBg, notifIcon, notifTitle, notifSub]
+
+        this.scene.tweens.add({
+            targets: allItems,
+            y: endY,
+            duration: 500,
+            ease: 'Back.easeOut'
+        })
+
+        this.scene.time.delayedCall(500, () => {
+            this.scene.tweens.add({
+                targets: notifIcon,
+                scaleX: 1.4,
+                scaleY: 1.4,
+                duration: 200,
+                yoyo: true,
+                repeat: 2
+            })
+        })
+
+        this.scene.time.delayedCall(3500, () => {
+            this.scene.tweens.add({
+                targets: allItems,
+                y: startY,
+                alpha: 0,
+                duration: 400,
+                ease: 'Sine.easeIn',
+                onComplete: () => {
+                    allItems.forEach(item => {
+                        if (item && item.active) item.destroy()
+                    })
+                }
+            })
+        })
     }
 
     // ─── Inventory ─────────────────────────────────────
@@ -595,7 +664,7 @@ export default class UI {
             .setStrokeStyle(2, 0xffaa00)
             .setDepth(61).setScrollFactor(0).setInteractive()
 
-        this.taskTitle = this.scene.add.text(W / 2, H / 2 - (panelH / 2) + 30, `📋 Level ${GameState.level} Tasks`, {
+        this.taskTitle = this.scene.add.text(W / 2, H / 2 - (panelH / 2) + 30, '📋 Current Tasks', {
             fontSize: '24px',
             fill: '#ffffff',
             fontStyle: 'bold'
@@ -609,10 +678,12 @@ export default class UI {
 
         tasks.forEach((task, i) => {
             const check = task.done ? '✅' : '⬜'
-            const color = task.done ? '#00ff88' : task.text.includes('───') ? '#555555' : '#ffffff'
+            const color = task.done ? '#00ff88' : '#ffffff'
             const textX = W / 2 - (panelW / 2) + 30
-            const text = this.scene.add.text(textX, H / 2 - (panelH / 2) + 80 + (i * itemSpacing),
-                `${task.text.includes('───') ? task.text : check + ' ' + task.text}`, {
+            const text = this.scene.add.text(
+                textX,
+                H / 2 - (panelH / 2) + 80 + (i * itemSpacing),
+                `${check} ${task.text}`, {
                 fontSize: '17px',
                 fill: color,
                 wordWrap: { width: panelW - 60 }
@@ -646,49 +717,84 @@ export default class UI {
 
     getCurrentTasks() {
         if (GameState.level === 1) {
+            if (!GameState.getFlag('electricalUnlocked')) {
+                return [
+                    { text: 'Gain 5 repair skill', done: GameState.skills.repair >= 5 },
+                    { text: 'Unlock Electrical Bench', done: GameState.getFlag('electricalUnlocked') }
+                ]
+            }
+            if (!GameState.getFlag('metTrader')) {
+                return [
+                    { text: 'Gain 10 repair skill', done: GameState.skills.repair >= 10 },
+                    { text: 'Meet the Trader at Junkyard', done: GameState.getFlag('metTrader') }
+                ]
+            }
             return [
-                { text: 'Gain 5 repair skill (unlock Electrical)', done: GameState.skills.repair >= 5 },
-                { text: 'Gain 10 repair skill (unlock Trader)', done: GameState.skills.repair >= 10 },
-                { text: 'Meet the Trader', done: GameState.getFlag('metTrader') },
-                { text: 'Buy the Armor Core', done: GameState.getFlag('boughtCore') }
+                { text: 'Buy the Armor Core from Trader', done: GameState.getFlag('boughtCore') }
             ]
         }
+
         if (GameState.level === 2) {
-            return [
-                { text: 'Talk to the King', done: GameState.getFlag('metKing') },
-                { text: 'Meet Luvaza at Town Center', done: GameState.getFlag('metLuvaza') },
-                { text: 'Repair all town buildings', done: GameState.getFlag('rebuiltBuildings') },
-                { text: 'Meet Park Cleaner', done: GameState.getFlag('metParkCleaner') },
-                { text: 'Research attack (30 pts)', done: GameState.skills.research >= 30 },
-                { text: '─── Clues ───', done: false },
-                { text: '🔍 Research findings', done: GameState.getFlag('researchClueFound') },
-                { text: '🔍 Luvaza\'s secret', done: GameState.getFlag('luvazaClueFound') },
-                { text: '🔍 Park Cleaner slip', done: GameState.getFlag('parkClueFound') },
-                { text: '🔍 Trader\'s warning', done: GameState.getFlag('traderClueFound') },
-                { text: '─── Final ───', done: false },
-                { text: '🎯 Discover the Truth', done: GameState.getFlag('learnedTruth') },
-                { text: '👑 Tell the King', done: GameState.getFlag('toldKing') }
-            ]
+            if (!GameState.getFlag('metKing')) {
+                return [{ text: 'Talk to the King at the Palace', done: GameState.getFlag('metKing') }]
+            }
+            if (!GameState.getFlag('metLuvaza')) {
+                return [{ text: 'Meet Luvaza at Town Center', done: GameState.getFlag('metLuvaza') }]
+            }
+            if (!GameState.getFlag('rebuiltBuildings')) {
+                return [{ text: 'Repair all town buildings', done: GameState.getFlag('rebuiltBuildings') }]
+            }
+            if (!GameState.getFlag('metParkCleaner')) {
+                return [{ text: 'Meet Park Cleaner at the Park', done: GameState.getFlag('metParkCleaner') }]
+            }
+            if (GameState.skills.research < 30) {
+                return [{ text: 'Research attack data (30 pts)', done: GameState.skills.research >= 30 }]
+            }
+            if (!GameState.getFlag('researchClueFound') ||
+                !GameState.getFlag('luvazaClueFound') ||
+                !GameState.getFlag('parkClueFound') ||
+                !GameState.getFlag('traderClueFound')) {
+                return [
+                    { text: '🔍 Find research clue', done: GameState.getFlag('researchClueFound') },
+                    { text: '🔍 Find Luvaza\'s clue', done: GameState.getFlag('luvazaClueFound') },
+                    { text: '🔍 Find Park Cleaner\'s clue', done: GameState.getFlag('parkClueFound') },
+                    { text: '🔍 Find Trader\'s clue', done: GameState.getFlag('traderClueFound') }
+                ]
+            }
+            if (!GameState.getFlag('learnedTruth')) {
+                return [{ text: '🎯 Discover the Truth', done: GameState.getFlag('learnedTruth') }]
+            }
+            return [{ text: '👑 Tell the King what you found', done: GameState.getFlag('toldKing') }]
         }
+
         if (GameState.level === 3) {
-            return [
-                { text: '─── Armor ───', done: false },
-                { text: '⚡ Core installed', done: GameState.getFlag('coreInstalled') },
-                { text: '🦾 Hands & legs assembled', done: GameState.getFlag('armorLimbsInstalled') },
-                { text: '🤖 Head unit repaired', done: GameState.getFlag('armorHeadFixed') },
-                { text: '🛡️ Trader reveals finished armor', done: GameState.getFlag('armorRevealSeen') },
-                { text: '✅ Armor complete & tested', done: GameState.getFlag('armorTested') },
-                { text: '─── Park Cleaner ───', done: false },
-                {
-                    text: `Friendship (${GameState.flags.parkCleanerFriendship || 0}/3)`,
-                    done: (GameState.flags.parkCleanerFriendship || 0) >= 3
-                },
-                { text: 'Learn reason for attack', done: GameState.getFlag('reasonForAttackKnown') },
-                { text: '─── The Tragedy ───', done: false },
-                { text: '📡 Trader: Armor ready', done: GameState.getFlag('traderCalledArmor') },
-                { text: '💔 That evening...', done: GameState.getFlag('gfDead') }
-            ]
+            if (!GameState.getFlag('coreInstalled')) {
+                return [{ text: '⚡ Install the power core', done: GameState.getFlag('coreInstalled') }]
+            }
+            if (!GameState.getFlag('armorLimbsInstalled')) {
+                return [{ text: '🦾 Assemble hands & legs', done: GameState.getFlag('armorLimbsInstalled') }]
+            }
+            if (!GameState.getFlag('armorHeadFixed')) {
+                return [{ text: '🤖 Repair head unit', done: GameState.getFlag('armorHeadFixed') }]
+            }
+            if (!GameState.getFlag('armorRevealSeen')) {
+                return [{ text: '🛡️ Wait for Trader to finish armor', done: GameState.getFlag('armorRevealSeen') }]
+            }
+            if (!GameState.getFlag('armorTested')) {
+                return [{ text: '✅ Test the completed armor', done: GameState.getFlag('armorTested') }]
+            }
+            if ((GameState.flags.parkCleanerFriendship || 0) < 3) {
+                return [{ text: `Build friendship with Park Cleaner (${GameState.flags.parkCleanerFriendship || 0}/3)`, done: false }]
+            }
+            if (!GameState.getFlag('reasonForAttackKnown')) {
+                return [{ text: 'Learn the reason for the attack', done: GameState.getFlag('reasonForAttackKnown') }]
+            }
+            if (!GameState.getFlag('traderCalledArmor')) {
+                return [{ text: '📡 Wait for Trader\'s call', done: GameState.getFlag('traderCalledArmor') }]
+            }
+            return [{ text: '💔 Something is about to happen...', done: GameState.getFlag('gfDead') }]
         }
+
         return [{ text: 'No tasks yet', done: false }]
     }
 
