@@ -179,6 +179,8 @@ const GameState = {
         // ─── Level 3 ───────────────────────────────────
         conspiracyRevealed: false,
         enemyTerritoryUnlocked: true,
+        enemyIntroSeen: false,
+        enemyTerritoryCleared: false,
         parkCleanerRevealed: false,
         reasonForAttackKnown: false,
 

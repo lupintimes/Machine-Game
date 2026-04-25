@@ -53,17 +53,6 @@ export default class EnemyScene extends Phaser.Scene {
         this.cameras.main.fadeIn(300, 0, 0, 0)
 
 
-        // Prevent main camera from rendering the viewer objects if they exist
-        this.events.on('update', () => {
-            if (this.viewerOverlay) {
-                this.cameras.main.ignore([
-                    this.viewerOverlay.overlay,
-                    this.viewerOverlay.frame,
-                    this.viewerOverlay.title,
-                    this.viewerOverlay.closeText
-                ])
-            }
-        })
 
         // ─── UI / Dialog ───────────────────────────────
         this.ui = new UI(this)
@@ -207,7 +196,7 @@ export default class EnemyScene extends Phaser.Scene {
 
         this.input.mouse.disableContextMenu()
         this.input.on('pointerdown', (pointer) => {
-            if (this.dialog.isActive || this.isDead) return
+            if (this.dialog.isActive || this.isDead || this.viewerOverlay) return
             if (this.positionTool && this.positionTool.enabled) {
                 const wx = Math.round(pointer.worldX)
                 const wy = Math.round(pointer.worldY)
@@ -312,7 +301,7 @@ export default class EnemyScene extends Phaser.Scene {
             fontSize: '11px', fill: '#888888'
         }).setOrigin(0.5).setScrollFactor(0).setDepth(100)
 
-        this.add.text(W / 2, H - 20,
+        this.controlsText = this.add.text(W / 2, H - 20,
             'WASD: Move | X: Shoot | LMB: Attack1 | SHIFT: Dash | C: Shield | Q: Jump | E: Attack2 | RMB: Attack3', {
             fontSize: '13px', fill: '#666666'
         }).setOrigin(0.5).setScrollFactor(0).setDepth(100)
@@ -398,26 +387,40 @@ export default class EnemyScene extends Phaser.Scene {
         }).setOrigin(0.5).setScrollFactor(0).setDepth(903)
 
         // ─── Live camera ───────────────────────────────
-        // Cameras don't have setDepth — just add it at the right position
         this.viewerCam = this.cameras.add(monX, monY, monW, monH)
         this.viewerCam.setZoom(0.6)
-        this.viewerCam.setScroll(3000, 400) // point this at your enemy base area
+        this.viewerCam.setScroll(3000, 400)
         this.viewerCam.setBackgroundColor('#000000')
 
-        // ─── Stop live cam seeing HUD/overlay objects ──
-        // Collect all fixed HUD objects to ignore
+        // ─── Collect ALL HUD/fixed objects to ignore on viewer cam ──
         const hudObjects = [
+            // Viewer overlay elements
             overlay, frame, title, closeText,
-            this.posToolLabel,
+            // Scene HUD indicators
+            this.posToolLabel, this.controlsText,
             this.dashIndicator, this.meleeIndicator, this.shieldIndicator,
             this.highJumpIndicator, this.ability2Indicator, this.ability3Indicator,
             this.progressBarBg, this.progressBar, this.progressText,
-            ...this.hearts
+            ...this.hearts,
+            // Viewer interaction elements
+            this.enemyBaseLabel, this.viewerPrompt
         ]
-        this.viewerCam.ignore(hudObjects)
 
-        // ─── Stop main cam seeing live cam viewport ────
-        // Main cam ignores the overlay/frame so they don't double-render
+        // Add UI bar elements (top bar, stats, time icon, nav icons, etc.)
+        if (this.ui) {
+            const uiEls = [
+                this.ui.bar, this.ui.statsText, this.ui.levelText,
+                this.ui.crisisBarBg, this.ui.crisisBar, this.ui.crisisLabel,
+                this.ui.dayText, this.ui.timeIcon,
+                this.ui.hubIcon, this.ui.invIcon, this.ui.taskIcon,
+                this.ui.dayPillTab, this.ui.dayPillText
+            ]
+            uiEls.forEach(el => { if (el) hudObjects.push(el) })
+        }
+
+        this.viewerCam.ignore(hudObjects.filter(obj => obj != null))
+
+        // ─── Main cam ignores viewer overlay so they don't double-render ──
         this.cameras.main.ignore([overlay, frame, title, closeText])
 
         this.viewerOverlay = { overlay, frame, title, closeText }
@@ -949,9 +952,6 @@ export default class EnemyScene extends Phaser.Scene {
         this.physics.add.existing(bullet); bullet.body.setAllowGravity(false)
         bullet.body.setVelocity((dx / dist) * speed, (dy / dist) * speed)
         this.enemyBullets.add(bullet)
-        this.physics.add.overlap(this.player, bullet, (player, b) => {
-            if (this.isInvincible || this.isDead) return; b.destroy(); this.takeDamage()
-        })
     }
 
     bulletHitEnemy(bullet, enemy) {
