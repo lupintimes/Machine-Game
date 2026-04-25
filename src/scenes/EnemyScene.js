@@ -91,11 +91,16 @@ export default class EnemyScene extends Phaser.Scene {
         this.createPlatform(41, 686, 82, 760)
         this.createPlatform(431, 391, 714, 67)
         this.createPlatform(365, 742, 622, 83)
+
         this.createPlatform(917, 792, 346, 91)
         this.createPlatform(1347, 402, 723, 94)
         this.createPlatform(1629, 776, 783, 81)
         this.createPlatform(1854, 575, 108, 58)
-        this.createPlatform(2424, 602, 803, 96)
+
+        this.createPlatform(2484, 602, 703, 96)
+        this.createPlatform(2380, 602 - 36, 703, 20)
+
+
         this.createPlatform(3491, 765, 632, 49)
         this.createPlatform(3214, 902, 65, 313)
         this.createPlatform(2879, 565, 86, 20)
@@ -124,14 +129,12 @@ export default class EnemyScene extends Phaser.Scene {
         this.createEnemy(700, H - 175, 'patrol', 200)
         this.createEnemy(400, H - 500, 'patrol', 200)
         this.createEnemy(401, 256, 'patrol', 250)
-        this.createEnemy(1744,634, 'patrol', 200)
-        this.createEnemy(2666,452, 'shooter', 0)
+        this.createEnemy(1744, 634, 'patrol', 200)
+        this.createEnemy(2666, 452, 'shooter', 0)
         this.createEnemy(3291, 639, 'shooter', 0)
-        
-        this.createEnemy(4300, H - 175, 'shooter', 0)
-        this.createEnemy(4900, H - 175, 'patrol', 300)
-        this.createEnemy(5500, H - 175, 'shooter', 0)
-        this.createEnemy(6100, H - 175, 'patrol', 250)
+        this.createEnemy(2256, 913, 'patrol', 300)
+        this.createEnemy(3142, 913, 'shooter', 0)
+
 
         this.createEnemy(1181, 253, 'shooter', 0)
 
@@ -241,10 +244,11 @@ export default class EnemyScene extends Phaser.Scene {
         this.physics.add.collider(this.player, this.platforms)
 
         // ─── Bullet colliders ──────────────────────────
-        this.physics.add.collider(this.bullets, this.platforms, (b) => { b.destroy() })
-        this.physics.add.collider(this.bullets, this.ground, (b) => { b.destroy() })
-        this.physics.add.collider(this.enemyBullets, this.platforms, (b) => { b.destroy() })
-        this.physics.add.collider(this.enemyBullets, this.ground, (b) => { b.destroy() })
+        // ✅ AFTER (Bullets will cleanly disappear when hitting walls/floors)
+        this.physics.add.overlap(this.bullets, this.platforms, (b) => { b.destroy() })
+        this.physics.add.overlap(this.bullets, this.ground, (b) => { b.destroy() })
+        this.physics.add.overlap(this.enemyBullets, this.platforms, (b) => { b.destroy() })
+        this.physics.add.overlap(this.enemyBullets, this.ground, (b) => { b.destroy() })
 
         this.physics.add.overlap(this.bullets, this.enemies, this.bulletHitEnemy, null, this)
         this.physics.add.overlap(this.player, this.enemyBullets, this.playerHit, null, this)
@@ -1071,7 +1075,7 @@ export default class EnemyScene extends Phaser.Scene {
     }
 
     createPlatform(x, y, w, h) {
-        const platform = this.add.rectangle(x, y, w, h, 0x000000, 0.8)
+        const platform = this.add.rectangle(x, y, w, h, 0x000000, 0)
         this.physics.add.existing(platform, true); this.platforms.add(platform)
         return platform
     }
