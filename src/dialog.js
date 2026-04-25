@@ -27,6 +27,10 @@ export default class DialogBox {
         this.portrait = null
         this.lastPortraitKey = null
 
+        // ─── Choices ───────────────────────────────────
+        this.choicesActive = false
+        this.choiceElements = []
+
         // ─── Default portraits (no expression) ─────────
         this.defaultPortrait = {
             'King': 'dialog-king-neutral',
@@ -96,16 +100,13 @@ export default class DialogBox {
     showPortrait(name, expression) {
         let imageKey = null
 
-        // ─── Try expression first ──────────────────────
         if (expression && this.expressionMap[name] && this.expressionMap[name][expression]) {
             const expKey = this.expressionMap[name][expression]
-            // ─── Only use if texture actually exists ───
             if (this.scene.textures.exists(expKey)) {
                 imageKey = expKey
             }
         }
 
-        // ─── Fall back to default if expression failed ─
         if (!imageKey && this.defaultPortrait[name]) {
             const defaultKey = this.defaultPortrait[name]
             if (this.scene.textures.exists(defaultKey)) {
@@ -113,13 +114,11 @@ export default class DialogBox {
             }
         }
 
-        // ─── Nothing found, hide portrait ─────────────
         if (!imageKey) {
             this.hidePortrait()
             return
         }
 
-        // ─── Same portrait already showing, skip ───────
         if (this.lastPortraitKey === imageKey && this.portrait) return
 
         this.hidePortrait()
@@ -182,10 +181,170 @@ export default class DialogBox {
             Phaser.Input.Keyboard.KeyCodes.SPACE
         )
         this.spaceKey.on('down', () => {
-            if (this.isActive && !this.isClosed && !this.historyVisible) {
+            if (this.isActive && !this.isClosed && !this.historyVisible && !this.choicesActive) {
                 this.next()
             }
         })
+    }
+
+    // ═══════════════════════════════════════════════════
+    // ─── CHOICES ───────────────────────────────────────
+    // ═══════════════════════════════════════════════════
+
+
+    showChoices(choices, options = {}) {
+        if (!choices || choices.length === 0) return
+
+        this.choicesActive = true
+
+        // ── Disable SPACE while choosing ───────────────
+        if (this.spaceKey) this.spaceKey.removeAllListeners()
+
+        // ── Hidden slots option ────────────────────────
+        const hiddenSlots = options.hiddenSlots || []
+
+        const W = this.scene.cameras.main.width
+        const H = this.scene.cameras.main.height
+
+        this.choiceElements = []
+
+        // ──────────────────────────────────────────────
+        // LAYOUT CONSTANTS
+        // ──────────────────────────────────────────────
+        const PANEL_SCALE = 1
+        const BTN_SCALE = 1
+        const PANEL_X = W / 2
+        const PANEL_Y = H / 2 + 50
+
+        const BTN_Y_OFFSETS = [-135, 5, 145, 285]
+        const LABEL_X_OFFSET = -230
+
+        const BTN_KEYS = [
+            'choice-btn-green',
+            'choice-btn-teal',
+            'choice-btn-purple',
+            'choice-btn-dark'
+        ]
+
+        const FONT_FAMILY = "'Share Tech Mono', monospace"
+
+        // ──────────────────────────────────────────────
+        // DEFAULT STYLES & OPTIONS FALLBACKS
+        // ──────────────────────────────────────────────
+        const defaultTitleStyle = {
+            fontFamily: FONT_FAMILY,
+            fontSize: '72px',
+            fill: '#ff8800',
+            fontStyle: 'bold'
+        }
+
+        const defaultSubtitleStyle = {
+            fontFamily: FONT_FAMILY,
+            fontSize: '24px',
+            fill: '#aaaaaa'
+        }
+
+        const defaultChoiceStyle = {
+            fontFamily: FONT_FAMILY,
+            fontSize: '38px',
+            fill: '#cccccc',
+            wordWrap: { width: 420 }
+        }
+
+        const titleTextStr = options.title || 'TRADER'
+        const subtitleTextStr = options.subtitle || 'Welcome, What do you need?'
+
+        // ─── Panel Background ─────────────────────────
+        const panel = this.scene.add.image(PANEL_X, PANEL_Y, 'choice-panel-bg')
+            .setScale(PANEL_SCALE)
+            .setDepth(110)
+            .setScrollFactor(0)
+            .setAlpha(0)
+        this.choiceElements.push(panel)
+
+        // ─── Title & Subtitle ─────────────────────────
+        const titleText = this.scene.add.text(PANEL_X, PANEL_Y - 300, titleTextStr, {
+            ...defaultTitleStyle,
+            ...(options.titleStyle || {})
+        }).setOrigin(0.5).setDepth(112).setScrollFactor(0).setAlpha(0)
+
+        const subtitleText = this.scene.add.text(PANEL_X, PANEL_Y - 250, subtitleTextStr, {
+            ...defaultSubtitleStyle,
+            ...(options.subtitleStyle || {})
+        }).setOrigin(0.5).setDepth(112).setScrollFactor(0).setAlpha(0)
+
+        this.choiceElements.push(titleText, subtitleText)
+
+        // ─── Buttons ──────────────────────────────────
+        choices.slice(0, 4).forEach((choice, i) => {
+
+            // ── Skip if this slot is hidden ────────────
+            if (hiddenSlots.includes(i)) return
+
+            const btnX = PANEL_X
+            const btnY = PANEL_Y + BTN_Y_OFFSETS[i]
+            const btnKey = BTN_KEYS[i] || BTN_KEYS[3]
+
+            const btn = this.scene.add.image(btnX, btnY, btnKey)
+                .setScale(BTN_SCALE)
+                .setDepth(111)
+                .setScrollFactor(0)
+                .setAlpha(0)
+                .setInteractive({ useHandCursor: true })
+
+            const label = this.scene.add.text(
+                btnX + LABEL_X_OFFSET, btnY,
+                choice.text, {
+                ...defaultChoiceStyle,
+                ...(choice.style || {})
+            }).setOrigin(0, 0.5).setDepth(112).setScrollFactor(0).setAlpha(0)
+
+            // ── Hover ───────────────────────────────────
+            btn.on('pointerover', () => {
+                btn.setTint(0x99ddff)
+                label.setFill('#ffffff')
+            })
+            btn.on('pointerout', () => {
+                btn.clearTint()
+                label.setFill(choice.style?.fill || '#cccccc')
+            })
+
+            // ── Click ───────────────────────────────────
+            btn.on('pointerdown', () => {
+                this.choiceElements.forEach(el => {
+                    if (el && el.removeInteractive) el.removeInteractive()
+                })
+
+                this.scene.tweens.add({
+                    targets: this.choiceElements,
+                    alpha: 0,
+                    duration: 150,
+                    ease: 'Sine.easeIn',
+                    onComplete: () => {
+                        this.destroyChoices()
+                        if (choice.onSelect) choice.onSelect()
+                    }
+                })
+            })
+
+            this.choiceElements.push(btn, label)
+        })
+
+        // ─── Fade everything in ────────────────────────
+        this.scene.tweens.add({
+            targets: this.choiceElements,
+            alpha: 1,
+            duration: 250,
+            ease: 'Sine.easeOut'
+        })
+    }
+
+    destroyChoices() {
+        this.choicesActive = false
+        if (this.choiceElements && this.choiceElements.length > 0) {
+            this.choiceElements.forEach(el => { if (el) el.destroy() })
+            this.choiceElements = []
+        }
     }
 
     // ═══════════════════════════════════════════════════
@@ -381,7 +540,6 @@ export default class DialogBox {
 
         if (this.backBtn) this.backBtn.setAlpha(this.currentIndex === 0 ? 0.3 : 1)
 
-        // ─── Show portrait with expression ─────────────
         this.showPortrait(line.name, line.expression)
     }
 
@@ -580,6 +738,11 @@ export default class DialogBox {
 
         if (this.historyVisible) {
             this.hideHistory()
+        }
+
+        // Destroy any lingering choices
+        if (this.choicesActive) {
+            this.destroyChoices()
         }
 
         this.hidePortrait()

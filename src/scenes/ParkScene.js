@@ -25,8 +25,6 @@ export default class ParkScene extends Phaser.Scene {
 
         // ─── Background ────────────────────────────────
         this.bg = this.add.image(0, 0, 'park-bg')
-
-        
         this.bg.setOrigin(0, 0)
         this.bg.setDepth(-1)
 
@@ -39,7 +37,6 @@ export default class ParkScene extends Phaser.Scene {
         this.dialog = new DialogBox(this)
         this.spaceKey = this.input.keyboard.addKey('SPACE')
         this.menuActive = false
-        this.menuItems = []
 
         // ─── Daily tracking ────────────────────────────
         this.lastCleanedDay = -1
@@ -99,98 +96,93 @@ export default class ParkScene extends Phaser.Scene {
         }
     }
 
-    // ─── Cleaner Menu ──────────────────────────────────
+    // ═══════════════════════════════════════════════════
+    // ─── Cleaner Menu (Choice Panel) ───────────────────
+    // ═══════════════════════════════════════════════════
+
     showCleanerMenu() {
-        const W = this.cameras.main.width
-        const H = this.cameras.main.height
-
         this.menuActive = true
-        this.menuItems = []
 
-        this.menuOverlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.7)
-            .setScrollFactor(0).setDepth(50)
-
-        this.menuPanel = this.add.rectangle(W / 2, H / 2, 500, 480, 0x1a1a2e)
-            .setStrokeStyle(3, 0x44ff44).setScrollFactor(0).setDepth(51)
-
-        this.menuTitle = this.add.text(W / 2, H / 2 - 200, '🧹 Park Cleaner', {
-            fontSize: '28px',
-            fill: '#44ff44',
-            fontStyle: 'bold'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(52)
-
-        // ─── Friendship in menu ────────────────────────
         const friendship = GameState.flags.parkCleanerFriendship || 0
         const hearts = '❤️'.repeat(friendship) + '🖤'.repeat(Math.max(0, 3 - friendship))
-        const friendText = this.add.text(W / 2, H / 2 - 165, `Friendship: ${hearts}`, {
-            fontSize: '16px',
-            fill: '#aaaaaa'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(52)
-        this.menuItems.push(friendText)
+        const green = { fill: '#88ff88' }
 
-        let btnY = H / 2 - 90
+        const showClean = friendship < 3
+        const showComms = GameState.getFlag('hasCommsDevice') &&
+                          !GameState.getFlag('gaveCommsToGF') &&
+                          GameState.getFlag('metLuvaza')
 
-        // 💬 Chat
-        this.createMenuButton(W / 2, btnY, '💬 Chat', () => {
-            this.closeMenu()
-            this.cleanerChat()
+        // ── Calculate which purple slots to hide ───────
+        const hidden = []
+        if (!showClean && !showComms) hidden.push(1) // Hide teal if nothing to show
+        if (!(showClean && showComms)) hidden.push(2) // Hide purple if we don't need both
+
+        const choices = [
+            // ── Slot 0: Chat (Green) ───────────────────
+            {
+                text: '💬 Chat',
+                style: green,
+                onSelect: () => {
+                    this.menuActive = false
+                    this.cleanerChat()
+                }
+            },
+            // ── Slot 1: Help Clean OR Comms (Teal) ─────
+            showClean
+                ? {
+                    text: '🌿 Help Clean Park',
+                    style: green,
+                    onSelect: () => {
+                        this.menuActive = false
+                        this.helpClean()
+                    }
+                }
+                : showComms
+                    ? {
+                        text: '📡 Think about Luvaza...',
+                        style: green,
+                        onSelect: () => {
+                            this.menuActive = false
+                            this.considerGivingComms()
+                        }
+                    }
+                    : { text: '', style: { fill: 'transparent' }, onSelect: () => {} },
+            // ── Slot 2: Comms OR Empty (Purple) ────────
+            showClean && showComms
+                ? {
+                    text: '📡 Think about Luvaza...',
+                    style: green,
+                    onSelect: () => {
+                        this.menuActive = false
+                        this.considerGivingComms()
+                    }
+                }
+                : { text: '', style: { fill: 'transparent' }, onSelect: () => {} },
+            // ── Slot 3: Leave (Dark) ───────────────────
+            {
+                text: '🔙 Leave',
+                style: { fill: '#888888', fontStyle: 'italic' },
+                onSelect: () => {
+                    this.menuActive = false
+                    this.cameras.main.fade(300, 0, 0, 0)
+                    this.time.delayedCall(300, () => this.scene.start('HubScene'))
+                }
+            }
+        ]
+
+        this.dialog.showChoices(choices, {
+            title: '🧹 Park Cleaner',
+            subtitle: `Friendship: ${hearts}`,
+            titleStyle: {
+                fontSize: '60px',
+                fill: '#44ff44'
+            },
+            subtitleStyle: {
+                fontSize: '28px',
+                fill: '#88ff88'
+            },
+            hiddenSlots: hidden
         })
-        btnY += 70
-
-        // 🌿 Help Clean
-        if (friendship < 3) {
-            this.createMenuButton(W / 2, btnY, '🌿 Help Clean Park', () => {
-                this.closeMenu()
-                this.helpClean()
-            })
-            btnY += 70
-        }
-
-        // 📡 Think about comms
-        if (GameState.getFlag('hasCommsDevice') &&
-            !GameState.getFlag('gaveCommsToGF') &&
-            GameState.getFlag('metLuvaza')) {
-            this.createMenuButton(W / 2, btnY, '📡 Think about Luvaza...', () => {
-                this.closeMenu()
-                this.considerGivingComms()
-            })
-            btnY += 70
-        }
-
-        // 🔙 Leave
-        this.createMenuButton(W / 2, btnY, '🔙 Leave', () => {
-            this.closeMenu()
-            this.cameras.main.fade(300, 0, 0, 0)
-            this.time.delayedCall(300, () => this.scene.start('HubScene'))
-        })
-    }
-
-    createMenuButton(x, y, text, onClick) {
-        const btn = this.add.rectangle(x, y, 380, 55, 0x333355)
-            .setStrokeStyle(2, 0x44ff44)
-            .setScrollFactor(0).setDepth(52)
-            .setInteractive({ useHandCursor: true })
-
-        const label = this.add.text(x, y, text, {
-            fontSize: '20px',
-            fill: '#ffffff'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(53)
-
-        btn.on('pointerover', () => btn.setFillStyle(0x224422))
-        btn.on('pointerout', () => btn.setFillStyle(0x333355))
-        btn.on('pointerdown', onClick)
-
-        this.menuItems.push(btn, label)
-        return btn
-    }
-
-    closeMenu() {
-        this.menuActive = false
-        if (this.menuOverlay) this.menuOverlay.destroy()
-        if (this.menuPanel) this.menuPanel.destroy()
-        if (this.menuTitle) this.menuTitle.destroy()
-        this.menuItems.forEach(item => item.destroy())
-        this.menuItems = []
     }
 
     // ─── Cleaner Chat ──────────────────────────────────

@@ -99,6 +99,16 @@ export default class PreloadScene extends Phaser.Scene {
         this.load.image('tasks-icon', 'assets/images/icons/tasks.png')
         this.load.image('hub-icon', 'assets/images/icons/hub.png')
 
+        this.load.image('time-morning', 'assets/images/ui/morning.png')
+        this.load.image('time-noon', 'assets/images/ui/noon.png')
+        this.load.image('time-evening', 'assets/images/ui/evening.png')
+        this.load.image('time-night', 'assets/images/ui/night.png')
+
+        this.load.image('choice-panel-bg', 'assets/images/ui/choice-panel-bg.png')
+        this.load.image('choice-btn-green', 'assets/images/ui/choice-btn-green.png')
+        this.load.image('choice-btn-teal', 'assets/images/ui/choice-btn-teal.png')
+        this.load.image('choice-btn-purple', 'assets/images/ui/choice-btn-purple.png')
+        this.load.image('choice-btn-dark', 'assets/images/ui/choice-btn-dark.png')
         // ─── Hub ───────────────────────────────────────
         this.load.image('hub-bg', 'assets/images/hub-bg.png')
 

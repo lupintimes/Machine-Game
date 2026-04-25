@@ -43,7 +43,6 @@ export default class TownCenterScene extends Phaser.Scene {
         this.dialog = new DialogBox(this)
         this.spaceKey = this.input.keyboard.addKey('SPACE')
         this.menuActive = false
-        this.menuItems = []
         this.buildings = []
         this.firstMeetItems = []
 
@@ -121,8 +120,6 @@ export default class TownCenterScene extends Phaser.Scene {
             labelOffsetY: -150
         })
 
-        
-
         // ─── Check if any buildings finished overnight ─
         this.checkConstructionComplete()
 
@@ -141,8 +138,6 @@ export default class TownCenterScene extends Phaser.Scene {
             this.luvazaSprite.setVisible(false)
             this.luvazaLabel.setVisible(false)
             if (this.luvazaZone) this.luvazaZone.setVisible(false)
-
-   
 
             // Hide main background and overlay
             this.bg.setVisible(false)
@@ -227,6 +222,7 @@ export default class TownCenterScene extends Phaser.Scene {
         this.cleanupIntro()
         this.transitionToFullView()
     }
+
     // ═══════════════════════════════════════════════════
     // ─── CLEANUP INTRO ELEMENTS ────────────────────────
     // ═══════════════════════════════════════════════════
@@ -266,8 +262,6 @@ export default class TownCenterScene extends Phaser.Scene {
             this.luvazaZone.setPosition(200, H - 200)
             this.luvazaZone.setVisible(true)
         }
-
-        if (this.backBtn) this.backBtn.setVisible(true)
 
         // ─── Fade in buildings one by one ──────────────
         this.buildings.forEach((b, i) => {
@@ -732,7 +726,6 @@ export default class TownCenterScene extends Phaser.Scene {
         })
     }
 
-
     // ═══════════════════════════════════════════════════
     // ─── TALK TO LUVAZA ────────────────────────────────
     // ═══════════════════════════════════════════════════
@@ -762,81 +755,111 @@ export default class TownCenterScene extends Phaser.Scene {
         }
     }
 
-    // ═══════════════════════════════════════════════════
-    // ─── LUVAZA MENU ───────────────────────────────────
+
+        // ═══════════════════════════════════════════════════
+    // ─── LUVAZA MENU (Choice Panel) ────────────────────
     // ═══════════════════════════════════════════════════
 
     showLuvazaMenu() {
-        const W = this.cameras.main.width
-        const H = this.cameras.main.height
-
         this.menuActive = true
-        this.menuItems = []
 
-        this.menuOverlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.7)
-            .setScrollFactor(0).setDepth(50)
-
-        this.menuPanel = this.add.rectangle(W / 2, H / 2, 500, 450, 0x1a1a2e)
-            .setStrokeStyle(3, 0xff69b4).setScrollFactor(0).setDepth(51)
-
-        this.menuTitle = this.add.text(W / 2, H / 2 - 190, '💕 Luvaza', {
-            fontSize: '28px', fill: '#ff69b4', fontStyle: 'bold'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(52)
-
-        this.createMenuButton(W / 2, H / 2 - 100, '💬 Talk', () => {
-            this.closeMenu()
-            this.luvazaTalk()
-        })
-
-        this.createMenuButton(W / 2, H / 2 - 30, '🏗️ Building Status', () => {
-            this.closeMenu()
-            this.showBuildingStatus()
-        })
-
+        const pink = { fill: '#ffaacc' }
         const inTownView = this.townViewBg && this.townViewBg.visible
+
+        let choices = []
+
         if (inTownView) {
-            this.createMenuButton(W / 2, H / 2 + 40, '🔧 Fix Buildings', () => {
-                this.closeMenu()
-                this.leaveTownHallView()
+            // ── ZOOMED IN VIEW (4 slots) ───────────────
+            choices = [
+                {
+                    text: '💬 Talk',
+                    style: pink,
+                    onSelect: () => {
+                        this.menuActive = false
+                        this.luvazaTalk()
+                    }
+                },
+                {
+                    text: '🏗️ Building Status',
+                    style: pink,
+                    onSelect: () => {
+                        this.menuActive = false
+                        this.showBuildingStatus()
+                    }
+                },
+                {
+                    text: '🔧 Fix Buildings',
+                    style: pink,
+                    onSelect: () => {
+                        this.menuActive = false
+                        this.leaveTownHallView()
+                    }
+                },
+                {
+                    text: '🔙 Back to Hub',
+                    style: { fill: '#888888', fontStyle: 'italic' },
+                    onSelect: () => {
+                        this.menuActive = false
+                        this.cleanupTownHallView()
+                        this.cameras.main.fade(300, 0, 0, 0)
+                        this.time.delayedCall(300, () => this.scene.start('HubScene'))
+                    }
+                }
+            ]
+
+            this.dialog.showChoices(choices, {
+                title: '💕 Luvaza',
+                subtitle: 'Coordinator of the rebuilding efforts',
+                titleStyle: { fontSize: '60px', fill: '#ff69b4' },
+                subtitleStyle: { fontSize: '24px', fill: '#cc5588' }
+            })
+
+        } else {
+            // ── NORMAL MAP VIEW (4 slots) ──────────────
+            choices = [
+                {
+                    text: '💬 Talk',
+                    style: pink,
+                    onSelect: () => {
+                        this.menuActive = false
+                        this.luvazaTalk()
+                    }
+                },
+                {
+                    text: '🏗️ Building Status',
+                    style: pink,
+                    onSelect: () => {
+                        this.menuActive = false
+                        this.showBuildingStatus()
+                    }
+                },
+                {
+                    text: '🔙 Back to Hub',
+                    style: { fill: '#888888', fontStyle: 'italic' },
+                    onSelect: () => {
+                        this.menuActive = false
+                        this.cameras.main.fade(300, 0, 0, 0)
+                        this.time.delayedCall(300, () => this.scene.start('HubScene'))
+                    }
+                },
+                {
+                    text: '✖ Close',
+                    style: { fill: '#555555' },
+                    onSelect: () => {
+                        this.menuActive = false
+                    }
+                }
+            ]
+
+            this.dialog.showChoices(choices, {
+                title: '💕 Luvaza',
+                subtitle: 'Coordinator of the rebuilding efforts',
+                titleStyle: { fontSize: '60px', fill: '#ff69b4' },
+                subtitleStyle: { fontSize: '24px', fill: '#cc5588' },
+                // Hide the purple button
+                hiddenSlots: [2] 
             })
         }
-
-        this.createMenuButton(W / 2, H / 2 + 110, '🔙 Back to Hub', () => {
-            this.closeMenu()
-            if (inTownView) this.cleanupTownHallView()
-            this.cameras.main.fade(300, 0, 0, 0)
-            this.time.delayedCall(300, () => this.scene.start('HubScene'))
-        })
-
-        this.createMenuButton(W / 2, H / 2 + 180, '✖ Close', () => {
-            this.closeMenu()
-        })
-    }
-
-    createMenuButton(x, y, text, onClick) {
-        const btn = this.add.rectangle(x, y, 350, 55, 0x333355)
-            .setStrokeStyle(2, 0xff69b4)
-            .setScrollFactor(0).setDepth(52)
-            .setInteractive({ useHandCursor: true })
-
-        const label = this.add.text(x, y, text, {
-            fontSize: '20px', fill: '#ffffff'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(53)
-
-        btn.on('pointerover', () => btn.setFillStyle(0x443344))
-        btn.on('pointerout', () => btn.setFillStyle(0x333355))
-        btn.on('pointerdown', onClick)
-
-        this.menuItems.push(btn, label)
-    }
-
-    closeMenu() {
-        this.menuActive = false
-        if (this.menuOverlay) this.menuOverlay.destroy()
-        if (this.menuPanel) this.menuPanel.destroy()
-        if (this.menuTitle) this.menuTitle.destroy()
-        this.menuItems.forEach(item => item.destroy())
-        this.menuItems = []
     }
 
     // ═══════════════════════════════════════════════════

@@ -9,7 +9,6 @@ export default class UI {
         this.hubBtnLabel = null
         this.invBtnLabel = null
         this.taskBtnLabel = null
-        this.timeSegments = []
         this._newTaskShown = false
         this._lastTaskCheck = 0
     }
@@ -18,14 +17,14 @@ export default class UI {
         const W = this.scene.cameras.main.width
         const H = this.scene.cameras.main.height
 
-        // ─── Top Bar Background (60px tall) ────────────
-        this.bar = this.scene.add.rectangle(W / 2, 30, W, 60, 0x000000, 0.8)
-            .setDepth(50).setScrollFactor(0)
+        // ─── Top Bar Background (70px tall) ────────────
+        this.bar = this.scene.add.rectangle(W / 2, 35, W, 70, 0x000000, 1)
+            .setDepth(50).setScrollFactor(0).setStrokeStyle(2, 0x444444)
 
         // Stats text:
-        this.statsText = this.scene.add.text(20, 15, '', {
+        this.statsText = this.scene.add.text(30, 25, '', {
             fontFamily: "'Share Tech Mono', monospace",
-            fontSize: '18px',
+            fontSize: '20px',
             fill: '#ffffff'
         }).setDepth(51).setScrollFactor(0)
 
@@ -41,7 +40,7 @@ export default class UI {
         const crisisW = 400
         const groupW = 620
         const groupStartX = (W - groupW) / 2
-        const crisisY = 30
+        const crisisY = 35
         const barX = groupStartX
 
         this.crisisBarBg = this.scene.add.rectangle(barX + crisisW / 2, crisisY, crisisW, 28, 0x222222, 0.6)
@@ -57,101 +56,51 @@ export default class UI {
             fontStyle: 'bold'
         }).setOrigin(0.5).setDepth(53).setScrollFactor(0)
 
-        this.dayText = this.scene.add.text(barX + crisisW + 15, crisisY, '', {
+        this.dayText = this.scene.add.text(barX + crisisW + 25, crisisY, '', {
             fontFamily: "'Share Tech Mono', monospace",
-            fontSize: '16px',
+            fontSize: '20px',
             fill: '#ffdd44',
             fontStyle: 'bold'
         }).setOrigin(0, 0.5).setDepth(53).setScrollFactor(0)
 
-        // ─── Time Pill Indicator ───────────────────────
-        this.timePillContainer = this.scene.add.container(W - 100, 30).setDepth(51).setScrollFactor(0)
-
-        this.pillBg = this.scene.add.rectangle(0, 0, 160, 30, 0x000000, 0.4)
-        this.timePillContainer.add(this.pillBg)
-
-        this.timeSlider = this.scene.add.graphics()
-        this.timeSlider.fillStyle(0xffffff, 0.3)
-        this.timeSlider.fillRoundedRect(-18, -16, 36, 32, 14)
-        this.timeSlider.x = -60 + (GameState.timeIndex || 0) * 40
-        this.timePillContainer.add(this.timeSlider)
-
-        this.timeSegments = []
-
-        // Morning (0)
-        const mornGfx = this.scene.add.graphics()
-        mornGfx.fillStyle(0xffe4b5)
-        mornGfx.beginPath()
-        mornGfx.arc(-5, 0, 15, Phaser.Math.DegToRad(90), Phaser.Math.DegToRad(270), false)
-        mornGfx.lineTo(20, -15); mornGfx.lineTo(20, 15); mornGfx.closePath(); mornGfx.fillPath()
-        mornGfx.fillStyle(0xff8c00); mornGfx.fillCircle(0, 12, 8)
-        mornGfx.fillStyle(0xffd700, 0.4); mornGfx.fillCircle(0, 12, 12)
-        mornGfx.fillStyle(0xaaaaaa)
-        mornGfx.beginPath(); mornGfx.arc(0, 14, 8, Phaser.Math.DegToRad(180), Phaser.Math.DegToRad(0), false); mornGfx.fillPath()
-        const mornCont = this.scene.add.container(-60, 0); mornCont.add(mornGfx)
-        this.timePillContainer.add(mornCont); this.timeSegments.push(mornCont)
-
-        // Afternoon (1)
-        const aftGfx = this.scene.add.graphics()
-        aftGfx.fillStyle(0x77ccff); aftGfx.fillRect(-20, -15, 40, 30)
-        aftGfx.fillStyle(0xffaa00); aftGfx.fillCircle(0, 2, 8)
-        aftGfx.fillStyle(0xffffff); aftGfx.fillCircle(-5, 8, 6); aftGfx.fillCircle(5, 8, 5); aftGfx.fillCircle(0, 10, 4)
-        const aftCont = this.scene.add.container(-20, 0); aftCont.add(aftGfx)
-        this.timePillContainer.add(aftCont); this.timeSegments.push(aftCont)
-
-        // Evening (2)
-        const eveGfx = this.scene.add.graphics()
-        eveGfx.fillStyle(0x555566); eveGfx.fillRect(-20, -15, 40, 30)
-        eveGfx.fillStyle(0xdddddd); eveGfx.fillCircle(0, 0, 6)
-        eveGfx.fillStyle(0x555566); eveGfx.fillCircle(3, -2, 5)
-        const eveCont = this.scene.add.container(20, 0); eveCont.add(eveGfx)
-        this.timePillContainer.add(eveCont); this.timeSegments.push(eveCont)
-
-        // Night (3)
-        const nightGfx = this.scene.add.graphics()
-        nightGfx.fillStyle(0x1a1a24)
-        nightGfx.beginPath(); nightGfx.lineTo(-20, -15); nightGfx.lineTo(5, -15)
-        nightGfx.arc(5, 0, 15, Phaser.Math.DegToRad(-90), Phaser.Math.DegToRad(90), false)
-        nightGfx.lineTo(-20, 15); nightGfx.closePath(); nightGfx.fillPath()
-        nightGfx.fillStyle(0xffffff); nightGfx.fillRect(-12, -5, 2, 2); nightGfx.fillRect(3, -8, 1, 1)
-        nightGfx.fillRect(-8, 5, 2, 2); nightGfx.fillRect(8, 2, 1, 1)
-        const nightCont = this.scene.add.container(60, 0); nightCont.add(nightGfx)
-        this.timePillContainer.add(nightCont); this.timeSegments.push(nightCont)
-
-        const initIdx = GameState.timeIndex || 0
-        this.timeSegments.forEach((seg, i) => {
-            seg.setScale(i === initIdx ? 1.15 : 0.85)
-            seg.setAlpha(i === initIdx ? 1 : 0.4)
-        })
-
-        const segments = [-60, -20, 20, 60]
-        segments.forEach((sx, i) => {
-            const hitPad = this.scene.add.rectangle(sx, 0, 40, 30, 0x000000, 0)
-                .setInteractive({ useHandCursor: true })
-            hitPad.on('pointerdown', () => this.changeTime(i))
-            this.timePillContainer.add(hitPad)
-        })
-
-        const border = this.scene.add.graphics()
-        border.lineStyle(2, 0xffffff, 1)
-        border.strokeRoundedRect(-80, -15, 160, 30, 15)
-        this.timePillContainer.add(border)
-
+        // ─── Time Icon (single, cycles on tap) ─────────
+        const timeKeys = ['time-morning', 'time-noon', 'time-evening', 'time-night']
         const timeNames = ['Morning', 'Afternoon', 'Evening', 'Night']
-        const initTimeName = timeNames[initIdx] || 'Morning'
-        this.dayPillTab = this.scene.add.rectangle(0, 25, 90, 20, 0x5a3a9a)
-        this.dayPillText = this.scene.add.text(0, 25, `Day ${GameState.day} - ${initTimeName}`, {
-            fontSize: '11px', fill: '#ffffff', fontStyle: 'bold'
-        }).setOrigin(0.5)
-        this.timePillContainer.add(this.dayPillTab)
-        this.timePillContainer.add(this.dayPillText)
-        this.dayPillTab.setSize(this.dayPillText.width + 20, 20)
+        const initIdx = GameState.timeIndex || 0
+        const timeIconX = W - 80-100
+        const timeIconY = 35
+        const timeIconW = 300
+
+        this.timeIcon = this.scene.add.image(timeIconX, timeIconY, timeKeys[initIdx])
+            .setDepth(51)
+            .setScrollFactor(0)
+            .setInteractive({ useHandCursor: true })
+
+        const timeIconScale = timeIconW / this.timeIcon.width
+        this.timeIcon.setScale(timeIconScale)
+        this.timeIcon._baseScale = timeIconScale
+
+        this.timeIcon.on('pointerdown', () => {
+            const currentIdx = GameState.timeIndex || 0
+            const nextIdx = (currentIdx + 1) % 4
+            this.changeTime(nextIdx)
+        })
+
+        this.timeIcon.on('pointerover', () => {
+            this.timeIcon.setScale(this.timeIcon._baseScale * 1.1)
+        })
+
+        this.timeIcon.on('pointerout', () => {
+            this.timeIcon.setScale(this.timeIcon._baseScale)
+        })
+
+        
 
         // ─── Navigation Icons (Top Right, Vertical) ────
-        const btnX = W - 30 - 80
-        const btnGap = 10
-        const iconScale = 0.15
-        let iconY = 75 + 80
+        const btnX = W - 50 - 80
+        const btnGap = 15
+        const iconScale = 0.2
+        let iconY = 80 + 80
 
         const makeIcon = (x, y, iconKey, onClick) => {
             const icon = this.scene.add.image(x, y, iconKey)
@@ -191,7 +140,7 @@ export default class UI {
         this.updateStats()
     }
 
-    // ─── Direct Time Change via UI Pill Indicator ──────
+    // ─── Direct Time Change via UI ─────────────────────
     changeTime(newIndex) {
         if (newIndex === GameState.timeIndex) return
 
@@ -222,7 +171,7 @@ export default class UI {
 
         this.updateSceneBackground()
 
-        const overlay = this.scene.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.9)
+        const overlay = this.scene.add.rectangle(W / 2, H / 2, W, H, 0x36454F, 0.87)
             .setScrollFactor(0).setDepth(300).setInteractive()
 
         const text = this.scene.add.text(W / 2, H / 2 - 20,
@@ -331,32 +280,29 @@ export default class UI {
         this.dayText.setFill('#ffdd44')
 
         const tIndex = GameState.timeIndex || 0
-        const targetX = -60 + tIndex * 40
         const timeNames = ['Morning', 'Afternoon', 'Evening', 'Night']
 
-        if (this.timeSlider) {
+        // ─── Update time icon ──────────────────────────
+        if (this.timeIcon) {
+            const timeKeys = ['time-morning', 'time-noon', 'time-evening', 'time-night']
+            this.timeIcon.setTexture(timeKeys[tIndex])
+
+            const timeIconW = 300
+            const newScale = timeIconW / this.timeIcon.width
+            this.timeIcon.setScale(newScale)
+            this.timeIcon._baseScale = newScale
+
             this.scene.tweens.add({
-                targets: this.timeSlider,
-                x: targetX,
-                duration: 600,
+                targets: this.timeIcon,
+                scaleX: newScale * 1.2,
+                scaleY: newScale * 1.2,
+                duration: 150,
+                yoyo: true,
                 ease: 'Back.easeOut'
             })
         }
 
-        if (this.timeSegments && this.timeSegments.length > 0) {
-            this.timeSegments.forEach((seg, i) => {
-                const isActive = i === tIndex
-                this.scene.tweens.add({
-                    targets: seg,
-                    scaleX: isActive ? 1.2 : 0.85,
-                    scaleY: isActive ? 1.2 : 0.85,
-                    alpha: isActive ? 1 : 0.4,
-                    duration: 500,
-                    ease: isActive ? 'Elastic.easeOut' : 'Quad.easeInOut'
-                })
-            })
-        }
-
+        // ─── Update day pill text ──────────────────────
         if (this.dayPillText && this.dayPillTab) {
             const newTimeName = timeNames[tIndex] || 'Time'
             this.dayPillText.setText(`Day ${GameState.day} - ${newTimeName}`)
@@ -370,6 +316,7 @@ export default class UI {
             })
         }
 
+        // ─── Crisis bar update ─────────────────────────
         const crisisW = 400
         const progress = Math.min(1, (GameState.day) / GameState.maxDays)
         const barWidth = Math.max(0, crisisW * progress)
@@ -835,6 +782,10 @@ export default class UI {
         if (this.invIcon) this.invIcon.destroy()
         if (this.taskIcon) this.taskIcon.destroy()
 
+        if (this.timeIcon) this.timeIcon.destroy()
+        if (this.dayPillTab) this.dayPillTab.destroy()
+        if (this.dayPillText) this.dayPillText.destroy()
+
         this.hideInventory()
         this.hideTaskPanel()
 
@@ -842,11 +793,5 @@ export default class UI {
             this.scene.input.keyboard.off('keydown-ESC', this._escHandler)
             this._escHandler = null
         }
-
-        if (this.timePillContainer) {
-            this.timePillContainer.destroy(true)
-            this.timePillContainer = null
-        }
-        this.timeSegments = []
     }
 }

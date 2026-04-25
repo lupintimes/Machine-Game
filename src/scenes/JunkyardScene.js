@@ -6,13 +6,7 @@ export default class JunkyardScene extends Phaser.Scene {
         super('JunkyardScene')
     }
 
-    preload() {
-        // ─── Load all 4 time-of-day backgrounds ───────
-        this.load.image('junkyard-morning', 'assets/images/junkyard/junkyard-morning.png')
-        this.load.image('junkyard-noon', 'assets/images/junkyard/junkyard-noon.png')
-        this.load.image('junkyard-evening', 'assets/images/junkyard/junkyard-evening.png')
-        this.load.image('junkyard-night', 'assets/images/junkyard/junkyard-night.png')
-    }
+    
 
     create() {
         const W = this.cameras.main.width
@@ -27,10 +21,10 @@ export default class JunkyardScene extends Phaser.Scene {
 
         // ─── Background (time-based) ───────────────────
         const bgKey = {
-            'morning': 'junkyard-morning',
+            'morning':   'junkyard-morning',
             'afternoon': 'junkyard-noon',
-            'evening': 'junkyard-evening',
-            'night': 'junkyard-night'
+            'evening':   'junkyard-evening',
+            'night':     'junkyard-night'
         }[GameState.timeOfDay] || 'junkyard-morning'
 
         this.bg = this.add.image(0, 0, bgKey)
@@ -52,18 +46,13 @@ export default class JunkyardScene extends Phaser.Scene {
         this.dialog = new DialogBox(this)
         this.spaceKey = this.input.keyboard.addKey('SPACE')
 
-        // ─── Menu ──────────────────────────────────────
-        this.menuActive = false
-        this.menuItems = []
+        // ─── Shop state ────────────────────────────────
         this.shopItems = []
         this.cutsceneTexts = []
 
         // ─── Safety: ensure armor object exists ────────
         if (!GameState.armor) {
-            GameState.armor = {
-                hasCore: false,
-                parts: []
-            }
+            GameState.armor = { hasCore: false, parts: [] }
         }
 
         // ─── Show intro dialog then menu ───────────────
@@ -83,145 +72,100 @@ export default class JunkyardScene extends Phaser.Scene {
     update() {
         if (this.dialog.isActive) {
             if (Phaser.Input.Keyboard.JustDown(this.spaceKey)) {
-                if (!this.dialog.isClosed) {
+                if (!this.dialog.isClosed && !this.dialog.choicesActive) {
                     this.dialog.next()
                 }
             }
         }
     }
 
-    // ─── Trader Menu ───────────────────────────────────
-    showTraderMenu() {
-        const W = this.cameras.main.width
-        const H = this.cameras.main.height
+    // ═══════════════════════════════════════════════════
+    // ─── TRADER MENU (now uses PNG choice panel) ───────
+    // ═══════════════════════════════════════════════════
 
-        this.menuActive = true
+    showTraderMenu() {
         GameState.setFlag('metTrader')
 
-        this.menuOverlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.7)
-            .setScrollFactor(0).setDepth(50)
-
-        this.menuPanel = this.add.rectangle(W / 2, H / 2, 500, 450, 0x1a1a1a)
-
-            .setStrokeStyle(3, 0xff8800).setScrollFactor(0).setDepth(51)
-
-        this.menuTitle = this.add.text(W / 2, H / 2 - 180, '🧑 Trader', {
-            fontSize: '28px',
-            fill: '#ff8800',
-            fontStyle: 'bold'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(52)
-
-        this.menuItems = []
-
-        // 💬 Talk
-        this.createMenuButton(W / 2, H / 2 - 80, '💬 Talk', () => {
-            this.closeMenu()
-            this.traderTalk()
-        })
-
-        // 🛒 Shop
-        this.createMenuButton(W / 2, H / 2, '🛒 Shop', () => {
-            this.closeMenu()
-            this.traderShop()
-        })
-
-        // 🔐 Secret
-        const secretText = GameState.getFlag('boughtCore') ? '🔐 Secret Base' : '🔐 ???'
+        const secretLabel  = GameState.getFlag('boughtCore') ? '🔐 Secret Base' : '🔐 ???'
         const secretLocked = !GameState.getFlag('boughtCore')
-        this.createMenuButton(W / 2, H / 2 + 80, secretText, () => {
-            if (secretLocked) {
-                this.closeMenu()
-                this.dialog.show([
-                    { name: 'Trader', text: '...' },
-                    { name: 'Trader', text: 'You\'re not ready for that yet.' }
-                ], () => {
-                    this.showTraderMenu()
-                })
-            } else {
-                this.closeMenu()
-                this.traderSecret()
+
+        this.dialog.showChoices([
+            {
+                text: '💬 Talk',
+                onSelect: () => this.traderTalk()
+            },
+            {
+                text: '🛒 Shop',
+                onSelect: () => this.traderShop()
+            },
+            {
+                text: secretLabel,
+                onSelect: () => {
+                    if (secretLocked) {
+                        this.dialog.show([
+                            { name: 'Trader', text: '...' },
+                            { name: 'Trader', text: 'You\'re not ready for that yet.' }
+                        ], () => { this.showTraderMenu() })
+                    } else {
+                        this.traderSecret()
+                    }
+                }
+            },
+            {
+                text: '🔙 Leave',
+                onSelect: () => {
+                    this.cameras.main.fade(300, 0, 0, 0)
+                    this.time.delayedCall(300, () => {
+                        this.scene.start('HubScene')
+                    })
+                }
             }
-        }, secretLocked)
-
-        // 🔙 Back
-        this.createMenuButton(W / 2, H / 2 + 160, '🔙 Back', () => {
-            this.closeMenu()
-            this.scene.start('HubScene')
-        })
+        ])
     }
 
-    createMenuButton(x, y, text, onClick, locked = false) {
-        const btn = this.add.rectangle(x, y, 350, 55, locked ? 0x222222 : 0x2a2a2a)
+    // ═══════════════════════════════════════════════════
+    // ─── TRADER TALK ───────────────────────────────────
+    // ═══════════════════════════════════════════════════
 
-            .setStrokeStyle(2, locked ? 0x444444 : 0xff8800)
-            .setScrollFactor(0).setDepth(52)
-            .setInteractive({ useHandCursor: !locked })
-
-        const label = this.add.text(x, y, text, {
-            fontSize: '20px',
-            fill: locked ? '#666666' : '#ffffff'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(53)
-
-        if (!locked) {
-            btn.on('pointerover', () => btn.setFillStyle(0x3a3a3a)
-            )
-            btn.on('pointerout', () => btn.setFillStyle(0x2a2a2a))
-        }
-        btn.on('pointerdown', onClick)
-
-        this.menuItems.push(btn, label)
-        return btn
-    }
-
-    closeMenu() {
-        this.menuActive = false
-        if (this.menuOverlay) this.menuOverlay.destroy()
-        if (this.menuPanel) this.menuPanel.destroy()
-        if (this.menuTitle) this.menuTitle.destroy()
-        this.menuItems.forEach(item => item.destroy())
-        this.menuItems = []
-    }
-
-    // ─── Trader Talk ───────────────────────────────────
     traderTalk() {
         if (!GameState.getFlag('boughtCore')) {
             this.dialog.show([
                 { name: 'Trader', text: 'Hey kid! The city\'s falling apart.' },
                 { name: 'Trader', text: 'But every broken thing is an opportunity, right?' },
-                { name: 'You', text: 'I need parts for my armor. Got anything?' },
+                { name: 'You',    text: 'I need parts for my armor. Got anything?' },
                 { name: 'Trader', text: 'Check my shop. I might have what you need.' }
             ], () => { this.showTraderMenu() })
 
         } else if (GameState.level >= 2 && !GameState.getFlag('traderClueFound')) {
             this.dialog.show([
                 { name: 'Trader', text: 'You\'ve been busy lately.' },
-                { name: 'You', text: 'Trying to figure out who attacked the city.' },
+                { name: 'You',    text: 'Trying to figure out who attacked the city.' },
                 { name: 'Trader', text: '...' },
                 { name: 'Trader', text: 'Close the door.' },
-                { name: 'You', text: 'What?' },
+                { name: 'You',    text: 'What?' },
                 { name: 'Trader', text: 'Just do it. Walls have ears in this city.' },
-                { name: 'You', text: '...' },
+                { name: 'You',    text: '...' },
                 { name: 'Trader', text: 'Look. I like you kid. You\'re smart.' },
                 { name: 'Trader', text: 'So I\'m going to tell you something.' },
                 { name: 'Trader', text: 'Something I probably shouldn\'t.' },
-                { name: 'You', text: 'Tell me.' },
+                { name: 'You',    text: 'Tell me.' },
                 { name: 'Trader', text: 'Two weeks before the attack...' },
                 { name: 'Trader', text: 'A buyer came to me. Wanted to purchase large quantities of explosives.' },
-                { name: 'You', text: 'Did you sell?' },
+                { name: 'You',    text: 'Did you sell?' },
                 { name: 'Trader', text: 'No. Something felt wrong.' },
                 { name: 'Trader', text: 'But I got a good look at him.' },
-                { name: 'You', text: 'Who was it?' },
+                { name: 'You',    text: 'Who was it?' },
                 { name: 'Trader', text: 'I don\'t know his name.' },
                 { name: 'Trader', text: 'But he carried a royal seal.' },
-                { name: 'You', text: 'A royal seal...' },
+                { name: 'You',    text: 'A royal seal...' },
                 { name: 'Trader', text: 'Exactly.' },
                 { name: 'Trader', text: 'Someone with royal connections planned this attack.' },
-                { name: 'You', text: 'Why didn\'t you report this?' },
+                { name: 'You',    text: 'Why didn\'t you report this?' },
                 { name: 'Trader', text: 'Report to who? The King?' },
                 { name: 'Trader', text: 'What if he already knows?' },
-                { name: 'You', text: '...' },
+                { name: 'You',    text: '...' },
                 { name: 'Trader', text: 'Be careful kid. This goes deeper than you think.' },
-                { name: '', text: '📌 Clue found! Keep investigating.' }
+                { name: '',       text: '📌 Clue found! Keep investigating.' }
             ], () => {
                 GameState.setFlag('traderClueFound')
                 this.showTraderMenu()
@@ -230,7 +174,7 @@ export default class JunkyardScene extends Phaser.Scene {
         } else if (GameState.getFlag('traderClueFound') && !GameState.getFlag('learnedTruth')) {
             this.dialog.show([
                 { name: 'Trader', text: 'You remember what I told you.' },
-                { name: 'You', text: 'Royal seal. Two weeks before the attack.' },
+                { name: 'You',    text: 'Royal seal. Two weeks before the attack.' },
                 { name: 'Trader', text: 'Keep digging. You\'re close.' },
                 { name: 'Trader', text: 'But watch your back.' }
             ], () => { this.showTraderMenu() })
@@ -238,7 +182,7 @@ export default class JunkyardScene extends Phaser.Scene {
         } else if (GameState.getFlag('learnedTruth')) {
             this.dialog.show([
                 { name: 'Trader', text: 'You figured it out didn\'t you.' },
-                { name: 'You', text: 'Yes.' },
+                { name: 'You',    text: 'Yes.' },
                 { name: 'Trader', text: 'Then you know what you\'re up against.' },
                 { name: 'Trader', text: 'Be very careful who you trust.' }
             ], () => { this.showTraderMenu() })
@@ -250,187 +194,181 @@ export default class JunkyardScene extends Phaser.Scene {
             ], () => { this.showTraderMenu() })
         }
     }
+// ═══════════════════════════════════════════════════
+// ─── TRADER SHOP (now uses the same choice panel) ─
+// ═══════════════════════════════════════════════════
 
-    // ─── Trader Shop ───────────────────────────────────
     traderShop() {
-        const W = this.cameras.main.width
-        const H = this.cameras.main.height
-
-        this.menuActive = true
-
-        this.shopOverlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.7)
-            .setScrollFactor(0).setDepth(50)
-
-        this.shopPanel = this.add.rectangle(W / 2, H / 2, 600, 550, 0x1a1a1a)
-            .setStrokeStyle(3, 0xffaa00).setScrollFactor(0).setDepth(51)
-
-        this.shopTitle = this.add.text(W / 2, H / 2 - 240, '🛒 Trader\'s Shop', {
-            fontSize: '28px',
-            fill: '#ffaa00',
+        const shopFont = {
+            fontSize: '26px',     // Slightly smaller to fit prices nicely
+            fill: '#ffffff',      // Gold color for shop items
             fontStyle: 'bold'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(52)
-
-        this.shopMoney = this.add.text(W / 2, H / 2 - 195, `💰 Your coins: ${GameState.money}`, {
-            fontSize: '20px',
-            fill: '#ffffff'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(52)
-
-        this.shopItems = []
-
-        let itemY = GameState.getFlag('boughtCore')
-            ? H / 2 - 90
-            : H / 2 - 130
-
-        // ─── Item 1: Armor Core ────────────────────────
-        if (!GameState.getFlag('boughtCore')) {
-            this.createShopItem(W / 2, itemY, '🤖 Armor Core', 500, () => {
-                if (GameState.spendMoney(500)) {
-                    if (!GameState.armor) {
-                        GameState.armor = { hasCore: false, parts: [] }
-                    }
-
-                    GameState.armor.hasCore = true
-                    GameState.addArmorPart('core')
-                    GameState.setFlag('boughtCore')
-
-                    GameState.addItem({
-                        id: 'armor_core',
-                        name: 'Armor Core',
-                        icon: '🤖',
-                        description: 'Power core for the robotic armor.',
-                        quantity: 1
-                    })
-
-                    GameState.addItem({
-                        id: 'comms_device',
-                        name: 'Comms Device',
-                        icon: '📡',
-                        description: 'An old but reliable communication device.',
-                        quantity: 1
-                    })
-                    GameState.setFlag('hasCommsDevice')
-
-                    this.closeShop()
-
-                    this.dialog.show([
-                        { name: 'Trader', text: 'Here\'s your power core. Handle with care.' },
-                        { name: 'You', text: 'Finally! Now I can make something with this.' },
-                        { name: 'Trader', text: 'Oh wait. Take this too.' },
-                        { name: 'Trader', text: 'A communication device. Old tech but reliable.' },
-                        { name: 'You', text: 'What\'s this for?' },
-                        { name: 'Trader', text: 'Keep in touch with people you care about.' },
-                        { name: 'Trader', text: 'In times like these... communication saves lives.' },
-                        { name: '', text: '📡 Received: Comms Device' },
-                        { name: 'Trader', text: 'Kid... there\'s something you should see.' },
-                        { name: 'Trader', text: 'Someone smart enough to actually use it.' },
-                        { name: 'You', text: 'What do you mean?' },
-                        { name: 'Trader', text: 'I found something underground. Years ago.' },
-                        { name: 'Trader', text: 'An armor frame. Ancient engineering.' },
-                        { name: 'You', text: 'What kind of armor?' },
-                        { name: 'Trader', text: 'The kind no ordinary human can work with.' },
-                        { name: 'Trader', text: 'But you... you understand machines.' },
-                        { name: 'Trader', text: 'I think you\'re the one who can finish it.' },
-                        { name: 'You', text: 'Show me.' }
-                    ], () => {
-                        GameState.setFlag('secretBaseRevealed')
-                        GameState.tryAdvanceLevel()
-                        this.ui.updateStats()
-                        this.showSecretBaseCutscene()
-                    })
-                } else {
-                    this.closeShop()
-                    this.dialog.show([
-                        { name: 'Trader', text: `Not enough coins! You need 500, you have ${GameState.money}.` }
-                    ], () => { this.showTraderMenu() })
-                }
-            })
-            itemY += 80
         }
 
-        // ─── Item 2: Repair Parts ──────────────────────
-        this.createShopItem(W / 2, itemY, '🔧 Repair Parts (+10 repair)', 100, () => {
-            if (GameState.spendMoney(100)) {
-                GameState.addSkill('repair', 10)
-                GameState.addItem({
-                    id: 'repair_parts',
-                    name: 'Repair Parts',
-                    icon: '🔧',
-                    description: 'Useful spare parts for fixing machines.',
-                    quantity: 1
-                })
-                this.closeShop()
-                this.dialog.show([
-                    { name: 'Trader', text: 'Good parts. Should help your work.' }
-                ], () => { this.showTraderMenu() })
-            } else {
-                this.closeShop()
-                this.dialog.show([
-                    { name: 'Trader', text: `Need 100 coins. You have ${GameState.money}.` }
-                ], () => { this.showTraderMenu() })
+        const backFont = {
+            fill: '#888888',
+            fontStyle: 'italic'
+        }
+
+        const choices = []
+
+        if (!GameState.getFlag('boughtCore')) {
+            choices.push(
+                { text: '🤖 Armor Core — 500💰',          style: shopFont, onSelect: () => this.buyArmorCore() },
+                { text: '🔧 Repair Parts (+10) — 100💰',  style: shopFont, onSelect: () => this.buyRepairParts() },
+                { text: '⚗️ Elixir (+3) — 150💰',          style: shopFont, onSelect: () => this.buyElixir() },
+                { text: '🔙 Back',                         style: backFont, onSelect: () => this.showTraderMenu() }
+            )
+        } else {
+            choices.push(
+                { text: '🔧 Repair Parts (+10) — 100💰',      style: shopFont, onSelect: () => this.buyRepairParts() },
+                { text: '⚗️ Elixir (+3) — 150💰',              style: shopFont, onSelect: () => this.buyElixir() },
+                { text: '📜 Blueprint (+5 research) — 200💰', style: shopFont, onSelect: () => this.buyBlueprint() },
+                { text: '🔙 Back',                              style: backFont, onSelect: () => this.showTraderMenu() }
+            )
+        }
+
+        // ✨ Pass the custom options here!
+        this.dialog.showChoices(choices, {
+            title: "🛒 Trader's Shop",
+            subtitle: `💰 Your coins: ${GameState.money}`,
+            titleStyle: {
+                fontSize: '60px',   // Slightly smaller than 72px to fit the icon nicely
+                fill: '#ffcc00'     // Match the gold theme
+            },
+            subtitleStyle: {
+                fill: '#ffaa00'     // Bright orange for the money counter
             }
-        })
-        itemY += 80
-
-        // ─── Item 3: Elixir ───────────────────────────
-        this.createShopItem(W / 2, itemY, '⚗️ Elixir (+3)', 150, () => {
-            if (GameState.spendMoney(150)) {
-                GameState.addElixir(3)
-                GameState.addItem({
-                    id: 'elixir',
-                    name: 'Elixir',
-                    icon: '⚗️',
-                    description: 'A mysterious liquid with magical properties.',
-                    quantity: 3
-                })
-                this.closeShop()
-                this.dialog.show([
-                    { name: 'Trader', text: 'Rare stuff. Use it wisely.' }
-                ], () => { this.showTraderMenu() })
-            } else {
-                this.closeShop()
-                this.dialog.show([
-                    { name: 'Trader', text: `Need 150 coins. You have ${GameState.money}.` }
-                ], () => { this.showTraderMenu() })
-            }
-        })
-        itemY += 80
-
-        // ─── Item 4: Blueprint ────────────────────────
-        this.createShopItem(W / 2, itemY, '📜 Blueprint (+5 research)', 200, () => {
-            if (GameState.spendMoney(200)) {
-                GameState.addSkill('research', 5)
-                GameState.addItem({
-                    id: 'blueprint',
-                    name: 'Blueprint',
-                    icon: '📜',
-                    description: 'Old schematics for advanced research.',
-                    quantity: 1
-                })
-                this.closeShop()
-                this.dialog.show([
-                    { name: 'Trader', text: 'Old schematics. Might come in handy.' }
-                ], () => { this.showTraderMenu() })
-            } else {
-                this.closeShop()
-                this.dialog.show([
-                    { name: 'Trader', text: `Need 200 coins. You have ${GameState.money}.` }
-                ], () => { this.showTraderMenu() })
-            }
-        })
-        itemY += 80
-
-        // ─── Back ──────────────────────────────────────
-        this.shopClose = this.add.text(W / 2, itemY + 40, '[ Back ]', {
-            fontSize: '18px',
-            fill: '#888888'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(52)
-            .setInteractive({ useHandCursor: true })
-
-        this.shopClose.on('pointerdown', () => {
-            this.closeShop()
-            this.showTraderMenu()
         })
     }
+
+// ─── Individual buy methods ─────────────────────
+
+buyArmorCore() {
+    if (!GameState.spendMoney(500)) {
+        this.dialog.show([
+            { name: 'Trader', text: `Not enough coins! Need 500💰, you have ${GameState.money}💰.` }
+        ], () => { this.traderShop() })
+        return
+    }
+
+    if (!GameState.armor) {
+        GameState.armor = { hasCore: false, parts: [] }
+    }
+
+    GameState.armor.hasCore = true
+    GameState.addArmorPart('core')
+    GameState.setFlag('boughtCore')
+
+    GameState.addItem({
+        id: 'armor_core',
+        name: 'Armor Core',
+        icon: '🤖',
+        description: 'Power core for the robotic armor.',
+        quantity: 1
+    })
+
+    GameState.addItem({
+        id: 'comms_device',
+        name: 'Comms Device',
+        icon: '📡',
+        description: 'An old but reliable communication device.',
+        quantity: 1
+    })
+    GameState.setFlag('hasCommsDevice')
+
+    this.dialog.show([
+        { name: 'Trader', text: 'Here\'s your power core. Handle with care.' },
+        { name: 'You',    text: 'Finally! Now I can make something with this.' },
+        { name: 'Trader', text: 'Oh wait. Take this too.' },
+        { name: 'Trader', text: 'A communication device. Old tech but reliable.' },
+        { name: 'You',    text: 'What\'s this for?' },
+        { name: 'Trader', text: 'Keep in touch with people you care about.' },
+        { name: 'Trader', text: 'In times like these... communication saves lives.' },
+        { name: '',       text: '📡 Received: Comms Device' },
+        { name: 'Trader', text: 'Kid... there\'s something you should see.' },
+        { name: 'Trader', text: 'Someone smart enough to actually use it.' },
+        { name: 'You',    text: 'What do you mean?' },
+        { name: 'Trader', text: 'I found something underground. Years ago.' },
+        { name: 'Trader', text: 'An armor frame. Ancient engineering.' },
+        { name: 'You',    text: 'What kind of armor?' },
+        { name: 'Trader', text: 'The kind no ordinary human can work with.' },
+        { name: 'Trader', text: 'But you... you understand machines.' },
+        { name: 'Trader', text: 'I think you\'re the one who can finish it.' },
+        { name: 'You',    text: 'Show me.' }
+    ], () => {
+        GameState.setFlag('secretBaseRevealed')
+        GameState.tryAdvanceLevel()
+        this.ui.updateStats()
+        this.showSecretBaseCutscene()
+    })
+}
+
+buyRepairParts() {
+    if (!GameState.spendMoney(100)) {
+        this.dialog.show([
+            { name: 'Trader', text: `Not enough coins! Need 100💰, you have ${GameState.money}💰.` }
+        ], () => { this.traderShop() })
+        return
+    }
+
+    GameState.addSkill('repair', 10)
+    GameState.addItem({
+        id: 'repair_parts',
+        name: 'Repair Parts',
+        icon: '🔧',
+        description: 'Useful spare parts for fixing machines.',
+        quantity: 1
+    })
+
+    this.dialog.show([
+        { name: 'Trader', text: 'Good parts. Should help your work.' }
+    ], () => { this.showTraderMenu() })
+}
+
+buyElixir() {
+    if (!GameState.spendMoney(150)) {
+        this.dialog.show([
+            { name: 'Trader', text: `Not enough coins! Need 150💰, you have ${GameState.money}💰.` }
+        ], () => { this.traderShop() })
+        return
+    }
+
+    GameState.addElixir(3)
+    GameState.addItem({
+        id: 'elixir',
+        name: 'Elixir',
+        icon: '⚗️',
+        description: 'A mysterious liquid with magical properties.',
+        quantity: 3
+    })
+
+    this.dialog.show([
+        { name: 'Trader', text: 'Rare stuff. Use it wisely.' }
+    ], () => { this.showTraderMenu() })
+}
+
+buyBlueprint() {
+    if (!GameState.spendMoney(200)) {
+        this.dialog.show([
+            { name: 'Trader', text: `Not enough coins! Need 200💰, you have ${GameState.money}💰.` }
+        ], () => { this.traderShop() })
+        return
+    }
+
+    GameState.addSkill('research', 5)
+    GameState.addItem({
+        id: 'blueprint',
+        name: 'Blueprint',
+        icon: '📜',
+        description: 'Old schematics for advanced research.',
+        quantity: 1
+    })
+
+    this.dialog.show([
+        { name: 'Trader', text: 'Old schematics. Might come in handy.' }
+    ], () => { this.showTraderMenu() })
+}
 
     createShopItem(x, y, text, price, onClick) {
         const btn = this.add.rectangle(x, y, 500, 55, 0x2a2a2a)
@@ -449,31 +387,33 @@ export default class JunkyardScene extends Phaser.Scene {
         }).setOrigin(1, 0.5).setScrollFactor(0).setDepth(53)
 
         btn.on('pointerover', () => btn.setFillStyle(0x444477))
-        btn.on('pointerout', () => btn.setFillStyle(0x333355))
+        btn.on('pointerout',  () => btn.setFillStyle(0x333355))
         btn.on('pointerdown', onClick)
 
         this.shopItems.push(btn, label, priceText)
     }
 
     closeShop() {
-        this.menuActive = false
         if (this.shopOverlay) this.shopOverlay.destroy()
-        if (this.shopPanel) this.shopPanel.destroy()
-        if (this.shopTitle) this.shopTitle.destroy()
-        if (this.shopMoney) this.shopMoney.destroy()
-        if (this.shopClose) this.shopClose.destroy()
+        if (this.shopPanel)   this.shopPanel.destroy()
+        if (this.shopTitle)   this.shopTitle.destroy()
+        if (this.shopMoney)   this.shopMoney.destroy()
+        if (this.shopClose)   this.shopClose.destroy()
         this.shopItems.forEach(item => item.destroy())
         this.shopItems = []
     }
 
-    // ─── Trader Secret ─────────────────────────────────
+    // ═══════════════════════════════════════════════════
+    // ─── TRADER SECRET ─────────────────────────────────
+    // ═══════════════════════════════════════════════════
+
     traderSecret() {
         if (!GameState.getFlag('secretBaseVisited')) {
             this.dialog.show([
                 { name: 'Trader', text: 'Come... follow me underground.' },
                 { name: 'Trader', text: 'Watch your step.' },
                 { name: 'Trader', text: 'Not many people know this place exists.' },
-                { name: 'You', text: 'How deep does this go?' },
+                { name: 'You',    text: 'How deep does this go?' },
                 { name: 'Trader', text: 'Deep enough that no one will find us.' }
             ], () => {
                 GameState.setFlag('secretBaseVisited')
@@ -490,7 +430,10 @@ export default class JunkyardScene extends Phaser.Scene {
         }
     }
 
-    // ─── Secret Base Cutscene ──────────────────────────
+    // ═══════════════════════════════════════════════════
+    // ─── SECRET BASE CUTSCENE ──────────────────────────
+    // ═══════════════════════════════════════════════════
+
     showSecretBaseCutscene() {
         const W = this.cameras.main.width
         const H = this.cameras.main.height
@@ -551,7 +494,7 @@ export default class JunkyardScene extends Phaser.Scene {
         this.cutsceneTexts.push(cont)
 
         cont.on('pointerover', () => cont.setStyle({ fill: '#ffffff' }))
-        cont.on('pointerout', () => cont.setStyle({ fill: '#888888' }))
+        cont.on('pointerout',  () => cont.setStyle({ fill: '#888888' }))
         cont.on('pointerdown', () => {
             this.cutsceneTexts.forEach(t => t.destroy())
             this.cutsceneTexts = []

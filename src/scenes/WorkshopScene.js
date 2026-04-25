@@ -146,7 +146,6 @@ export default class WorkshopScene extends Phaser.Scene {
 
         // ─── State ─────────────────────────────────────
         this.menuActive = false
-        this.menuItems = []
         this.truthTriggered = false
 
         if (GameState.getFlag('learnedTruth')) {
@@ -163,7 +162,7 @@ export default class WorkshopScene extends Phaser.Scene {
             this.dialog.show([
                 { name: 'You', text: 'My workshop... at least this place is still standing.', expression: 'sad' },
                 { name: 'You', text: 'I should start working soon.', expression: 'serious' }
-                        ], () => {
+            ], () => {
                 GameState.setFlag('workshopIntroSeen')
 
                 // Force show right arrow (we're at bench 0)
@@ -176,7 +175,7 @@ export default class WorkshopScene extends Phaser.Scene {
                 if (this.eKeyHint) this.eKeyHint.setVisible(true)
             })
 
-        this.updateBenchUI()
+            this.updateBenchUI()
         }
     }
 
@@ -421,134 +420,90 @@ export default class WorkshopScene extends Phaser.Scene {
     }
 
     // ═══════════════════════════════════════════════════
-    // ─── Magical Bench Menu ────────────────────────────
+    // ─── Magical Bench Menu (uses choice panel) ────────
     // ═══════════════════════════════════════════════════
-    showMagicalBenchMenu(station) {
-        const W = this.cameras.main.width
-        const H = this.cameras.main.height
-
+            showMagicalBenchMenu(station) {
         this.menuActive = true
-        this.menuItems = []
 
-        this.menuOverlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.7)
-            .setScrollFactor(0).setDepth(50)
-
-        this.menuPanel = this.add.rectangle(W / 2, H / 2, 600, 500, 0x1a1a1a)
-            .setStrokeStyle(3, 0x9b59b6).setScrollFactor(0).setDepth(51)
-
-        this.menuTitle = this.add.text(W / 2, H / 2 - 210, '🔮 Magical Bench', {
-            fontSize: '28px',
-            fill: '#9b59b6',
-            fontStyle: 'bold'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(52)
-
-        this.menuStats = this.add.text(W / 2, H / 2 - 160,
-            `🔬 Research: ${GameState.skills.research}/30   ⚗️ Elixir: ${GameState.elixir}`, {
-            fontSize: '18px',
-            fill: '#aaaaaa'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(52)
-
-        const timeInfo = this.add.text(W / 2, H / 2 - 125,
-            '🌙 Night — Ancient energy is active', {
-            fontSize: '14px',
-            fill: '#9b59b6'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(52)
-        this.menuItems.push(timeInfo)
-
-        // ─── Energy Calibration ────────────────────────
-        this.createBenchButton(
-            W / 2, H / 2 - 50,
-            '⚡ Energy Calibration',
-            'Earn elixir + research skill',
-            () => {
-                this.closeMagicalMenu()
-                station.cooldown = true
-                this.time.delayedCall(5000, () => { station.cooldown = false })
-                this.scene.pause('WorkshopScene')
-                this.scene.launch('EnergyCalibrationGame')
-            }
-        )
-
-        // ─── Research ──────────────────────────────────
         const researchDone = GameState.skills.research >= 30
-        const canResearch = GameState.elixir >= 1 && !researchDone
+        const canResearch  = GameState.elixir >= 1 && !researchDone
 
-        this.createBenchButton(
-            W / 2, H / 2 + 60,
-            researchDone ? '✅ Research Complete' : '🔬 Research Attack Data',
-            researchDone
-                ? 'All clues gathered'
-                : canResearch
-                    ? `Costs ⚗️1 elixir | Progress: ${GameState.skills.research}/30`
-                    : '❌ Need at least 1 elixir',
-            () => {
-                if (researchDone) {
-                    this.closeMagicalMenu()
-                    this.dialog.show([
-                        { name: 'You', text: 'Research is complete.', expression: 'serious' },
-                        { name: 'You', text: 'I need to gather all clues from others.', expression: 'determined' }
-                    ])
-                    return
+        const purple = { fill: '#cc88ff' }
+
+        const choices = [
+            // ── Slot 0: Energy Calibration (Green) ─────
+            {
+                text: '⚡ Energy Calibration',
+                style: purple,
+                onSelect: () => {
+                    this.menuActive = false
+                    station.cooldown = true
+                    this.time.delayedCall(5000, () => { station.cooldown = false })
+                    this.scene.pause('WorkshopScene')
+                    this.scene.launch('EnergyCalibrationGame')
                 }
-                if (GameState.elixir < 1) {
-                    this.closeMagicalMenu()
-                    this.dialog.show([
-                        { name: 'You', text: 'I need at least 1 elixir to run the analysis.', expression: 'serious' },
-                        { name: 'You', text: 'Play Energy Calibration to earn elixir.', expression: 'neutral' }
-                    ])
-                    return
-                }
-                this.closeMagicalMenu()
-                this.doResearch()
             },
-            !canResearch && !researchDone
-        )
+            // ── Slot 1: Research (Teal) ────────────────
+            {
+                text: researchDone
+                    ? '✅ Research Complete'
+                    : `🔬 Research Attack Data (${GameState.skills.research}/30)`,
+                style: researchDone
+                    ? { fill: '#44ff88' }
+                    : canResearch
+                        ? purple
+                        : { fill: '#555555' },
+                onSelect: () => {
+                    this.menuActive = false
+                    if (researchDone) {
+                        this.dialog.show([
+                            { name: 'You', text: 'Research is complete.', expression: 'serious' },
+                            { name: 'You', text: 'I need to gather all clues from others.', expression: 'determined' }
+                        ])
+                        return
+                    }
+                    if (GameState.elixir < 1) {
+                        this.dialog.show([
+                            { name: 'You', text: 'I need at least 1 elixir to run the analysis.', expression: 'serious' },
+                            { name: 'You', text: 'Play Energy Calibration to earn elixir.', expression: 'neutral' }
+                        ])
+                        return
+                    }
+                    this.doResearch()
+                }
+            },
+            // ── Slot 2: EMPTY (Purple - gets hidden) ───
+            {
+                text: '',
+                style: { fill: 'transparent' },
+                onSelect: () => {}
+            },
+            // ── Slot 3: Back (Dark) ────────────────────
+            {
+                text: '🔙 Back',
+                style: { fill: '#888888', fontStyle: 'italic' },
+                onSelect: () => {
+                    this.menuActive = false
+                }
+            }
+        ]
 
-        // ─── Back ──────────────────────────────────────
-        this.createBenchButton(W / 2, H / 2 + 170, '🔙 Back', '', () => {
-            this.closeMagicalMenu()
+        this.dialog.showChoices(choices, {
+            title: '🔮 Magical Bench',
+            subtitle: `🔬 Research ${GameState.skills.research}/30  ·  ⚗️ Elixir ${GameState.elixir}`,
+            titleStyle: {
+                fontSize: '60px',
+                fill: '#9b59b6'
+            },
+            subtitleStyle: {
+                fontSize: '20px',
+                fill: '#9b59b6'
+            },
+            // ── Hide slot index 2 (the purple button) ──
+            hiddenSlots: [2]
         })
     }
 
-    createBenchButton(x, y, text, subtitle, onClick, locked = false) {
-        const btn = this.add.rectangle(x, y, 500, 75, locked ? 0x222222 : 0x2a2a2a)
-            .setStrokeStyle(2, locked ? 0x444444 : 0x9b59b6)
-            .setScrollFactor(0).setDepth(52)
-            .setInteractive({ useHandCursor: !locked })
-
-        const mainText = this.add.text(x, subtitle ? y - 12 : y, text, {
-            fontSize: '20px',
-            fill: locked ? '#666666' : '#ffffff'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(53)
-
-        let subText = null
-        if (subtitle) {
-            subText = this.add.text(x, y + 16, subtitle, {
-                fontSize: '14px',
-                fill: locked ? '#444444' : '#aaaaaa'
-            }).setOrigin(0.5).setScrollFactor(0).setDepth(53)
-        }
-
-        if (!locked) {
-            btn.on('pointerover', () => btn.setFillStyle(0x3a3a3a))
-            btn.on('pointerout', () => btn.setFillStyle(0x2a2a2a))
-        }
-        btn.on('pointerdown', () => { if (!locked) onClick() })
-
-        this.menuItems.push(btn, mainText)
-        if (subText) this.menuItems.push(subText)
-        return btn
-    }
-
-    closeMagicalMenu() {
-        this.menuActive = false
-        if (this.menuOverlay) this.menuOverlay.destroy()
-        if (this.menuPanel) this.menuPanel.destroy()
-        if (this.menuTitle) this.menuTitle.destroy()
-        if (this.menuStats) this.menuStats.destroy()
-        this.menuItems.forEach(item => item.destroy())
-        this.menuItems = []
-    }
 
     // ═══════════════════════════════════════════════════
     // ─── Research System ───────────────────────────────

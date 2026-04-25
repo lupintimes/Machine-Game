@@ -137,7 +137,7 @@ export default class HubScene extends Phaser.Scene {
             .setDepth(3)
             .setInteractive({ useHandCursor: true, pixelPerfect: true, alphaTolerance: 50 })
 
-            
+
         this.legend.on('pointerover', () => {
             this.tweens.add({
                 targets: this.legend,
@@ -181,7 +181,9 @@ export default class HubScene extends Phaser.Scene {
             this.ui.crisisBarBg,
             this.ui.crisisBar,
             this.ui.crisisLabel,
-            this.ui.timePillContainer,
+            this.ui.timeIcon,
+            this.ui.dayPillTab,
+            this.ui.dayPillText,
             this.ui.taskIcon,
             this.ui.invIcon,
             this.ui.hubIcon

@@ -27,7 +27,6 @@ export default class PalaceScene extends Phaser.Scene {
         this.dialog = new DialogBox(this)
         this.spaceKey = this.input.keyboard.addKey('SPACE')
         this.menuActive = false
-        this.menuItems = []
 
         // ─── Shutdown cleanup ──────────────────────────
         this.events.on('shutdown', () => {
@@ -70,68 +69,62 @@ export default class PalaceScene extends Phaser.Scene {
         }
     }
 
+    // ═══════════════════════════════════════════════════
+    // ─── King Menu (Choice Panel) ──────────────────────
+    // ═══════════════════════════════════════════════════
     showKingMenu() {
-        const W = this.cameras.main.width
-        const H = this.cameras.main.height
-
         this.menuActive = true
-        this.menuItems = []
 
-        this.menuOverlay = this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.7)
-            .setScrollFactor(0).setDepth(50)
+        const gold = { fill: '#ffeebb' }
 
-        this.menuPanel = this.add.rectangle(W / 2, H / 2, 500, 400, 0x1a1a2e)
-            .setStrokeStyle(3, 0xffdd00).setScrollFactor(0).setDepth(51)
-
-        this.menuTitle = this.add.text(W / 2, H / 2 - 160, '👑 King', {
-            fontSize: '28px', fill: '#ffdd00', fontStyle: 'bold'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(52)
-
-        this.createMenuButton(W / 2, H / 2 - 60, '💬 Talk', () => {
-            this.closeMenu()
-            this.kingTalk()
-        })
-
-        this.createMenuButton(W / 2, H / 2 + 20, '📋 Rebuild Quest', () => {
-            this.closeMenu()
-            this.showQuestStatus()
-        })
-
-        this.createMenuButton(W / 2, H / 2 + 100, '🔙 Leave', () => {
-            this.closeMenu()
-            this.scene.start('HubScene')
+        this.dialog.showChoices([
+            {
+                text: '💬 Talk',
+                style: gold,
+                onSelect: () => {
+                    this.menuActive = false
+                    this.kingTalk()
+                }
+            },
+            {
+                text: '📋 Rebuild Quest',
+                style: gold,
+                onSelect: () => {
+                    this.menuActive = false
+                    this.showQuestStatus()
+                }
+            },
+            {
+                text: '',
+                style: { fill: 'transparent' },
+                onSelect: () => {}
+            },
+            {
+                text: '🔙 Leave',
+                style: { fill: '#888888', fontStyle: 'italic' },
+                onSelect: () => {
+                    this.menuActive = false
+                    this.scene.start('HubScene')
+                }
+            }
+        ], {
+            title: '👑 King',
+            subtitle: 'Ruler of the fallen city',
+            titleStyle: {
+                fontSize: '72px',
+                fill: '#ffdd00'
+            },
+            subtitleStyle: {
+                fontSize: '24px',
+                fill: '#ccaa00'
+            },
+            hiddenSlots: [2] // Hide the purple button
         })
     }
 
-    createMenuButton(x, y, text, onClick, locked = false) {
-        const btn = this.add.rectangle(x, y, 350, 55, locked ? 0x222233 : 0x333355)
-            .setStrokeStyle(2, locked ? 0x444444 : 0xffdd00)
-            .setScrollFactor(0).setDepth(52)
-            .setInteractive({ useHandCursor: !locked })
-
-        const label = this.add.text(x, y, text, {
-            fontSize: '20px', fill: locked ? '#666666' : '#ffffff'
-        }).setOrigin(0.5).setScrollFactor(0).setDepth(53)
-
-        if (!locked) {
-            btn.on('pointerover', () => btn.setFillStyle(0x444433))
-            btn.on('pointerout', () => btn.setFillStyle(0x333355))
-        }
-        btn.on('pointerdown', onClick)
-
-        this.menuItems.push(btn, label)
-        return btn
-    }
-
-    closeMenu() {
-        this.menuActive = false
-        if (this.menuOverlay) this.menuOverlay.destroy()
-        if (this.menuPanel) this.menuPanel.destroy()
-        if (this.menuTitle) this.menuTitle.destroy()
-        this.menuItems.forEach(item => item.destroy())
-        this.menuItems = []
-    }
-
+    // ═══════════════════════════════════════════════════
+    // ─── King Talk ─────────────────────────────────────
+    // ═══════════════════════════════════════════════════
     kingTalk() {
         if (!GameState.getFlag('rebuiltBuildings')) {
             this.dialog.show([
@@ -186,16 +179,9 @@ export default class PalaceScene extends Phaser.Scene {
         }
     }
 
-    triggerLevel2Complete() {
-        this.cameras.main.fade(800, 0, 0, 0)
-        this.time.delayedCall(800, () => {
-            this.scene.start('CutsceneScene', {
-                key: 'level2Complete',
-                returnScene: 'HubScene'
-            })
-        })
-    }
-
+    // ═══════════════════════════════════════════════════
+    // ─── Quest Status ──────────────────────────────────
+    // ═══════════════════════════════════════════════════
     showQuestStatus() {
         const rebuilt = GameState.getFlag('rebuiltBuildings')
         const buildings = GameState.rebuiltBuildings || []
@@ -208,5 +194,18 @@ export default class PalaceScene extends Phaser.Scene {
             { name: '🏛️', text: `Town Hall: ${buildings.includes('town') ? '✅ Repaired' : '❌ Needs repair'}` },
             { name: 'King', text: rebuilt ? 'All buildings repaired! Thank you.' : 'Go to town center. Luvaza will guide you.', expression: rebuilt ? 'neutral' : 'serious' }
         ], () => { this.showKingMenu() })
+    }
+
+    // ═══════════════════════════════════════════════════
+    // ─── Level Transition ──────────────────────────────
+    // ═══════════════════════════════════════════════════
+    triggerLevel2Complete() {
+        this.cameras.main.fade(800, 0, 0, 0)
+        this.time.delayedCall(800, () => {
+            this.scene.start('CutsceneScene', {
+                key: 'level2Complete',
+                returnScene: 'HubScene'
+            })
+        })
     }
 }
