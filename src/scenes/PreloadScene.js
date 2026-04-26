@@ -78,6 +78,12 @@ export default class PreloadScene extends Phaser.Scene {
         this.load.image('workshop-evening', 'assets/images/workshop/workshop-evening.png')
         this.load.image('workshop-night', 'assets/images/workshop/workshop-night.png')
 
+        this.load.image('lock-key', 'assets/images/ui/lock_key.png')
+        this.load.image('e-key', 'assets/images/ui/E_key.png')
+        this.load.image('lock-overlay', 'assets/images/ui/electric_bench_locked.png')
+        this.load.image('arrow', 'assets/images/ui/arrow.png')
+
+
         // ─── Junkyard ──────────────────────────────────
         this.load.image('junkyard-morning', 'assets/images/junkyard/junkyard-morning.png')
         this.load.image('junkyard-noon', 'assets/images/junkyard/junkyard-noon.png')
@@ -88,14 +94,25 @@ export default class PreloadScene extends Phaser.Scene {
         this.load.image('palace-bg', 'assets/images/palace-bg.png')
 
         // ─── Town Center ───────────────────────────────
-        this.load.image('towncenter-bg', 'assets/images/towncenter-bg.png')
+        this.load.image('town-ruined', 'assets/images/towncenter/town_ruined.png')
+        this.load.image('town-overlay', 'assets/images/towncenter/overlay.png')
+
+        this.load.image('btn-hospital', 'assets/images/towncenter/hospital_button.png')
+        this.load.image('btn-water', 'assets/images/towncenter/water_button.png')
+        this.load.image('btn-power', 'assets/images/towncenter/power_button.png')
+        this.load.image('btn-town', 'assets/images/towncenter/town_button.png')
+
+        this.load.image('btn-hospital-fixed', 'assets/images/towncenter/fixed_hospital.png')
+        this.load.image('btn-water-fixed', 'assets/images/towncenter/fixed_water.png')
+        this.load.image('btn-power-fixed', 'assets/images/towncenter/fixed_power.png')
+        this.load.image('btn-town-fixed', 'assets/images/towncenter/fixed_town.png')
 
         // ─── Park ──────────────────────────────────────
         this.load.image('park-bg', 'assets/images/park-bg.png')
 
         // ─── UI Icons ──────────────────────────────────
         this.load.image('inventory-panel', 'assets/images/ui/inventory-panel.png')
-        
+
         this.load.image('lock-icon', 'assets/images/icons/lock.png')
         this.load.image('inventory-icon', 'assets/images/icons/inventory.png')
         this.load.image('tasks-icon', 'assets/images/icons/tasks.png')
@@ -114,8 +131,7 @@ export default class PreloadScene extends Phaser.Scene {
         // ─── Hub ───────────────────────────────────────
         this.load.image('hub-bg', 'assets/images/hub-bg.png')
 
-        // ─── Workshop (single) ─────────────────────────
-        this.load.image('workshop-bg', 'assets/images/workshop-bg.png')
+
 
         // ─── Secret Base ───────────────────────────────
         this.load.image('secretbase-bg', 'assets/images/secretbase-bg.png')
@@ -158,6 +174,8 @@ export default class PreloadScene extends Phaser.Scene {
         this.load.image('dialog-player-determined', 'assets/images/dialog/Player/Smirk.png')
         this.load.image('dialog-player-sad', 'assets/images/dialog/Player/Sad.png')
 
+        //mini game
+        this.load.image('energystabliser', 'assets/images/minigame/energystabliser.png')
 
         // ─── Add any other assets here ─────────────────
         // this.load.image('player', 'assets/images/player.png')

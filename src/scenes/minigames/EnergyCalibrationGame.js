@@ -14,78 +14,87 @@ export default class EnergyCalibrationGame extends Phaser.Scene {
         this.round = 0
         this.waiting = false
 
-        // ─── Background ────────────────
-        this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.85).setDepth(0)
-        this.add.rectangle(W / 2, H / 2, 700, 700, 0x0a0a1a).setDepth(1)
-            .setStrokeStyle(3, 0xff00ff)
+        const panelX = W / 2;
+        const panelY = H / 2 - 22;
 
-        // ─── Title ─────────────────────
-        this.add.text(W / 2, H / 2 - 310, '🔮 Energy Calibration', {
-            fontSize: '36px',
-            fill: '#ff00ff',
-            fontStyle: 'bold'
-        }).setOrigin(0.5).setDepth(2)
+        const bgOffsetX = 0
+        const bgOffsetY = -22
 
-        this.add.text(W / 2, H / 2 - 260, 'Press SPACE when rings align!', {
-            fontSize: '20px',
-            fill: '#aaaaaa'
-        }).setOrigin(0.5).setDepth(2)
+        const bg = this.add.image(W / 2 + bgOffsetX, H / 2 + bgOffsetY, 'energystabliser')
+            .setDepth(0)
 
-        // ─── Orb ───────────────────────
-        this.orb = this.add.circle(W / 2, H / 2, 60, 0xff00ff).setDepth(3)
-        this.orb.setStrokeStyle(4, 0xffffff)
+        const bgScale = 1
+        bg.setScale(bgScale)
 
-        // ─── Outer ring ────────────────
-        this.outerRing = this.add.circle(W / 2, H / 2, 150, 0x000000, 0).setDepth(3)
+
+        const mechanismCenterX = W / 2 + 0
+        const mechanismCenterY = H / 2 - 40
+
+
+        // ─── Orb (Center glowing ball) ───────
+        this.orb = this.add.circle(mechanismCenterX, mechanismCenterY, 60, 0xff00ff).setDepth(3)
+        this.orb.setStrokeStyle(4, 0xffffff).setAlpha(0)
+
+        // ─── Outer ring (Static target) ─────
+        this.outerRing = this.add.circle(mechanismCenterX, mechanismCenterY, 150, 0x000000, 0).setDepth(3)
         this.outerRing.setStrokeStyle(6, 0xff00ff)
 
-        // ─── Pulse ring (moves in/out) ─
-        this.pulseRing = this.add.circle(W / 2, H / 2, 250, 0x000000, 0).setDepth(3)
+        // ─── Pulse ring (Moves in/out) ──────
+        this.pulseRing = this.add.circle(mechanismCenterX, mechanismCenterY, 250, 0x000000, 0).setDepth(3)
         this.pulseRing.setStrokeStyle(4, 0xffffff)
         this.pulseRadius = 250
         this.pulseSpeed = 3
         this.pulseDirection = -1
 
-        // ─── Miss indicators ───────────
-        this.missIndicators = []
+
+
+        // ─── Round Text ──────────────────────
+        this.roundText = this.add.text(mechanismCenterX, mechanismCenterY - 215, `Round: 1 / ${this.totalRounds}`, {
+            fontFamily: "'Orbitron', sans-serif",
+            fontSize: '24px',
+            fill: '#ffffff',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setDepth(4)
+
+        this.hitsText = this.add.text(mechanismCenterX + 55, mechanismCenterY + 230, '0', {
+            fontSize: '28px',
+            fill: '#22d04f',
+            fontStyle: 'bold'
+
+        }).setOrigin(0.5).setDepth(4).setFontFamily('Arial')
+
+        // ─── Result Text ────────────────────
+        this.resultText = this.add.text(mechanismCenterX, mechanismCenterY + 250, '', {
+            fontSize: '28px',
+            fill: '#ffffff',
+            fontStyle: 'bold'
+        }).setOrigin(0.5).setDepth(4)
+
+        this.missIndicators = [];
+
+        const startX = W / 2 - 60; // adjust positioning
+        const y = mechanismCenterY + 200;
+
         for (let i = 0; i < this.maxMisses; i++) {
-            const dot = this.add.circle(W / 2 - 30 + (i * 30), H / 2 + 220, 10, 0xff0000).setDepth(4)
-            this.missIndicators.push(dot)
+            const dot = this.add.circle(startX + i * 40, y, 10, 0xff4444)
+                .setDepth(4)
+                .setAlpha(0.3); // faded initially
+
+            this.missIndicators.push(dot);
         }
 
-        // ─── Status texts ──────────────
-        this.roundText = this.add.text(W / 2, H / 2 - 200, `Round: 1 / ${this.totalRounds}`, {
-            fontSize: '22px',
-            fill: '#ffffff'
-        }).setOrigin(0.5).setDepth(4)
-
-        this.hitsText = this.add.text(W / 2, H / 2 + 170, `✅ Hits: 0`, {
-            fontSize: '22px',
-            fill: '#00ff88'
-        }).setOrigin(0.5).setDepth(4)
-
-        this.resultText = this.add.text(W / 2, H / 2 + 260, 'Press SPACE!', {
-            fontSize: '26px',
-            fill: '#ffffff'
-        }).setOrigin(0.5).setDepth(4)
-
-        // ─── Space key ─────────────────
+        // ─── Space key ─────────────────────
         this.spaceKey = this.input.keyboard.addKey('SPACE')
 
-        // ─── Close Button ──────────────
-        const closeBtn = this.add.text(W - 60, 40, '✖', {
-            fontSize: '32px',
-            fill: '#ff4444',
-            backgroundColor: '#000000',
-            padding: { x: 10, y: 5 }
-        }).setOrigin(0.5).setDepth(100).setInteractive({ useHandCursor: true })
+        // ─── Close Button ──────────────────
+        const closeBtn = this.add.text(1270, 150, '✖', {
+            fontSize: '32px', fill: '#ff4444', backgroundColor: '#000000', padding: { x: 10, y: 5 }
+        }).setOrigin(0.5).setDepth(100).setInteractive({ useHandCursor: true });
 
-        closeBtn.on('pointerover', () => closeBtn.setFill('#ff0000'))
-        closeBtn.on('pointerout', () => closeBtn.setFill('#ff4444'))
         closeBtn.on('pointerdown', () => {
-            this.scene.stop()
-            this.scene.resume('WorkshopScene')
-        })
+            this.scene.stop();
+            this.scene.resume('WorkshopScene');
+        });
     }
 
     update() {
@@ -121,27 +130,24 @@ export default class EnergyCalibrationGame extends Phaser.Scene {
     }
 
     checkPress() {
-        // Perfect if pulse ring is within 20px of outer ring (150)
         const diff = Math.abs(this.pulseRadius - 150)
 
         if (diff <= 25) {
-            // Perfect hit!
             this.hits++
-            this.hitsText.setText(`✅ Hits: ${this.hits}`)
+            this.hitsText.setText(`${this.hits}`)
             this.resultText.setText('🎯 Perfect!')
             this.resultText.setFill('#00ff88')
             this.cameras.main.flash(200, 0, 255, 0)
         } else {
-            // Miss!
             this.misses++
             this.resultText.setText('❌ Miss!')
             this.resultText.setFill('#ff4444')
             this.cameras.main.shake(200, 0.01)
 
-            // Update miss indicators
+            // Make missed dots visible to "cross out" the PNG's red dots
             this.missIndicators.forEach((dot, i) => {
                 if (i < this.misses) {
-                    dot.setFillStyle(0x333333)
+                    dot.setFillStyle(0x222222, 0.9) // Dark gray overlay
                 }
             })
 
@@ -151,20 +157,20 @@ export default class EnergyCalibrationGame extends Phaser.Scene {
             }
         }
 
-        this.round++
+
         this.roundText.setText(`Round: ${this.round + 1} / ${this.totalRounds}`)
+
+        this.round++
 
         if (this.round >= this.totalRounds) {
             this.endGame(true)
             return
         }
 
-        // Brief pause between rounds
         this.waiting = true
         this.time.delayedCall(800, () => {
             this.waiting = false
-            this.resultText.setText('Press SPACE!')
-            this.resultText.setFill('#ffffff')
+            this.resultText.setText('')
         })
     }
 
@@ -172,13 +178,13 @@ export default class EnergyCalibrationGame extends Phaser.Scene {
         this.waiting = true
 
         if (success && this.hits >= 3) {
-            this.resultText.setText(`✅ Calibrated! ${this.hits}/${this.totalRounds} hits!`)
+            this.resultText.setText(`✅ Success! +${this.hits} Elixir`)
             this.resultText.setFill('#00ff88')
             GameState.addElixir(this.hits)
             GameState.addSkill('research', 5)
             GameState.addReputation(2)
         } else {
-            this.resultText.setText('❌ Calibration failed! No reward.')
+            this.resultText.setText('❌ Calibration failed!')
             this.resultText.setFill('#ff4444')
         }
 
@@ -187,5 +193,4 @@ export default class EnergyCalibrationGame extends Phaser.Scene {
             this.scene.resume('WorkshopScene')
         })
     }
-
 }

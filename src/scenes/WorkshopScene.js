@@ -6,13 +6,7 @@ export default class WorkshopScene extends Phaser.Scene {
         super('WorkshopScene')
     }
 
-    preload() {
-        this.load.image('workshop-bg', 'assets/images/workshop-bg.png')
-        this.load.image('lock-key', 'assets/images/ui/lock_key.png')
-        this.load.image('e-key', 'assets/images/ui/E_key.png')
-        this.load.image('lock-overlay', 'assets/images/ui/electric_bench_locked.png')
-        this.load.image('arrow', 'assets/images/ui/arrow.png')
-    }
+
 
     create() {
         const W = this.cameras.main.width

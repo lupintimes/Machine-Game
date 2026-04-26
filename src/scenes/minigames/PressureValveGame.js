@@ -1,242 +1,166 @@
 export default class PressureValveGame extends Phaser.Scene {
     constructor() {
-        super('PressureValveGame')
+        super('PressureValveGame');
     }
+
+    preload() {
+        // Replace these paths with your actual asset locations
+        this.load.image('gauge_panel_bg', 'assets/images/minigame/gauge_back.png');      // The empty valve frame
+        this.load.image('gauge_fill', 'assets/images/minigame/green_fill.png');    // The green liquid/bar
+        this.load.image('gauge_panel_overlay', 'assets/images/minigame/gauge_glass.png'); // The highlights/top frame
+    }
+
 
     create() {
-        const W = this.cameras.main.width
-        const H = this.cameras.main.height
+        const W = this.cameras.main.width;
+        const H = this.cameras.main.height;
 
-        this.timeLeft = 20
-        this.failed = false
+        this.timeLeft = 20;
+        this.failed = false;
 
-        // ─── Background ────────────────
-        this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.85).setDepth(0)
-        this.add.rectangle(W / 2, H / 2, 1000, 700, 0x110a00).setDepth(1)
-            .setStrokeStyle(3, 0xffaa00)
+        // ─── 1. Background Logic ────────────────
+        this.add.rectangle(W / 2, H / 2, W, H, 0x000000, 0.8).setDepth(0);
 
-        // ─── Title ─────────────────────
-        this.add.text(W / 2, H / 2 - 310, '🔧 Pressure Valve', {
-            fontSize: '36px',
-            fill: '#ffaa00',
-            fontStyle: 'bold'
-        }).setOrigin(0.5).setDepth(2)
+        // Main Panel Background
+        const panelX = 964.50;
+        const panelY = 592.00;
+        this.add.image(panelX, panelY, 'gauge_panel_bg').setDepth(1);
 
-        this.add.text(W / 2, H / 2 - 260, 'Click gauges to release pressure before it EXPLODES!', {
-            fontSize: '20px',
-            fill: '#aaaaaa'
-        }).setOrigin(0.5).setDepth(2)
+        const panelBG = this.add.image(panelX, panelY, 'gauge_panel_bg').setDepth(1);
+        const closeX = panelX + (panelBG.width / 2) - 40;
+        const closeY = panelY - (panelBG.height / 2) + 40;
 
-        // ─── Timer ─────────────────────
-        this.timerText = this.add.text(W / 2, H / 2 - 220, 'Time: 20', {
-            fontSize: '24px',
-            fill: '#ffffff'
-        }).setOrigin(0.5).setDepth(2)
+        this.createCloseButton(closeX, closeY)
 
-        this.time.addEvent({
-            delay: 1000,
-            callback: this.tickTimer,
-            callbackScope: this,
-            loop: true
-        })
+        this.gauges = [];
 
-        // ─── Gauges ────────────────────
-        this.gauges = []
-        const positions = [
-            W / 2 - 350,
-            W / 2 - 120,
-            W / 2 + 120,
-            W / 2 + 350
-        ]
+        // Horizontal offsets for the 4 valves (adjust these to fit your BG slots)
+        const xOffsets = [-335, -112, 112, 335];
 
-        positions.forEach((x, i) => {
-            this.gauges.push(this.createGauge(x, H / 2 + 20, i))
-        })
+        xOffsets.forEach((offset, i) => {
+            // We pass the absolute design coordinates for the first percentage text
+            // and offset the others by the same gap as the valves.
+            const textX = 618.00 + (i * 223); // 223 is the gap between xOffsets (-112 - (-335))
+            const textY = 421.91;
 
-        // ─── Result text ───────────────
-        this.resultText = this.add.text(W / 2, H / 2 + 290, '', {
-            fontSize: '28px',
-            fill: '#ffffff'
-        }).setOrigin(0.5).setDepth(5)
+            this.gauges.push(this.createGaugeLogic(panelX + offset, panelY + 45, textX, textY));
+        });
 
-        // ─── Update gauges every 100ms ─
-        this.time.addEvent({
-            delay: 100,
-            callback: this.updateGauges,
-            callbackScope: this,
-            loop: true
-        })
-        // ─── Close Button ──────────────
-        const closeBtn = this.add.text(W - 60, 40, '✖', {
-            fontSize: '32px',
-            fill: '#ff4444',
-            backgroundColor: '#000000',
-            padding: { x: 10, y: 5 }
-        }).setOrigin(0.5).setDepth(100).setInteractive({ useHandCursor: true })
+        // ─── 3. Overlay (The Glass) ─────────────
+        this.add.image(964.50, 640.00, 'gauge_panel_overlay').setDepth(5);
 
-        closeBtn.on('pointerover', () => closeBtn.setFill('#ff0000'))
-        closeBtn.on('pointerout', () => closeBtn.setFill('#ff4444'))
-        closeBtn.on('pointerdown', () => {
-            this.scene.stop()
-            this.scene.resume('WorkshopScene')
-        })
+        // ─── 4. UI ──────────────────────────────
+        this.timerText = this.add.text(W / 2 - 95, 362, '20', {
+            fontSize: '32px', fill: '#f3a70b', fontStyle: 'bold', fontFamily: "'Orbitron', sans-serif",
+        }).setOrigin(0.5).setDepth(10);
+
+        this.time.addEvent({ delay: 1000, callback: this.tickTimer, callbackScope: this, loop: true });
+        this.time.addEvent({ delay: 100, callback: this.updateGauges, callbackScope: this, loop: true });
     }
 
-    createGauge(x, y, index) {
+    createCloseButton(x, y) {
+        const closeBtn = this.add.text(x, y, '✖', {
+            fontSize: '40px',
+            fill: '#ff4444',
+            fontFamily: "'Orbitron', sans-serif",
+            padding: { x: 20, y: 20 }
+        })
+            .setOrigin(0.5)
+            .setDepth(100)
+            .setInteractive({ useHandCursor: true });
+
+        closeBtn.on('pointerdown', () => {
+            this.scene.stop('PressureValveGame');
+            this.scene.resume('WorkshopScene');
+        });
+    }
+
+    createGaugeLogic(x, y, textX, textY) {
         const gauge = {
             x, y,
-            value: Phaser.Math.Between(10, 30),   // start LOW
-            speed: Phaser.Math.FloatBetween(0.8, 2.0),  // only goes UP
-            bar: null,
-            bg: null,
-            valueText: null,
-            label: null,
+            value: Phaser.Math.Between(10, 30),
+            speed: Phaser.Math.FloatBetween(0.7, 1.8),
             exploded: false
-        }
+        };
 
-        // Label
-        gauge.label = this.add.text(x, y - 175, `Valve ${index + 1}`, {
-            fontSize: '18px',
-            fill: '#ffaa00'
-        }).setOrigin(0.5).setDepth(3)
+        // Fill Bar
+        gauge.bar = this.add.image(x, y + 150, 'gauge_fill')
+            .setOrigin(0.5, 1)
+            .setDepth(2);
 
-        // Background bar
-        gauge.bg = this.add.rectangle(x, y, 80, 300, 0x333333).setDepth(3)
-        gauge.bg.setStrokeStyle(2, 0x666666)
+        // Mask
+        const maskShape = this.make.graphics();
+        maskShape.fillRect(x - 40, y - 100, 80, 250);
+        gauge.bar.setMask(maskShape.createGeometryMask());
 
-        // Green zone (safe zone 0-60)
-        this.add.rectangle(x, y + 60, 80, 120, 0x00ff00, 0.15).setDepth(3)
-        this.add.text(x, y + 115, 'SAFE', {
-            fontSize: '14px',
-            fill: '#00ff00'
-        }).setOrigin(0.5).setDepth(4)
+        // Hitbox for clicking
+        const hitArea = this.add.rectangle(x, y, 100, 280, 0xffffff, 0)
+            .setInteractive({ useHandCursor: true })
+            .setDepth(6);
 
-        // Red zone (danger 60-100)
-        this.add.rectangle(x, y - 90, 80, 60, 0xff0000, 0.15).setDepth(3)
-        this.add.text(x, y - 115, 'DANGER', {
-            fontSize: '14px',
-            fill: '#ff0000'
-        }).setOrigin(0.5).setDepth(4)
+        hitArea.on('pointerdown', () => {
+            if (!gauge.exploded && !this.failed) {
+                gauge.value = Math.max(0, gauge.value - 30);
 
-        // Value bar
-        gauge.bar = this.add.rectangle(x, y + 140, 70, 5, 0x00ff88).setDepth(4)
-
-        // Value text
-        gauge.valueText = this.add.text(x, y + 165, '0%', {
-            fontSize: '20px',
-            fill: '#ffffff'
-        }).setOrigin(0.5).setDepth(4)
-
-        // Click to release pressure (drops value back down)
-        gauge.bg.setInteractive()
-        gauge.bg.on('pointerdown', () => {
-            if (!gauge.exploded) {
-                gauge.value = Math.max(0, gauge.value - 40)  // release pressure
-                this.cameras.main.flash(100, 0, 255, 100)
             }
-        })
-        gauge.bg.on('pointerover', () => {
-            if (!gauge.exploded) {
-                gauge.bg.setStrokeStyle(3, 0xffff00)
-            }
-        })
-        gauge.bg.on('pointerout', () => {
-            gauge.bg.setStrokeStyle(2, 0x666666)
-        })
+        });
 
-        return gauge
+        // Percentage Text at your EXACT requested coordinates
+        gauge.valueText = this.add.text(textX + 20, textY + 50, '0%', {
+            fontSize: '22px',
+            fill: '#000000',
+            fontStyle: 'bold',
+            fontFamily: 'Arial'
+        }).setOrigin(0.5).setDepth(10);
+
+        return gauge;
     }
 
     updateGauges() {
-        if (this.failed) return
+        if (this.failed) return;
 
         this.gauges.forEach(gauge => {
-            if (gauge.exploded) return
+            if (gauge.exploded) return;
 
-            // Pressure ONLY goes up
-            gauge.value += gauge.speed
-            gauge.value = Math.min(gauge.value, 100)
+            gauge.value = Math.min(gauge.value + gauge.speed, 100);
+            gauge.bar.setScale(1, gauge.value / 100);
 
-            // Update bar height
-            const barHeight = (gauge.value / 100) * 280
-            gauge.bar.setSize(70, Math.max(barHeight, 2))
-            gauge.bar.setY(gauge.y + 140 - barHeight / 2)
-
-            // Color based on pressure
-            if (gauge.value < 60) {
-                gauge.bar.setFillStyle(0x00ff88)
-                gauge.valueText.setFill('#00ff88')
-            } else if (gauge.value < 85) {
-                gauge.bar.setFillStyle(0xffaa00)
-                gauge.valueText.setFill('#ffaa00')
-            } else {
-                gauge.bar.setFillStyle(0xff4444)
-                gauge.valueText.setFill('#ff4444')
-                this.cameras.main.shake(50, 0.003)
+            // Change color based on pressure
+            if (gauge.value < 60) gauge.bar.setTint(0x00ff88);
+            else if (gauge.value < 85) gauge.bar.setTint(0xffaa00);
+            else {
+                gauge.bar.setTint(0xff4444);
+                if (Math.random() > 0.9) this.cameras.main.shake(50, 0.002);
             }
 
-            gauge.valueText.setText(`${Math.round(gauge.value)}%`)
+            gauge.valueText.setText(`${Math.round(gauge.value)}%`);
 
-            // Explode if hits 100!
             if (gauge.value >= 100) {
-                this.explodeGauge(gauge)
+                gauge.exploded = true;
+                gauge.bar.setTint(0x220000);
+                this.add.text(gauge.x, gauge.y, '', { fontSize: '60px' }).setOrigin(0.5).setDepth(15);
+                if (this.gauges.every(g => g.exploded)) this.endGame(false);
             }
-        })
-    }
-
-    explodeGauge(gauge) {
-        gauge.exploded = true
-        gauge.bar.setFillStyle(0xff0000)
-        gauge.bg.setFillStyle(0xff0000)
-        gauge.bg.setAlpha(0.5)
-        gauge.label.setText('💥 BOOM!')
-        gauge.label.setFill('#ff0000')
-        this.cameras.main.shake(500, 0.02)
-
-        // Check if all exploded
-        const allExploded = this.gauges.every(g => g.exploded)
-        if (allExploded) {
-            this.endGame(false)
-        }
+        });
     }
 
     tickTimer() {
-        if (this.failed) return
-        this.timeLeft--
-        this.timerText.setText(`Time: ${this.timeLeft}`)
-
-        if (this.timeLeft <= 10) {
-            this.timerText.setFill('#ff4444')
-        }
-
-        // Speed increases over time!
-        this.gauges.forEach(gauge => {
-            gauge.speed += 0.1
-        })
-
-        if (this.timeLeft <= 0) {
-            this.endGame(true)
-        }
+        if (this.failed) return;
+        this.timeLeft--;
+        this.timerText.setText(`${this.timeLeft}`);
+        if (this.timeLeft <= 0) this.endGame(true);
     }
 
     endGame(success) {
-        this.failed = true
+        this.failed = true;
+        this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 2,
+            success ? "STABILIZED" : "SYSTEM FAILURE",
+            { fontSize: '60px', fill: success ? '#00ff88' : '#ff0000', fontStyle: 'bold', fontFamily: "'Orbitron', sans-serif", })
+            .setOrigin(0.5).setDepth(20);
 
-        if (success) {
-            const survived = this.gauges.filter(g => !g.exploded).length
-            this.resultText.setText(`✅ Survived! ${survived}/4 valves intact!`)
-            this.resultText.setFill('#00ff88')
-            GameState.earnMoney(80)
-            GameState.addSkill('repair', 8)
-            GameState.addReputation(5)
-        } else {
-            this.resultText.setText('💥 All valves exploded! No reward.')
-            this.resultText.setFill('#ff4444')
-        }
-
-        this.time.delayedCall(2000, () => {
-            this.scene.stop('PressureValveGame')
-            this.scene.resume('WorkshopScene')
-        })
+        this.time.delayedCall(3000, () => {
+            this.scene.stop();
+            this.scene.resume('WorkshopScene');
+        });
     }
 }
