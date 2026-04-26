@@ -28,6 +28,7 @@ export default class HubScene extends Phaser.Scene {
         this.cameras.main.setZoom(0.98)
         this.cameras.main.centerOn(W / 2, H / 2 - 20)
 
+        playDynamicMusic(this);
         // ─── Shutdown cleanup ──────────────────────────
         this.events.on('shutdown', () => {
             if (this.ui) this.ui.destroy()
@@ -303,7 +304,7 @@ export default class HubScene extends Phaser.Scene {
                     this.showTooltip(
                         x,
                         y - (locImage.displayHeight / 2) - 20,
-                        `🕐 Only in the ${timeRestriction}`,
+                        `🕐 Only in ${timeRestriction}`,
                         250,
                         35,
                         '24px'

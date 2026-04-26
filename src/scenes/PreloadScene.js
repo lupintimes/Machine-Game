@@ -1,3 +1,5 @@
+import GameState from '../data/gameState.js';
+
 export default class PreloadScene extends Phaser.Scene {
     constructor() {
         super('PreloadScene')
@@ -71,6 +73,8 @@ export default class PreloadScene extends Phaser.Scene {
         // ═══════════════════════════════════════════════
         // ─── LOAD ALL GAME ASSETS ──────────────────────
         // ═══════════════════════════════════════════════
+
+        this.load.font('gloria', 'assets/fonts/GloriaHallelujah.ttf');
 
         // ─── Workshop ──────────────────────────────────
         this.load.image('workshop-morning', 'assets/images/workshop/workshop-morning.png')
@@ -178,14 +182,19 @@ export default class PreloadScene extends Phaser.Scene {
         //mini game
         this.load.image('energystabliser', 'assets/images/minigame/energystabliser.png')
 
-        // ─── Add any other assets here ─────────────────
-        // this.load.image('player', 'assets/images/player.png')
-        // this.load.audio('bgm', 'assets/audio/bgm.mp3')
+        //audio
+        this.load.audio('level12', 'assets/audio/level12.ogg');
+        this.load.audio('level3', 'assets/audio/level3.ogg');
+        this.load.audio('level4', 'assets/audio/level4.ogg');
+        this.load.audio('intro', 'assets/audio/intro.ogg');
     }
 
     create() {
         const W = this.cameras.main.width
         const H = this.cameras.main.height
+
+        // ✅✅✅ ADD THIS LINE RIGHT HERE! ✅✅✅
+        window.playDynamicMusic = playDynamicMusic;
 
         // ─── Show "Click to Start" ─────────────────────
         const startBtn = this.add.text(W / 2, H / 2 + 180, '[ Click to Start ]', {
@@ -210,7 +219,7 @@ export default class PreloadScene extends Phaser.Scene {
         startBtn.on('pointerdown', () => {
             this.cameras.main.fade(500, 0, 0, 0)
             this.time.delayedCall(500, () => {
-                this.scene.start('HubScene')
+                this.scene.start('MenuScene')
             })
         })
 
@@ -218,8 +227,69 @@ export default class PreloadScene extends Phaser.Scene {
         this.input.keyboard.once('keydown-SPACE', () => {
             this.cameras.main.fade(500, 0, 0, 0)
             this.time.delayedCall(500, () => {
-                this.scene.start('HubScene')
+                this.scene.start('MenuScene')
             })
         })
     }
+}
+
+function playDynamicMusic(scene) {
+    let desiredTrack = '';
+    let shouldLoop = true;
+
+    if (scene.scene.key === 'CutsceneScene') {
+        desiredTrack = 'intro';
+        shouldLoop = false; 
+    }
+    else if (GameState.level === 4) {
+        desiredTrack = 'level4';
+    }
+    else if (GameState.level === 1) {
+        desiredTrack = 'level12';
+    }
+    else if (GameState.level === 3 || GameState.level === 2) {
+        desiredTrack = 'level3';
+    }
+
+    if (!desiredTrack) return;
+    if (scene.registry.get('currentMusic') === desiredTrack) return;
+
+    const targetVolume = 0.4;
+    const fadeDuration = 2000; // 2 seconds for the crossfade
+
+    // 1. FADE OUT the old song
+    const oldSong = scene.registry.get('currentMusicInstance');
+    if (oldSong) {
+        // Stop the fade if it was already fading
+        scene.tweens.killTweensOf(oldSong); 
+        
+        scene.tweens.add({
+            targets: oldSong,
+            volume: 0,
+            duration: fadeDuration,
+            onComplete: () => {
+                oldSong.stop();
+                oldSong.destroy();
+            }
+        });
+    }
+
+    // 2. FADE IN the new song
+    const newSong = scene.sound.add(desiredTrack, { 
+        loop: shouldLoop, 
+        volume: 0 // ✅ CRITICAL: Start at 0 so it can fade in!
+    });
+    
+    newSong.play();
+
+    scene.tweens.add({
+        targets: newSong,
+        volume: targetVolume,
+        duration: fadeDuration,
+        delay: 500 // Optional: wait 0.5s before fading in so they don't overlap too much
+    });
+
+    // 3. Remember what is playing
+    scene.registry.set('currentMusic', desiredTrack);
+    scene.registry.set('currentMusicInstance', newSong);
 }

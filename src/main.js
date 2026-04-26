@@ -1,5 +1,6 @@
 import GameState from './data/gameState.js'
 import PreloadScene from './scenes/PreloadScene.js' 
+import MenuScene from './scenes/MenuScene.js' 
 import HubScene from './scenes/HubScene.js'
 import WorkshopScene from './scenes/WorkshopScene.js'
 import JunkyardScene from './scenes/JunkyardScene.js'
@@ -36,6 +37,7 @@ const config = {
     },
     scene: [
         PreloadScene,
+        MenuScene,
         HubScene,
         WorkshopScene,
         JunkyardScene,
