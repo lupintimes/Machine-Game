@@ -1,3 +1,5 @@
+import GameState from '../../data/gameState.js';
+
 export default class PressureValveGame extends Phaser.Scene {
     constructor() {
         super('PressureValveGame');
@@ -15,7 +17,7 @@ export default class PressureValveGame extends Phaser.Scene {
         const W = this.cameras.main.width;
         const H = this.cameras.main.height;
 
-        this.timeLeft = 20;
+        this.timeLeft = 7;
         this.failed = false;
 
         // ─── 1. Background Logic ────────────────
@@ -50,7 +52,7 @@ export default class PressureValveGame extends Phaser.Scene {
         this.add.image(964.50, 640.00, 'gauge_panel_overlay').setDepth(5);
 
         // ─── 4. UI ──────────────────────────────
-        this.timerText = this.add.text(W / 2 - 95, 362, '20', {
+        this.timerText = this.add.text(W / 2 - 95, 362, '7', {
             fontSize: '32px', fill: '#f3a70b', fontStyle: 'bold', fontFamily: "'Orbitron', sans-serif",
         }).setOrigin(0.5).setDepth(10);
 
@@ -138,10 +140,15 @@ export default class PressureValveGame extends Phaser.Scene {
             if (gauge.value >= 100) {
                 gauge.exploded = true;
                 gauge.bar.setTint(0x220000);
-                this.add.text(gauge.x, gauge.y, '', { fontSize: '60px' }).setOrigin(0.5).setDepth(15);
-                if (this.gauges.every(g => g.exploded)) this.endGame(false);
+
+                // Check if every single gauge is now exploded
+                if (this.gauges.every(g => g.exploded)) {
+                    this.endGame(false); // Triggers failure reward (0)
+                }
             }
         });
+
+
     }
 
     tickTimer() {
@@ -153,12 +160,45 @@ export default class PressureValveGame extends Phaser.Scene {
 
     endGame(success) {
         this.failed = true;
-        this.add.text(this.cameras.main.width / 2, this.cameras.main.height / 2,
-            success ? "STABILIZED" : "SYSTEM FAILURE",
-            { fontSize: '60px', fill: success ? '#00ff88' : '#ff0000', fontStyle: 'bold', fontFamily: "'Orbitron', sans-serif", })
-            .setOrigin(0.5).setDepth(20);
 
-        this.time.delayedCall(3000, () => {
+        const savedCount = this.gauges.filter(g => !g.exploded).length;
+
+        let rewards = { coins: 0, repair: 0 };
+
+        if (savedCount === 1) rewards = { coins: 100, repair: 2 };
+        else if (savedCount === 2) rewards = { coins: 225, repair: 5 };
+        else if (savedCount === 3) rewards = { coins: 350, repair: 8 };
+        else if (savedCount === 4) rewards = { coins: 500, repair: 10 };
+
+        // ✅ SAFE UPDATE: Fallback to window just in case of ES6 circular dependency issues
+        const GS = (typeof GameState !== 'undefined' && GameState.earnMoney) ? GameState : window.GameState;
+        
+        if (GS) {
+            GS.earnMoney(rewards.coins);           
+            GS.addSkill('repair', rewards.repair); 
+        } else {
+            console.error("GameState could not be found!");
+        }
+
+        const W = this.cameras.main.width;
+        const H = this.cameras.main.height;
+
+        this.add.text(W / 2, H / 2 - 100,
+            success ? "PRESSURE STABILIZED" : "SYSTEM FAILURE",
+            { fontSize: '50px', fill: success ? '#00ff88' : '#ff4444', fontStyle: 'bold', fontFamily: "'Orbitron', sans-serif" }
+        ).setOrigin(0.5).setDepth(20);
+
+        const rewardText = `Valves Saved: ${savedCount}\n+${rewards.coins} Coins\n+${rewards.repair} Repair Skill`;
+
+        this.add.text(W / 2, H / 2 + 50, rewardText, {
+            fontSize: '28px',
+            fill: '#ffffff',
+            align: 'center',
+            fontFamily: "'Share Tech Mono', monospace",
+            lineSpacing: 10
+        }).setOrigin(0.5).setDepth(20);
+
+        this.time.delayedCall(4000, () => {
             this.scene.stop();
             this.scene.resume('WorkshopScene');
         });

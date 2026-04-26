@@ -346,7 +346,7 @@ export default class WorkshopScene extends Phaser.Scene {
             if (!this.canDoWork()) return
             this.advanceWorkTime()
             this.scene.pause('WorkshopScene')
-            this.scene.launch('WireConnectGame')
+            this.scene.launch('OscilloscopeGame')
             station.cooldown = true
             this.time.delayedCall(5000, () => { station.cooldown = false })
         }

@@ -245,8 +245,8 @@ export default class EnemyScene extends Phaser.Scene {
         this.physics.add.overlap(this.player, this.spikes, this.playerHitSpikes, null, this)
 
         // ─── Checkpoints (after player) ────────────────
-        this.createCheckpoint(1854, 1109, 163, 120)
-        this.createCheckpoint(2702, 485.5, 138, 113)
+        this.createCheckpoint(925, 555, 80, 60)
+        this.createCheckpoint(1353, 200, 60, 60)
         this.totalCheckpoints = this.checkpoints.length
 
         // ─── Camera ────────────────────────────────────
