@@ -7,7 +7,7 @@ import SecretBaseScene from './scenes/SecretBaseScene.js'
 import PalaceScene from './scenes/PalaceScene.js'
 import TownCenterScene from './scenes/TownCenterScene.js'
 import ParkScene from './scenes/ParkScene.js'
-import WireConnectGame from './scenes/minigames/WireConnectGame.js'
+import OscilloscopeGame from './scenes/minigames/OscilloscopeGame.js'
 import PressureValveGame from './scenes/minigames/PressureValveGame.js'
 import CutsceneScene from './scenes/CutsceneScene.js'
 import EnemyScene from './scenes/EnemyScene.js'
@@ -46,7 +46,7 @@ const config = {
         CutsceneScene,
         Level3PalaceScene,
         EnemyScene,
-        WireConnectGame,
+        OscilloscopeGame,
         PressureValveGame,
         CoreAssemblyGame,
         EnergyCalibrationGame,
