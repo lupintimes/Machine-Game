@@ -6,7 +6,7 @@ export default class OscilloscopeGame extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('osci_bg', 'assets/images/minigame/oscilloscope_bg.png');
+        this.load.image('osci_bg', 'assets/images/minigame/oscilloscope_bg.webp');
     }
 
     create() {

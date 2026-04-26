@@ -4,23 +4,23 @@ export default class CoreAssemblyGame extends Phaser.Scene {
     }
 
     preload() {
-        this.load.image('core-bg', 'assets/images/minigame/core_bg.png')
-        this.load.image('core-ready-bg', 'assets/images/minigame/core_ready_bg.png')
+        this.load.image('core-bg', 'assets/images/minigame/core_bg.webp')
+        this.load.image('core-ready-bg', 'assets/images/minigame/core_ready_bg.webp')
 
-        this.load.image('core', 'assets/images/minigame/core.png')
-        this.load.image('core-ready', 'assets/images/minigame/core_ready.png')
+        this.load.image('core', 'assets/images/minigame/core.webp')
+        this.load.image('core-ready', 'assets/images/minigame/core_ready.webp')
 
-        this.load.image('blue', 'assets/images/minigame/blue.png')
-        this.load.image('blue-ready', 'assets/images/minigame/blue_ready.png')
+        this.load.image('blue', 'assets/images/minigame/blue.webp')
+        this.load.image('blue-ready', 'assets/images/minigame/blue_ready.webp')
 
-        this.load.image('red', 'assets/images/minigame/red.png')
-        this.load.image('red-ready', 'assets/images/minigame/red_ready.png')
+        this.load.image('red', 'assets/images/minigame/red.webp')
+        this.load.image('red-ready', 'assets/images/minigame/red_ready.webp')
 
-        this.load.image('yellow', 'assets/images/minigame/yellow.png')
-        this.load.image('yellow-ready', 'assets/images/minigame/yellow_ready.png')
+        this.load.image('yellow', 'assets/images/minigame/yellow.webp')
+        this.load.image('yellow-ready', 'assets/images/minigame/yellow_ready.webp')
 
-        this.load.image('green', 'assets/images/minigame/green.png')
-        this.load.image('green-ready', 'assets/images/minigame/green_ready.png')
+        this.load.image('green', 'assets/images/minigame/green.webp')
+        this.load.image('green-ready', 'assets/images/minigame/green_ready.webp')
     }
     create() {
         const W = this.cameras.main.width

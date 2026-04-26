@@ -6,13 +6,7 @@ export default class SecretBaseScene extends Phaser.Scene {
         super('SecretBaseScene')
     }
 
-    preload() {
-        this.load.image('armor-nocore', 'assets/images/secretbase/armor_nocore.png')
-        this.load.image('armor-core', 'assets/images/secretbase/armor_core.png')
-        this.load.image('armor-nohead', 'assets/images/secretbase/armor_nohead.png')
-        this.load.image('armor-head', 'assets/images/secretbase/armor_head.png')
-        this.load.image('armor-ready', 'assets/images/secretbase/armor_ready.png')
-    }
+ 
 
     create() {
         const W = this.cameras.main.width

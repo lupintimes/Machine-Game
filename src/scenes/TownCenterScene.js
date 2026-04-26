@@ -6,21 +6,7 @@ export default class TownCenterScene extends Phaser.Scene {
         super('TownCenterScene')
     }
 
-    preload() {
-        this.load.image('town-ruined', 'assets/images/towncenter/town_ruined.png')
-        this.load.image('town-overlay', 'assets/images/towncenter/overlay.png')
-
-        this.load.image('btn-hospital', 'assets/images/towncenter/hospital_button.png')
-        this.load.image('btn-water', 'assets/images/towncenter/water_button.png')
-        this.load.image('btn-power', 'assets/images/towncenter/power_button.png')
-        this.load.image('btn-town', 'assets/images/towncenter/town_button.png')
-
-        this.load.image('btn-hospital-fixed', 'assets/images/towncenter/fixed_hospital.png')
-        this.load.image('btn-water-fixed', 'assets/images/towncenter/fixed_water.png')
-        this.load.image('btn-power-fixed', 'assets/images/towncenter/fixed_power.png')
-        this.load.image('btn-town-fixed', 'assets/images/towncenter/fixed_town.png')
-    }
-
+ 
     create() {
         const W = this.cameras.main.width
         const H = this.cameras.main.height

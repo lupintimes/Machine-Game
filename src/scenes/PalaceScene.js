@@ -6,9 +6,7 @@ export default class PalaceScene extends Phaser.Scene {
         super('PalaceScene')
     }
 
-    preload() {
-        this.load.image('palace-bg', 'assets/images/palace-bg.png')
-    }
+   
 
     create() {
         const W = this.cameras.main.width

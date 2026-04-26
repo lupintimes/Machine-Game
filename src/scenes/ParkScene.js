@@ -6,9 +6,8 @@ export default class ParkScene extends Phaser.Scene {
         super('ParkScene')
     }
 
-    preload() {
-        this.load.image('park-bg', 'assets/images/park-bg.png')
-    }
+  
+
 
     create() {
         const W = this.cameras.main.width

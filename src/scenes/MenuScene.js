@@ -4,10 +4,12 @@ export default class MenuScene extends Phaser.Scene {
   }
 
   preload() {
-    this.load.image('menu-bg', 'assets/images/menu.png')
+    this.load.image('menu-bg', 'assets/images/menu.webp')
   }
 
   create() {
+
+    playDynamicMusic(this);
     const width = this.cameras.main.width;
     const height = this.cameras.main.height;
     const centerX = width / 2;

@@ -18,6 +18,8 @@ export default class CutsceneScene extends Phaser.Scene {
         this.speedMultiplier = 1
         this.isSkipping = false
 
+        playDynamicMusic(this);
+
         // ─── Controls ──────────────────────────────────
         this.enterKey = this.input.keyboard.addKey('ENTER')
         this.spaceKey = this.input.keyboard.addKey('SPACE')

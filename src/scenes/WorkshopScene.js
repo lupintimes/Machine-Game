@@ -12,6 +12,8 @@ export default class WorkshopScene extends Phaser.Scene {
         const W = this.cameras.main.width
         const H = this.cameras.main.height
 
+        
+
         // ─── UI ────────────────────────────────────────
         this.ui = new UI(this)
         this.ui.create()

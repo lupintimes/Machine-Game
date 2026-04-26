@@ -57,8 +57,7 @@ export default class JunkyardScene extends Phaser.Scene {
 
 
         if (
-            GameState.level === 3 &&
-            GameState.getFlag('armorPlatingInstalled') &&
+            GameState.getFlag('traderFinishing') &&         // ← set when head is built ✅
             !GameState.getFlag('traderCalledArmor')
         ) {
             GameState.setFlag('traderCalledArmor')
@@ -243,7 +242,7 @@ export default class JunkyardScene extends Phaser.Scene {
             choices.push(
                 { text: '🔧 Repair Parts (+10) — 100💰', style: shopFont, onSelect: () => this.buyRepairParts() },
                 { text: '⚗️ Elixir (+3) — 150💰', style: shopFont, onSelect: () => this.buyElixir() },
-                { text: '📜 Blueprint (+5 research) — 200💰', style: shopFont, onSelect: () => this.buyBlueprint() },
+                { text: '📜 Blueprint (+5 research) — 50💰', style: shopFont, onSelect: () => this.buyBlueprint() },
                 { text: '🔙 Back', style: backFont, onSelect: () => this.showTraderMenu() }
             )
         }
@@ -369,9 +368,9 @@ export default class JunkyardScene extends Phaser.Scene {
     }
 
     buyBlueprint() {
-        if (!GameState.spendMoney(200)) {
+        if (!GameState.spendMoney(50)) {
             this.dialog.show([
-                { name: 'Trader', text: `Not enough coins! Need 200💰, you have ${GameState.money}💰.` }
+                { name: 'Trader', text: `Not enough coins! Need 50💰, you have ${GameState.money}💰.` }
             ], () => { this.traderShop() })
             return
         }

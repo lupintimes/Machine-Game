@@ -7,9 +7,7 @@ export default class PressureValveGame extends Phaser.Scene {
 
     preload() {
         // Replace these paths with your actual asset locations
-        this.load.image('gauge_panel_bg', 'assets/images/minigame/gauge_back.png');      // The empty valve frame
-        this.load.image('gauge_fill', 'assets/images/minigame/green_fill.png');    // The green liquid/bar
-        this.load.image('gauge_panel_overlay', 'assets/images/minigame/gauge_glass.png'); // The highlights/top frame
+
     }
 
 

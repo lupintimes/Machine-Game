@@ -7,30 +7,6 @@ export default class EnemyScene extends Phaser.Scene {
         super('EnemyScene')
     }
 
-    preload() {
-        this.load.image('enemy-bg', 'assets/images/enemy-bg.png')
-        this.load.image('heart-full', 'assets/images/ui/heart-full.png')
-        this.load.image('heart-empty', 'assets/images/ui/heart-empty.png')
-        this.load.image('monitor-frame', 'assets/images/ui/monitor-frame.png')
-
-        this.load.spritesheet('enemy-walk', 'assets/images/enemy/Walk.png', { frameWidth: 96, frameHeight: 96 })
-        this.load.spritesheet('enemy-attack', 'assets/images/enemy/Attack_1.png', { frameWidth: 96, frameHeight: 96 })
-        this.load.spritesheet('enemy-idle', 'assets/images/enemy/Idle.png', { frameWidth: 96, frameHeight: 96 })
-        this.load.spritesheet('enemy-hurt', 'assets/images/enemy/Hurt.png', { frameWidth: 96, frameHeight: 96 })
-        this.load.spritesheet('enemy-dead', 'assets/images/enemy/Death.png', { frameWidth: 96, frameHeight: 96 })
-
-        this.load.spritesheet('player-walk', 'assets/images/player/Walk.png', { frameWidth: 128, frameHeight: 128 })
-        this.load.spritesheet('player-run', 'assets/images/player/Run.png', { frameWidth: 128, frameHeight: 128 })
-        this.load.spritesheet('player-shield', 'assets/images/player/Shield.png', { frameWidth: 128, frameHeight: 128 })
-        this.load.spritesheet('player-jump', 'assets/images/player/Jump.png', { frameWidth: 128, frameHeight: 128 })
-        this.load.spritesheet('player-idle', 'assets/images/player/Idle.png', { frameWidth: 128, frameHeight: 128 })
-        this.load.spritesheet('player-hurt', 'assets/images/player/Hurt.png', { frameWidth: 128, frameHeight: 128 })
-        this.load.spritesheet('player-dead', 'assets/images/player/Dead.png', { frameWidth: 128, frameHeight: 128 })
-        this.load.spritesheet('player-attack', 'assets/images/player/Attack_1.png', { frameWidth: 128, frameHeight: 128 })
-        this.load.spritesheet('player-attack2', 'assets/images/player/Attack_2.png', { frameWidth: 128, frameHeight: 128 })
-        this.load.spritesheet('player-attack3', 'assets/images/player/Attack_3.png', { frameWidth: 128, frameHeight: 128 })
-    }
-
     create() {
         const W = this.cameras.main.width
         const H = this.cameras.main.height
@@ -40,6 +16,8 @@ export default class EnemyScene extends Phaser.Scene {
         // negative Y = move up
         this.checkpointOffsetX = -38
         this.checkpointOffsetY = -31.45
+        
+        
 
         // ─── Background ────────────────────────────────
         this.bg = this.add.image(0, 0, 'enemy-bg').setOrigin(0, 0)

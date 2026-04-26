@@ -5,20 +5,7 @@ export default class HubScene extends Phaser.Scene {
         super('HubScene')
     }
 
-    preload() {
-        this.load.image('hub-bg', 'assets/images/hub-bg.png')
-
-        this.load.image('loc-workshop', 'assets/images/locations/workshop.png')
-        this.load.image('loc-junkyard', 'assets/images/locations/junkyard.png')
-        this.load.image('loc-palace', 'assets/images/locations/palace.png')
-        this.load.image('loc-towncenter', 'assets/images/locations/towncenter.png')
-        this.load.image('loc-park', 'assets/images/locations/park.png')
-        this.load.image('loc-enemy', 'assets/images/locations/enemy.png')
-
-        this.load.image('hub-overlay', 'assets/images/locations/border.png')
-        this.load.image('legend', 'assets/images/locations/legend.png')
-    }
-
+  
     create() {
         const W = this.cameras.main.width
         const H = this.cameras.main.height
