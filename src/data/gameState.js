@@ -77,13 +77,13 @@ const GameState = {
 
     // ─── Core Stats ────────────────────────────────────
     level: 1,
-    money: 5000,
-    reputation: 100,
-    elixir: 100,
+    money: 0,
+    reputation: 0,
+    elixir: 0,
 
     skills: {
-        repair: 100,
-        research: 10,
+        repair: 0,
+        research: 0,
         combat: 0
     },
 
@@ -183,6 +183,16 @@ const GameState = {
         enemyTerritoryCleared: false,
         parkCleanerRevealed: false,
         reasonForAttackKnown: false,
+
+
+        // ─── Level 4 ───────────────────────────────────
+        finalSuppliesReady: false,
+        enteredEnemyTerritory: false,
+        defensesDisabled: false,
+        commanderDefeated: false,
+        leaderConfronted: false,
+        gameFinished: false,
+
 
         // ─── GF Story ──────────────────────────────────
         gfCalledComms: false,
